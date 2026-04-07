@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>CS 플랫폼 AI 데모</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; }
+
+    header {
+      background: #1a1a2e; color: #fff;
+      padding: 18px 32px; font-size: 20px; font-weight: bold;
+      letter-spacing: 1px;
+    }
+    header span { color: #7ecbff; }
+
+    .tabs {
+      display: flex; gap: 0;
+      background: #fff; border-bottom: 2px solid #e0e0e0;
+      padding: 0 32px;
+    }
+    .tab {
+      padding: 14px 24px; cursor: pointer; font-size: 14px;
+      border-bottom: 3px solid transparent; color: #666;
+      transition: all 0.2s;
+    }
+    .tab.active { border-bottom-color: #1a1a2e; color: #1a1a2e; font-weight: bold; }
+    .tab:hover:not(.active) { background: #f5f5f5; }
+
+    .panel { display: none; padding: 32px; max-width: 900px; margin: 0 auto; }
+    .panel.active { display: block; }
+
+    .card {
+      background: #fff; border-radius: 12px;
+      padding: 24px; margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .card h3 { font-size: 15px; color: #555; margin-bottom: 16px; }
+
+    textarea, input[type=text] {
+      width: 100%; padding: 12px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 14px; resize: vertical;
+      font-family: inherit;
+    }
+    textarea:focus, input[type=text]:focus {
+      outline: none; border-color: #1a1a2e;
+    }
+
+    button {
+      margin-top: 12px; padding: 10px 24px;
+      background: #1a1a2e; color: #fff; border: none;
+      border-radius: 8px; cursor: pointer; font-size: 14px;
+      transition: background 0.2s;
+    }
+    button:hover { background: #2d2d5e; }
+    button:disabled { background: #aaa; cursor: not-allowed; }
+
+    .result {
+      margin-top: 16px; padding: 16px; border-radius: 8px;
+      background: #f8f9fa; border: 1px solid #e9ecef;
+      min-height: 60px; font-size: 14px; line-height: 1.6;
+    }
+
+    /* 배지 */
+    .badge {
+      display: inline-block; padding: 3px 10px;
+      border-radius: 20px; font-size: 12px; font-weight: bold;
+    }
+    .badge.safe    { background: #d4edda; color: #155724; }
+    .badge.danger  { background: #f8d7da; color: #721c24; }
+    .badge.info    { background: #cce5ff; color: #004085; }
+    .badge.warning { background: #fff3cd; color: #856404; }
+
+    /* 채팅 UI */
+    .chat-box {
+      border: 1px solid #e0e0e0; border-radius: 12px;
+      height: 360px; overflow-y: auto;
+      padding: 16px; background: #fafafa;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .bubble {
+      max-width: 75%; padding: 10px 14px;
+      border-radius: 16px; font-size: 14px; line-height: 1.5;
+    }
+    .bubble.bot {
+      background: #fff; border: 1px solid #e0e0e0;
+      align-self: flex-start; border-bottom-left-radius: 4px;
+    }
+    .bubble.user {
+      background: #1a1a2e; color: #fff;
+      align-self: flex-end; border-bottom-right-radius: 4px;
+    }
+    .bubble.system {
+      background: #fff3cd; border: 1px solid #ffc107;
+      align-self: center; font-size: 12px; color: #856404;
+    }
+    .bubble.thinking {
+      background: #f0f0f0; color: #888;
+      align-self: flex-start; font-style: italic;
+    }
+
+    .chat-input-row {
+      display: flex; gap: 8px; margin-top: 12px;
+    }
+    .chat-input-row input { flex: 1; margin: 0; }
+    .chat-input-row button { margin: 0; }
+
+    .handoff-btn {
+      display: none; width: 100%; margin-top: 8px;
+      background: #dc3545; padding: 12px;
+      font-size: 14px; border-radius: 8px;
+    }
+    .handoff-btn:hover { background: #c82333; }
+
+    /* 탐지 결과 테이블 */
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+    th { background: #1a1a2e; color: #fff; padding: 8px 12px; text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+    tr:hover td { background: #f5f5f5; }
+
+    .original { text-decoration: line-through; color: #999; }
+    .cleaned  { color: #155724; font-weight: bold; }
+
+    .latency { font-size: 11px; color: #aaa; margin-top: 8px; }
+
+    /* 분류 결과 */
+    .category-grid {
+      display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px;
+    }
+    .category-item {
+      padding: 8px 16px; border-radius: 20px;
+      border: 2px solid #e0e0e0; font-size: 13px; color: #666;
+    }
+    .category-item.selected {
+      border-color: #1a1a2e; background: #1a1a2e; color: #fff;
+    }
+
+    /* 요약 */
+    .summary-text {
+      background: #f8f9fa; border-left: 4px solid #1a1a2e;
+      padding: 16px; border-radius: 0 8px 8px 0;
+      font-size: 14px; line-height: 1.8; color: #333;
+      margin-top: 12px;
+    }
+
+    .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .preset-btn {
+      padding: 6px 14px; background: #f0f2f5;
+      border: 1px solid #ddd; color: #444;
+      border-radius: 20px; font-size: 12px; margin: 0;
+    }
+    .preset-btn:hover { background: #e0e3e8; }
+
+    .store-context-label {
+      font-size: 12px; color: #888; margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<header>사장님 옆자리 <span>AI 데모</span></header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('detect')">욕설 감지 / 중립화</div>
+  <div class="tab" onclick="switchTab('chatbot')">AI 챗봇</div>
+  <div class="tab" onclick="switchTab('classify')">문의 분류</div>
+  <div class="tab" onclick="switchTab('summary')">대화 요약</div>
+</div>
+
+<!-- ── 탭 1: 욕설 감지 ─────────────────────────── -->
+<div id="tab-detect" class="panel active">
+  <div class="card">
+    <h3>테스트 메시지 입력</h3>
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="setDetect('씨발 배송이 왜 이렇게 늦어요')">욕설 포함</button>
+      <button class="preset-btn" onclick="setDetect('병신같은 서비스 환불해줘')">모욕 포함</button>
+      <button class="preset-btn" onclick="setDetect('배송은 언제 오나요?')">정상 문의</button>
+      <button class="preset-btn" onclick="setDetect('환불 처리 부탁드립니다')">정상 문의 2</button>
+    </div>
+    <textarea id="detect-input" rows="3" placeholder="메시지를 입력하세요..."></textarea>
+    <button onclick="runDetect()" id="detect-btn">감지 실행</button>
+  </div>
+
+  <div class="card" id="detect-result-card" style="display:none">
+    <h3>감지 결과</h3>
+    <div id="detect-result"></div>
+  </div>
+
+  <div class="card" id="neutralize-result-card" style="display:none">
+    <h3>중립화 처리 결과 (DB 저장 구조)</h3>
+    <div id="neutralize-result"></div>
+  </div>
+</div>
+
+<!-- ── 탭 2: AI 챗봇 ──────────────────────────── -->
+<div id="tab-chatbot" class="panel">
+  <div class="card">
+    <div class="store-context-label">스토어 정보 (사업자 설정값)</div>
+    <textarea id="store-context" rows="5">스토어명: 하루마켓
+배송정책: 주문 후 2~3 영업일 이내 출고, 도서산간 지역 추가 2일
+환불정책: 수령 후 7일 이내 환불 가능, 개봉 상품 불가
+교환정책: 수령 후 7일 이내 교환 가능, 배송비 고객 부담
+상품: 프리미엄 후드티 (블랙/화이트/그레이, S/M/L/XL) 59,000원
+FAQ: 당일배송 불가 / 해외배송 불가</textarea>
+  </div>
+
+  <div class="card">
+    <div class="chat-box" id="chat-box"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." onkeydown="if(event.key==='Enter') sendChat()">
+      <button onclick="sendChat()" id="chat-btn">전송</button>
+    </div>
+    <button class="handoff-btn" id="handoff-btn" onclick="alert('상담사 연결 요청을 보냈습니다.')">
+      📞 상담사 연결하기
+    </button>
+    <div class="preset-btns" style="margin-top:12px">
+      <button class="preset-btn" onclick="setChat('배송은 얼마나 걸려요?')">배송 문의</button>
+      <button class="preset-btn" onclick="setChat('후드티 색상 알려줘')">상품 문의</button>
+      <button class="preset-btn" onclick="setChat('제 주문 어디까지 왔어요?')">주문 조회 (HANDOFF)</button>
+      <button class="preset-btn" onclick="setChat('환불 접수 해주세요')">환불 접수 (HANDOFF)</button>
+      <button class="preset-btn" onclick="clearChat()">대화 초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 탭 3: 문의 분류 ────────────────────────── -->
+<div id="tab-classify" class="panel">
+  <div class="card">
+    <h3>고객 문의 입력</h3>
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="setClassify('주문한 상품이 아직도 안 왔어요')">배송</button>
+      <button class="preset-btn" onclick="setClassify('환불 신청하고 싶어요')">환불</button>
+      <button class="preset-btn" onclick="setClassify('사이즈가 달라서 교환하고 싶어요')">교환</button>
+      <button class="preset-btn" onclick="setClassify('후드티 재고 있나요?')">상품</button>
+      <button class="preset-btn" onclick="setClassify('안녕하세요')">기타</button>
+    </div>
+    <textarea id="classify-input" rows="3" placeholder="문의 내용을 입력하세요..."></textarea>
+    <button onclick="runClassify()" id="classify-btn">분류 실행</button>
+  </div>
+
+  <div class="card" id="classify-result-card" style="display:none">
+    <h3>분류 결과</h3>
+    <div class="category-grid">
+      <div class="category-item" id="cat-배송문의">📦 배송문의</div>
+      <div class="category-item" id="cat-환불문의">💰 환불문의</div>
+      <div class="category-item" id="cat-교환문의">🔄 교환문의</div>
+      <div class="category-item" id="cat-상품문의">🛍️ 상품문의</div>
+      <div class="category-item" id="cat-기타">💬 기타</div>
+    </div>
+    <div id="classify-detail" class="result" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- ── 탭 4: 대화 요약 ────────────────────────── -->
+<div id="tab-summary" class="panel">
+  <div class="card">
+    <h3>요약할 대화 내용</h3>
+    <textarea id="summary-input" rows="10" placeholder="[고객]: ...\n[상담사]: ...">
+[고객]: 안녕하세요. 지난주에 주문한 프리미엄 후드티가 아직 안 왔어요.
+[상담사]: 안녕하세요! 주문번호를 알려주시면 확인해드리겠습니다.
+[고객]: ORD-2024-001234입니다.
+[상담사]: 확인해보니 현재 배송 중이며 내일 오후 도착 예정입니다.
+[고객]: 혹시 색상이 블랙인지 확인해줄 수 있나요?
+[상담사]: 네, 블랙 L사이즈로 주문되어 있습니다.
+[고객]: 감사합니다. 근데 혹시 배송지 변경이 가능한가요?
+[상담사]: 이미 출고된 상태라 배송지 변경이 어렵습니다. 수령 후 교환은 가능합니다.
+[고객]: 알겠습니다. 감사합니다.</textarea>
+    <button onclick="runSummary()" id="summary-btn">요약 생성</button>
+  </div>
+
+  <div class="card" id="summary-result-card" style="display:none">
+    <h3>요약 결과</h3>
+    <div class="summary-text" id="summary-result"></div>
+    <div class="latency" id="summary-latency"></div>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.origin;
+let chatHistory = [];
+
+// ── 탭 전환 ───────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tabs = ['detect','chatbot','classify','summary'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// ── 욕설 감지 ────────────────────────────────────
+function setDetect(t) { document.getElementById('detect-input').value = t; }
+
+async function runDetect() {
+  const text = document.getElementById('detect-input').value.trim();
+  if (!text) return;
+  const btn = document.getElementById('detect-btn');
+  btn.disabled = true; btn.textContent = '처리 중...';
+
+  try {
+    const [dRes, nRes] = await Promise.all([
+      fetch(`${BASE}/detect`,    { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text}) }),
+      fetch(`${BASE}/neutralize`,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text}) }),
+    ]);
+    const d = await dRes.json();
+    const n = await nRes.json();
+
+    // 감지 결과
+    const dc = document.getElementById('detect-result');
+    if (d.is_profanity) {
+      let rows = d.detections.map(det =>
+        `<tr><td>${det.word}</td><td>${det.offense_type}</td><td>${det.target}</td><td>${'★'.repeat(det.level)}</td></tr>`
+      ).join('');
+      dc.innerHTML = `
+        <span class="badge danger">악성 표현 감지됨</span>
+        <span style="margin-left:8px;font-size:13px;color:#888">신뢰도: ${(d.confidence*100).toFixed(1)}%</span>
+        <table style="margin-top:12px">
+          <tr><th>단어</th><th>유형</th><th>대상</th><th>심각도</th></tr>
+          ${rows}
+        </table>
+        <div class="latency">감지 지연: ${d.latency_ms}ms · 방식: ${d.method}</div>`;
+    } else {
+      dc.innerHTML = `<span class="badge safe">정상 메시지</span>
+        <div class="latency">감지 지연: ${d.latency_ms}ms</div>`;
+    }
+    document.getElementById('detect-result-card').style.display = 'block';
+
+    // 중립화 결과
+    const nc = document.getElementById('neutralize-result');
+    nc.innerHTML = `
+      <table>
+        <tr><th>구분</th><th>내용</th><th>DB 컬럼</th></tr>
+        <tr>
+          <td>원본</td>
+          <td class="${n.is_filtered ? 'original' : ''}">${n.original}</td>
+          <td><code>content_raw</code></td>
+        </tr>
+        <tr>
+          <td>표시</td>
+          <td class="${n.is_filtered ? 'cleaned' : ''}">${n.cleaned}</td>
+          <td><code>content_display</code></td>
+        </tr>
+        <tr>
+          <td>필터링</td>
+          <td><span class="badge ${n.is_filtered ? 'danger' : 'safe'}">${n.is_filtered ? '필터링됨' : '정상'}</span></td>
+          <td><code>is_filtered</code></td>
+        </tr>
+      </table>
+      ${n.is_filtered ? '<div style="margin-top:12px;font-size:13px;color:#666">💡 상담사 화면에는 [원문보기] 버튼이 표시됩니다.</div>' : ''}
+      <div class="latency">처리 지연: ${n.latency_ms}ms</div>`;
+    document.getElementById('neutralize-result-card').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('detect-result').innerHTML = `<span style="color:red">서버 연결 실패: ${e.message}</span>`;
+    document.getElementById('detect-result-card').style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '감지 실행';
+  }
+}
+
+// ── AI 챗봇 ──────────────────────────────────────
+function setChat(t) { document.getElementById('chat-input').value = t; }
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('chat-box').innerHTML = '';
+  document.getElementById('handoff-btn').style.display = 'none';
+}
+
+function addBubble(text, type) {
+  const box = document.getElementById('chat-box');
+  const div = document.createElement('div');
+  div.className = `bubble ${type}`;
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const btn = document.getElementById('chat-btn');
+  btn.disabled = true;
+  input.value = '';
+
+  addBubble(msg, 'user');
+  chatHistory.push({ role: 'customer', content: msg });
+
+  // 생각중 버블
+  const thinkingBubble = addBubble('생각중입니다...', 'thinking');
+  let botBubble = null;
+
+  try {
+    const response = await fetch(`${BASE}/chatbot/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        history: chatHistory.slice(-10),
+        store_context: document.getElementById('store-context').value
+      })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let reply = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        const data = JSON.parse(line.slice(6));
+
+        if (data.thinking_end) {
+          thinkingBubble.remove();
+          botBubble = addBubble('', 'bot');
+        }
+        if (data.token && botBubble) {
+          reply += data.token;
+          botBubble.textContent = reply;
+          document.getElementById('chat-box').scrollTop = 9999;
+        }
+        if (data.final) {
+          if (thinkingBubble.parentNode) thinkingBubble.remove();
+          if (botBubble) {
+            botBubble.textContent = '';  // 부분 출력된 텍스트 삭제
+          } else {
+            botBubble = addBubble('', 'bot');
+          }
+          reply = '';  // 히스토리에 HAND 같은 잔여 텍스트 남지 않게
+          botBubble.textContent = data.final;
+          document.getElementById('handoff-btn').style.display = 'block';
+          addBubble('⚠️ 상담사 연결이 필요한 문의입니다.', 'system');
+        }
+        if (data.error) {
+          thinkingBubble.remove();
+          addBubble('오류가 발생했습니다. 다시 시도해주세요.', 'system');
+        }
+      }
+    }
+
+    if (reply) chatHistory.push({ role: 'bot', content: reply });
+
+  } catch(e) {
+    thinkingBubble.remove();
+    addBubble(`연결 오류: ${e.message}`, 'system');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── 문의 분류 ────────────────────────────────────
+function setClassify(t) { document.getElementById('classify-input').value = t; }
+
+async function runClassify() {
+  const text = document.getElementById('classify-input').value.trim();
+  if (!text) return;
+  const btn = document.getElementById('classify-btn');
+  btn.disabled = true; btn.textContent = '분류 중...';
+
+  // 카테고리 초기화
+  ['배송문의','환불문의','교환문의','상품문의','기타'].forEach(c => {
+    document.getElementById(`cat-${c}`).classList.remove('selected');
+  });
+
+  try {
+    const res = await fetch(`${BASE}/classify`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    const d = await res.json();
+
+    document.getElementById(`cat-${d.category}`)?.classList.add('selected');
+    document.getElementById('classify-detail').innerHTML = `
+      분류 결과: <strong>${d.category}</strong>
+      &nbsp;<span class="badge info">${d.confidence}</span>
+      <div class="latency">처리 지연: ${d.latency_ms}ms</div>`;
+    document.getElementById('classify-result-card').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('classify-detail').innerHTML = `<span style="color:red">서버 연결 실패</span>`;
+    document.getElementById('classify-result-card').style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '분류 실행';
+  }
+}
+
+// ── 대화 요약 ────────────────────────────────────
+async function runSummary() {
+  const raw = document.getElementById('summary-input').value.trim();
+  if (!raw) return;
+  const btn = document.getElementById('summary-btn');
+  btn.disabled = true; btn.textContent = '요약 생성 중...';
+
+  const messages = raw.split('\n').filter(l => l.trim()).map(line => {
+    const m = line.match(/^\[(.+?)\]:\s*(.+)/);
+    return m ? { sender: m[1], content: m[2] } : null;
+  }).filter(Boolean);
+
+  try {
+    const res = await fetch(`${BASE}/summarize`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ messages })
+    });
+    const d = await res.json();
+
+    document.getElementById('summary-result').textContent = d.summary;
+    document.getElementById('summary-latency').textContent =
+      `메시지 ${d.message_count}개 요약 · 처리 시간: ${(d.latency_ms/1000).toFixed(1)}초`;
+    document.getElementById('summary-result-card').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('summary-result').textContent = `서버 연결 실패: ${e.message}`;
+    document.getElementById('summary-result-card').style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '요약 생성';
+  }
+}
+</script>
+</body>
+</html>

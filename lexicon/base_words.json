@@ -1,0 +1,2020 @@
+{
+  "words": [
+    {
+      "word": "시발",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": [
+        "씨발",
+        "씨빨",
+        "씨팔",
+        "시팔",
+        "씨바",
+        "시바",
+        "쉬발",
+        "슈발",
+        "쒸발",
+        "쓔발",
+        "쉽알",
+        "씹발"
+      ]
+    },
+    {
+      "word": "병신",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": [
+        "븅신",
+        "빙신",
+        "병싄",
+        "병시",
+        "ㅄ"
+      ]
+    },
+    {
+      "word": "지랄",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": [
+        "짓알",
+        "지럴",
+        "지랭이"
+      ]
+    },
+    {
+      "word": "새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": [
+        "샊기",
+        "섀끼",
+        "새키",
+        "쉐끼",
+        "쌔끼"
+      ]
+    },
+    {
+      "word": "개새끼",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": [
+        "개샊기",
+        "개섀끼",
+        "개새키",
+        "게새끼"
+      ]
+    },
+    {
+      "word": "좆",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": [
+        "좃",
+        "졷",
+        "조또",
+        "존나"
+      ]
+    },
+    {
+      "word": "보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": [
+        "보즤",
+        "봊이"
+      ]
+    },
+    {
+      "word": "니미",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": [
+        "니엄",
+        "느금",
+        "느금마",
+        "니미럴"
+      ]
+    },
+    {
+      "word": "애미",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": [
+        "애비",
+        "에미",
+        "에비"
+      ]
+    },
+    {
+      "word": "꺼져",
+      "level": 3,
+      "offense_type": "위협",
+      "target": "일반",
+      "variants": [
+        "꺼저",
+        "껒져"
+      ]
+    },
+    {
+      "word": "닥쳐",
+      "level": 3,
+      "offense_type": "위협",
+      "target": "일반",
+      "variants": [
+        "닥처",
+        "닥춰",
+        "다쳐"
+      ]
+    },
+    {
+      "word": "뒤져",
+      "level": 4,
+      "offense_type": "위협",
+      "target": "일반",
+      "variants": [
+        "뒤저",
+        "뒈져",
+        "뒈저",
+        "디져"
+      ]
+    },
+    {
+      "word": "미친",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": [
+        "미칀",
+        "미틴",
+        "믿친"
+      ]
+    },
+    {
+      "word": "또라이",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": [
+        "돌아이",
+        "또라히",
+        "또라리"
+      ]
+    },
+    {
+      "word": "찐따",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": [
+        "찐다",
+        "진따",
+        "ㅉㄷ"
+      ]
+    },
+    {
+      "word": "한남",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": [
+        "한남충"
+      ]
+    },
+    {
+      "word": "한녀",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": [
+        "한녀충",
+        "김치녀"
+      ]
+    },
+    {
+      "word": "느개비",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": [
+        "느게비"
+      ]
+    },
+    {
+      "word": "10새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "18새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "DOG새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "ㄱㅐ새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "ㄱㅐ지랄",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "ㅂ ㅏ ㅂ ㅗ",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "ㅆㅂㄹㅁ",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "ㅆㅂㄻ",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개걸레",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "개년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개또라이",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개쓰레기",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씨발",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씨발넘",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씨발놈",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씨발뇸",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씹",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씹창",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개씹팔",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개자식",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개자지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개좆",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개지랄",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개호로년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "개호로새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "걸레",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "걸레가튼넘",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "걸레가튼뇸",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "걸레같은년",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "걸레같은놈",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "걸레년",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "게보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게쓰레기",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게씨발넘",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게자지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게좆",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게지랄",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게호로년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게호로놈",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "게호로새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "그지새끼",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "그지좃밥",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "그지좃빱",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "그지좆밥",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "느그애미",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "느그애비",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니미랄",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니미롤",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니미를",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니애미",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니애비",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "니좆",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "뒤져라",
+      "level": 4,
+      "offense_type": "위협",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "등신",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": []
+    },
+    {
+      "word": "때씹",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "만화보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친넘",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친놈",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친뇬",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친세리",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친섹이",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친쉐이",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친쉑이",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "미친자식",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "바보탱이",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "병신쉐리",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": []
+    },
+    {
+      "word": "병신쉐이",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": []
+    },
+    {
+      "word": "보지걸",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지구녕",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지구멍",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지나라",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지녀",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "보지년",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "보지뇬",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "보지당",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지물",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지벌",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "보지털",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "빙신쉐리",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": []
+    },
+    {
+      "word": "빙신쉐이",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "외모/장애",
+      "variants": []
+    },
+    {
+      "word": "빨자좃",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "빽보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "빽자지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "섹보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "숙모보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "스타씹기",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시발넘",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시발년",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시발놈",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시발롬",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시발새끼",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시팍새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시팔넘",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시팔년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시팔놈",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "시팔새꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "십발새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "십새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "십지랄",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "십팔새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "쌩보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "쌩보지쑈",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "쓰레기",
+      "level": 3,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "쓰바새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "쓰발새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씁새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨박새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발넘",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발년",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발놈",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발놈아",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발뇬",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발뇸",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨발롬",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨팍새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨팔넘",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨팔년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨팔뇬",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씨팔뇸",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹8",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹갓길",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹넘",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹녀",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹놈",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹뇬",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹뇸",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹딱꿍",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹때꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹때끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹떼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹떼끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹물",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹밸",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹벌",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹보지년",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "씹부랄",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹블",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹빡",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹빨",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹빵구",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹뻘",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹뽀지",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새리",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새이",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새캬",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹새키",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹색꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹색끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹색히",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹샛길",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹생알",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹세",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹세끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹세이",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹셋나루",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쉐",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쉐리",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쉐이",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쉑",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쉑히",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹시끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쌔",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쌔기",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쌔꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쌔끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쌔키",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쎄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹쎄끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹씨키",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹알",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹연",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹자지년",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "씹지랄",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹지럴",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹질",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹창",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹창년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "씹탱",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹탱구리",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹탱꾸리",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹팔",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹팔년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹팔련",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹팔쌔끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹팔연",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹펄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹풀",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹할",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹할련",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "씹할연",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "여자보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "왕보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "왕자지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "자지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "자지털",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃가튼년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃가튼뇬",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃간년",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃까리",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃깟네",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃넘",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃니",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃만아",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좃털",
+      "level": 3,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆같은놈",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆같은새끼",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆년",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "좆만",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆만아",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆만한년",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "좆만한놈",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆만한새끼",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆먹어",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆빨아",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆새끼",
+      "level": 5,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "좆털",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "쥐좆",
+      "level": 5,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄무지개",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄삽차기",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄쌈치기",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄육갑",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄이",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄하",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄하는",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지랄해",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "지좆",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "창녀",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "창녀촌",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "성별",
+      "variants": []
+    },
+    {
+      "word": "큰보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "큰자지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "플레이보지",
+      "level": 5,
+      "offense_type": "음란",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "허접새끼",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "허쩝새끼",
+      "level": 4,
+      "offense_type": "모욕",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로년",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로새꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로새끼",
+      "level": 4,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로새리",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로색끼",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로쌔꺄",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로자슥",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    },
+    {
+      "word": "호로자식",
+      "level": 3,
+      "offense_type": "욕설",
+      "target": "일반",
+      "variants": []
+    }
+  ],
+  "meta": {
+    "version": "3.1",
+    "schema_version": "k-haters-v1",
+    "description": "한국어 욕설/비속어/혐오표현 어휘 사전. 기존 공개 욕설 코퍼스에서 수집한 단어 목록에 K-HATERS 데이터셋의 분류 체계(offense_type, target)를 적용하여 구축된 하이브리드 사전이다.",
+    "dataset_structure": {
+      "overview": "이 사전은 두 가지 이질적인 자원을 결합한 하이브리드 구조이다: (1) 단어 수준의 욕설 코퍼스와 (2) K-HATERS의 문장 수준 혐오 분류 체계.",
+      "word_source": "단어 목록은 직접 작성 및 오픈소스 한국어 욕설 데이터셋(LDNOOBW/ko, doublems/korean-bad-words)에서 수집·정제하였다. 이들은 단어 자체의 존재 여부(출현 빈도 기반)에 초점을 둔 필터링 목적 자료이다.",
+      "classification_source": "각 단어에 부여된 offense_type과 target은 K-HATERS(Kim et al., 2022) 데이터셋의 문장 수준 annotation 체계를 단어 수준으로 투영(projection)한 것이다. K-HATERS의 원래 label은 문장 단위이지만, 여기서는 단어의 전형적 사용 맥락과 주 의미를 기준으로 하나의 대표 범주를 수동 부여하였다.",
+      "design_rationale": "단어 목록과 분류 체계를 분리된 자원으로 결합한 이유: 기존 욕설 코퍼스는 다양하고 광범위하나 혐오 대상·유형 정보가 없고, K-HATERS는 정교한 분류 체계를 제공하지만 특정 발화 스타일(뉴스 댓글)에 편향되어 있다. 두 자원을 결합함으로써 폭넓은 어휘 커버리지와 혐오표현 유형별 필터링을 동시에 달성한다.",
+      "limitations": "단어 수준의 offense_type/target은 문맥 독립적 단순화이다. 동일 단어도 문맥에 따라 범주가 달라질 수 있으며(예: '시발'은 감탄사로도 사용), 이는 상위 시스템의 문맥 분석(sLLM analyze_intent)으로 보완된다."
+    },
+    "k_haters_alignment": {
+      "offense_types": {
+        "욕설": "일반 욕설/비속어 (profanity)",
+        "모욕": "특정 대상 비하/모욕 (insult)",
+        "음란": "성적 음란 표현 (obscenity)",
+        "위협": "위협/공격적 언어 (threat)"
+      },
+      "hate_targets": {
+        "일반": "특정 대상 없는 일반 욕설",
+        "성별": "성별 기반 혐오 (gender)",
+        "외모/장애": "외모/장애 비하 (appearance/disability)",
+        "연령": "연령 기반 혐오 (age)",
+        "지역": "지역 기반 혐오 (region)",
+        "인종/국적": "인종/국적 기반 혐오 (race/nationality)",
+        "종교": "종교 기반 혐오 (religion)",
+        "정치": "정치 기반 혐오 (politics)"
+      },
+      "reference": "K-HATERS: Kim et al. (2022), 192K 네이버 뉴스 댓글 기반"
+    },
+    "sources": [
+      "직접 작성 (base_words.json)",
+      "LDNOOBW/ko (CC BY 4.0) - 필터링됨",
+      "doublems/korean-bad-words (MIT) - 필터링됨",
+      "K-HATERS 카테고리 체계 (Kim et al., 2022)"
+    ],
+    "total_words": 270,
+    "changelog": {
+      "v3.1": "hate_level 제거: Likert 척도는 단어 수준 속성이 아닌 문장 수준 annotation 개념이므로 lexicon에서 제외. dataset_structure 설명 추가.",
+      "v3.0": "K-HATERS 기반 스키마 재구축: category → offense_type, target 추가, 노이즈 항목 7개 제거 (word에 ? 포함된 항목)",
+      "v2.1": "음성학적 변형 variants 추가 (쉬발, 슈발 등)",
+      "v2.0": "초기 버전"
+    }
+  }
+}

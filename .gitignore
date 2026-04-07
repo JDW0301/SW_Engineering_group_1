@@ -1,1 +1,7 @@
-.sisyphus/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+server.log
+*.log
+.env

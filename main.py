@@ -75,14 +75,34 @@ def _build_automaton(lexicon: list[dict]):
 
 
 # ── 감지 / 중립화 ────────────────────────────────────────────
+# CS 플랫폼 문맥 키워드 — 포함 시 offensive 오탐 방지
+_CS_KEYWORDS = {
+    "환불", "배송", "교환", "주문", "결제", "상품", "접수",
+    "처리", "부탁", "신청", "문의", "반품", "수령", "도착",
+}
+
+def _is_cs_context(text: str) -> bool:
+    """CS 업무 문맥 여부 — offensive 오탐 필터용"""
+    return any(kw in text for kw in _CS_KEYWORDS)
+
 def _koelectra_classify(text: str) -> tuple[bool, float, str]:
-    """KoELECTRA로 악성 표현 여부 분류. (is_flagged, score, label) 반환"""
+    """KoELECTRA로 악성 표현 여부 분류. (is_flagged, score, label) 반환
+
+    threshold:
+      offensive >= 0.97  — CS 문맥 키워드 포함 시 제외 (오탐 방지)
+      hate      >= 0.95  — CS 문맥과 무관하게 판정 (더 명확한 분류)
+    """
     result = _resources["classifier"](text, truncation=True, max_length=128)[0]
     label = result["label"]
     score = round(result["score"], 4)
-    # offensive >= 0.999 / hate >= 0.99 일 때만 악성으로 판정
-    is_flagged = (label == "offensive" and score >= 0.999) or \
-                 (label == "hate"      and score >= 0.990)
+
+    if label == "hate" and score >= 0.95:
+        is_flagged = True
+    elif label == "offensive" and score >= 0.97 and not _is_cs_context(text):
+        is_flagged = True
+    else:
+        is_flagged = False
+
     return is_flagged, score, label
 
 def _lexicon_detect(text: str) -> list[dict]:

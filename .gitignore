@@ -1,0 +1,16 @@
+.DS_Store
+.env
+.env.*
+*.log
+
+# Node / frontend artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/.vite/
+
+# Local editor files
+.idea/
+.vscode/

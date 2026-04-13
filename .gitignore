@@ -11,6 +11,16 @@ dist/
 .vite/
 **/.vite/
 
+# Local runtime artifacts
+.local-mysql/
+.dev-run/
+server/.venv/
+server/.pydeps/
+server.out
+server.err
+**/server.out
+**/server.err
+
 # Local editor files
 .idea/
 .vscode/

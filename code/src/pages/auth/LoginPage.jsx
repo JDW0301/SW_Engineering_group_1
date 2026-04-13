@@ -1,11 +1,19 @@
 import { useState } from "react";
-import { MessageSquare, ArrowLeft } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Card, Input, Button } from "../../components/ui";
 
-const LoginPage = ({ onLogin, onGoRegister }) => {
+const LoginPage = ({ onLogin, onGoRegister, error, isSubmitting }) => {
   const [isOperator, setIsOperator] = useState(false);
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+
+  const handleLogin = () => {
+    onLogin({
+      role: isOperator ? "operator" : "customer",
+      loginId,
+      password,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -25,7 +33,10 @@ const LoginPage = ({ onLogin, onGoRegister }) => {
           <div className="space-y-4">
             <Input label="아이디" placeholder="아이디를 입력하세요" value={loginId} onChange={e => setLoginId(e.target.value)} />
             <Input label="비밀번호" type="password" placeholder="비밀번호를 입력하세요" value={password} onChange={e => setPassword(e.target.value)} />
-            <Button className="w-full" size="lg" onClick={() => onLogin(isOperator ? "operator" : "customer")}>로그인</Button>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button className="w-full" size="lg" onClick={handleLogin} disabled={isSubmitting}>
+              {isSubmitting ? "로그인 중..." : "로그인"}
+            </Button>
           </div>
           <div className="mt-4 text-center">
             <button onClick={() => onGoRegister(isOperator ? "operator" : "customer")} className="text-sm text-indigo-600 hover:underline">

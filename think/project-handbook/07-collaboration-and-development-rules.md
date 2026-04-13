@@ -1,100 +1,140 @@
-# 07. Collaboration and Development Rules
-
-## 1. Purpose
-
-This document defines the minimum common rules for a 4-person AI-assisted development project.
-
-The goal is not to add heavy process. The goal is to reduce merge conflicts, naming mismatches, and duplicated work while keeping the team workflow simple.
-
-This document should be used together with:
-
-- `specs/` for feature and technical requirements
-- `think/project-handbook/` for overall project context and planning
-- `specs/00-overview/05-shared-naming-registry.md` for shared naming updates
+# SW_Engineering_group_1 개발 규칙
 
 ---
 
-## 2. Shared Source of Truth Order
+## 1. 프로젝트 개요
 
-When documents conflict, use this order:
+본 프로젝트는 소규모 판매자를 위한 고객지원 플랫폼을 개발하는 것을 목표로 한다.
 
-1. `specs/`
-2. `think/project-handbook/`
-3. this document
-4. `05-shared-naming-registry.md`
+시스템 구성은 다음과 같다.
 
-Rule:
+- Frontend: React + Vite
+- Backend: FastAPI
+- Database: MySQL
+- AI: 챗봇 및 상담 보조 기능
 
-- Feature behavior, API structure, DB rules, and page flow must follow `specs/` first.
-- Team workflow and GitHub collaboration must follow this document.
-- New shared names must be recorded in the naming registry.
+이 문서는 학부 프로젝트 수준에서 실제로 지킬 수 있는 최소 협업 규칙을 정리한 문서다.
+목표는 복잡한 절차를 늘리는 것이 아니라, 협업 충돌과 중복 작업을 줄이고 구현 흐름을 단순하게 유지하는 것이다.
 
----
+이 문서는 다음 문서와 함께 사용한다.
 
-## 3. Team Roles
-
-## PM / Data Manager
-
-- manages shared documents
-- manages requirement alignment
-- reviews naming conflicts
-- reviews DB-related changes
-- coordinates final integration priorities
-
-## Backend / Integration
-
-- authentication and authorization
-- API implementation
-- DB access and data flow
-- external or internal integration logic
-- synchronization logic
-- file processing
-- statistics API
-
-## Frontend / Screen Owner
-
-- customer-facing screens
-- operator-facing screens
-- UI interaction and input/output behavior
-- search, filter, status-change UI
-- chat UI and dashboard UI
-
-## AI Owner
-
-- classification
-- chatbot
-- abusive-expression detection
-- message summary
-- neutralization logic
-- AI integration API definition
-
-Role rule:
-
-- Each area has a main owner.
-- If a change affects another area, the owner must open a PR and request review from the related owner.
+- `specs/` : 기능, API, DB, 페이지 흐름의 기준 문서
+- `think/project-handbook/` : 프로젝트 배경, 범위, 계획 문서
+- `specs/00-overview/05-shared-naming-registry.md` : 공유 네이밍 기록 문서
 
 ---
 
-## 4. Development Principles
+## 2. 프로젝트 구조
 
-1. Start from the shared documents, not from personal assumptions.
-2. Follow the existing structure before creating a new one.
-3. Keep names consistent across frontend, backend, AI, and DB.
-4. Do not merge code without updating documents when the change affects shared behavior.
-5. Keep the process minimal. Use only the rules that prevent real confusion.
+프로젝트는 다음과 같은 디렉토리 구조를 기준으로 한다.
+
+- `code/` : 프론트엔드 코드
+- `server/` : 백엔드 코드
+- `specs/` : API 및 기능 명세
+- `think/` : 개발 규칙, 기획, 협업 문서
+- `data/` : 참고 데이터
+
+문서 충돌 시 우선순위는 다음과 같다.
+
+1. `specs/` 및 그 안의 공유 네이밍 레지스트리
+2. `think/project-handbook/`의 프로젝트 배경, 범위, 계획 문서
+3. 이 문서
+
+규칙:
+
+- 기능 동작, API 구조, DB 규칙, 페이지 흐름은 `specs/`를 먼저 따른다.
+- 팀 협업 방식과 GitHub 워크플로는 이 문서를 따른다.
+- 새 공유 이름은 `specs/00-overview/05-shared-naming-registry.md`에 기록한다.
 
 ---
 
-## 5. GitHub Branch Rules
+## 3. 핵심 개발 원칙
 
-## Main Rule
+### 3.1 API 우선 설계 (API Contract First)
 
-- Do not push directly to `main`.
-- All work must be merged through Pull Request.
+모든 구현은 가능하면 API와 데이터 구조를 먼저 맞춘 뒤 진행한다.
 
-## Branch Naming
+- Frontend와 Backend는 개발 전에 관련 API 요청/응답 구조를 먼저 확인한다.
+- API 필드가 공유되면 `specs/`와 네이밍 레지스트리를 먼저 확인한다.
+- 기능 변경으로 API 계약이 바뀌면, 코드를 병합하기 전에 관련 명세를 먼저 수정하거나 같은 PR에서 함께 수정한다.
 
-Use one of the following formats:
+### 3.2 문서 기반 개발
+
+모든 판단은 개인 추측보다 문서를 우선한다.
+
+- 기준은 `specs(네이밍 레지스트리 포함) > think/project-handbook의 다른 안내 문서 > 이 문서` 순서다.
+- 구현 전에 관련 spec을 먼저 읽는다.
+- 공유 동작이 바뀌었는데 문서가 업데이트되지 않았다면, 코드만으로 완료된 것으로 보지 않는다.
+
+### 3.3 네이밍 일관성
+
+- API, DB, Frontend, AI에서 같은 의미는 같은 이름을 사용한다.
+- 새로운 공유 필드, 상태값, 개념이 생기면 `specs/00-overview/05-shared-naming-registry.md`에 기록한다.
+- 이름이 여러 영역에 걸쳐 쓰이면 개인 판단으로 바꾸지 않는다.
+
+### 3.4 기존 구조 우선
+
+- 기존 구조와 패턴을 먼저 따른다.
+- 새로운 폴더, 새 추상화, 새 공통 구조는 실제 필요가 있을 때만 추가한다.
+- 학부 프로젝트 범위를 넘는 과도한 복잡성은 피한다.
+
+---
+
+## 4. 팀 역할
+
+### PM / Data Manager
+
+- 공유 문서 관리
+- 요구사항 정렬
+- 네이밍 충돌 검토
+- DB 관련 변경 검토
+- 최종 통합 우선순위 조정
+
+### Backend / Integration
+
+- 인증과 인가
+- API 구현
+- DB 접근과 데이터 흐름
+- 내부/외부 연동 로직
+- 동기화 로직
+- 파일 처리
+- 통계 API
+
+### Frontend / Screen Owner
+
+- 고객 화면
+- 운영자 화면
+- UI 상호작용과 입력/출력 동작
+- 검색, 필터, 상태 변경 UI
+- 채팅 UI와 대시보드 UI
+
+### AI Owner
+
+- 문의 분류
+- 챗봇
+- 악성 표현 감지
+- 메시지 요약
+- 표현 완화 로직
+- AI 연동 API 정의
+
+역할 규칙:
+
+- 각 영역에는 주요 담당자가 있다.
+- 다른 영역에 영향을 주는 변경은 관련 담당자 리뷰를 요청한다.
+
+---
+
+## 5. Git 브랜치 전략
+
+### 5.1 기본 규칙
+
+- `main` 브랜치에 직접 push하지 않는다.
+- 모든 변경은 Pull Request를 통해 병합한다.
+- 하나의 브랜치는 하나의 기능 그룹 또는 하나의 명확한 작업에 집중한다.
+
+### 5.2 브랜치 네이밍 규칙
+
+다음 형식을 사용한다.
 
 - `feat/<short-topic>`
 - `fix/<short-topic>`
@@ -102,7 +142,7 @@ Use one of the following formats:
 - `refactor/<short-topic>`
 - `chore/<short-topic>`
 
-Examples:
+예시:
 
 - `feat/auth-signup-login`
 - `feat/operator-inquiry-list`
@@ -110,16 +150,34 @@ Examples:
 - `fix/token-refresh-error`
 - `docs/collaboration-rules`
 
-## Branch Scope Rule
+### 5.3 개발 흐름
 
-- One branch should focus on one feature group or one clear task.
-- Do not mix unrelated backend, frontend, and AI work in one branch unless they must be merged together.
+개발은 다음 순서를 기본으로 한다.
+
+```text
+관련 specs 확인
+   ↓
+개인 브랜치 생성
+   ↓
+기능 개발
+   ↓
+문서 및 네이밍 반영
+   ↓
+Pull Request 생성
+   ↓
+리뷰
+   ↓
+main 병합
+```
+
+별도의 `test` 브랜치를 기본 규칙으로 두지 않는다.
+대신 PR 단위로 검증 결과를 남기고 리뷰 후 병합한다.
 
 ---
 
-## 6. Commit Message Rules
+## 6. 커밋 규칙
 
-Use a simple prefix-based format:
+커밋 메시지는 다음 접두사 형식을 사용한다.
 
 - `feat: ...`
 - `fix: ...`
@@ -128,211 +186,224 @@ Use a simple prefix-based format:
 - `test: ...`
 - `chore: ...`
 
-Examples:
+예시:
 
 - `feat: add customer signup API`
 - `fix: correct inquiry status mapping`
 - `docs: update shared naming registry`
 
-Commit rule:
+규칙:
 
-- Write what changed in clear and short language.
-- Prefer one meaningful change per commit.
+- 커밋 메시지는 짧고 명확하게 작성한다.
+- 하나의 커밋에는 하나의 의미 있는 변경만 담는 것을 원칙으로 한다.
 
 ---
 
-## 7. Pull Request Rules
+## 7. Pull Request 규칙
 
-Every PR should include:
+### 7.1 PR 작성 시 포함 내용
 
-1. Summary of what was changed
-2. Why the change was needed
-3. Related documents updated
-4. Test or verification result
-5. Screenshots if UI changed
+모든 PR에는 다음 내용을 포함한다.
 
-## PR Title Rule
+1. 무엇을 변경했는지
+2. 왜 변경이 필요했는지
+3. 어떤 문서를 함께 수정했는지
+4. 테스트 또는 수동 검증 결과
+5. UI 변경이 있다면 스크린샷
 
-Use the same style as commit prefixes:
+### 7.2 PR 제목 규칙
+
+PR 제목은 커밋 prefix 스타일을 따른다.
 
 - `feat: operator inquiry detail page`
 - `fix: login token validation`
 - `docs: add development rules`
 
-## Review Rule
+### 7.3 리뷰 및 병합 규칙
 
-- At least one teammate review is required before merge.
-- If the PR changes shared API, DB, or naming, request review from the related owner.
-
-## Merge Rule
-
-Do not merge if any of these are missing:
-
-- required document update
-- naming registry update for new shared names
-- basic test or manual verification note
+- 최소 1명의 팀원 리뷰 후 병합한다.
+- API, DB, 네이밍 변경이 있으면 관련 담당자 리뷰를 요청한다.
+- 아래 항목이 없으면 병합하지 않는다.
+  - 필요한 문서 업데이트
+  - 새 공유 이름에 대한 네이밍 레지스트리 반영
+  - 기본 테스트 또는 수동 검증 기록
 
 ---
 
-## 8. File and Scope Rules
+## 8. 파일 및 변경 범위 규칙
 
-## Frontend
+### Frontend
 
-- Frontend owners should not change backend response format by assumption.
-- If frontend needs a response change, it must be discussed and reflected in the relevant spec or naming registry.
+- Frontend는 Backend 응답 형식을 추측으로 바꾸지 않는다.
+- 응답 형식 변경이 필요하면 관련 spec 또는 네이밍 문서에 먼저 반영한다.
 
-## Backend
+### Backend
 
-- Backend owners should not rename shared API fields without updating documents.
-- Backend owners should not change DB field meaning without updating the registry and relevant specs.
+- Backend는 공유 API 필드를 문서 업데이트 없이 변경하지 않는다.
+- DB 필드 의미를 바꿀 때는 관련 spec과 네이밍 레지스트리를 함께 수정한다.
 
-## AI
+### AI
 
-- AI owners should not invent new request/response names independently when those values are shared with frontend or backend.
-- AI input/output fields must follow documented names.
+- AI 관련 요청/응답 이름은 Frontend나 Backend와 공유되면 독자적으로 새로 만들지 않는다.
+- AI 입출력 필드는 문서화된 이름을 따른다.
 
-## PM / Data
+### PM / Data
 
-- PM or data manager reviews final naming consistency and shared documentation quality.
+- 최종 네이밍 일관성과 공유 문서 품질을 확인한다.
 
 ---
 
-## 9. Shared Naming Rules
+## 9. API 명세 및 공유 이름 규칙
 
-All shared names must be consistent across documents and code.
+공유되는 이름은 문서와 코드에서 일관되어야 한다.
 
-This includes:
+대상:
 
-- API field names
-- DB column names
-- enum/status names
-- shared component names
-- shared class names
-- AI input/output field names
+- API 필드명
+- DB 컬럼명
+- enum/status 이름
+- 공유 컴포넌트명
+- 공유 클래스명
+- AI 입력/출력 필드명
 
-If a new shared name is introduced, it must be added to:
+새로운 공유 이름이 생기면 다음 문서에 기록한다.
 
 - `specs/00-overview/05-shared-naming-registry.md`
 
-before merge, or at minimum in the same PR.
-
----
-
-## 10. Document Update Rules
-
-The following changes require document updates:
-
-- API request/response field change
-- DB column add/remove/change
-- enum or status change
-- naming change shared across teams
-- page flow or user flow change
-- AI input/output contract change
-
-Rule:
-
-- A PR that changes shared behavior must also update the relevant markdown file.
-
-Simple standard:
-
-- code change only is not enough for shared behavior changes
-
----
-
-## 11. AI-Assisted Development Rules
-
-Each developer may use AI during implementation, but must give AI the correct context.
-
-Minimum input to AI should include:
-
-- related spec file paths
-- current task scope
-- files allowed to change
-- names already defined in the naming registry
-
-Do not ask AI to freely redesign unrelated parts of the project.
-
-Preferred pattern:
-
-1. read the relevant spec
-2. check the naming registry
-3. define the exact task scope
-4. generate or edit code with AI
-5. update docs if shared behavior changed
-
----
-
-## 12. Integration Rule
-
-When work affects more than one area, integrate in this order:
-
-1. shared document check
-2. API or DB contract confirmation
-3. implementation in each area
-4. naming registry update if needed
-5. PR review
-6. merge
-
----
-
-## 13. Recommended Development Flow
+공유 동작 예시는 다음처럼 문서화한다.
 
 ```text
-Read shared specs
-   ↓
-Check naming registry
-   ↓
-Create personal branch
-   ↓
-Develop with AI inside defined scope
-   ↓
-New shared name or field created?
-   ├─ No → continue
-   └─ Yes → update naming registry
-   ↓
-Open Pull Request
-   ↓
-Review documents + code together
-   ↓
-Merge into main
+POST /api/auth/login
+
+Request:
+{
+  "loginId": "",
+  "password": ""
+}
+
+Response:
+{
+  "accessToken": "",
+  "refreshToken": "",
+  "user": {}
+}
 ```
+
+문서 예시는 실제 구현과 같거나, 구현 전에 합의된 계약과 일치해야 한다.
 
 ---
 
-## 14. GitHub Workflow Diagram
+## 10. 문서 업데이트 규칙
+
+다음 변경은 문서 업데이트가 필요하다.
+
+- API request/response 필드 변경
+- DB 컬럼 추가/삭제/변경
+- enum/status 변경
+- 여러 팀이 공유하는 이름 변경
+- 페이지 흐름 또는 사용자 흐름 변경
+- AI 입출력 계약 변경
+
+규칙:
+
+- 공유 동작이 바뀌면 관련 markdown 문서도 같은 작업 범위 안에서 같이 수정한다.
+- 공유 동작 변경에서 코드만 바꾸고 문서를 남겨두는 것은 허용하지 않는다.
+
+---
+
+## 11. 테스트 규칙
+
+병합 전에는 최소한 다음을 확인한다.
+
+- 기능 직접 실행 또는 수동 확인
+- 관련 API 정상 동작 확인
+- 변경 내용에 맞는 기본 검증 결과 기록
+
+자동 테스트가 있으면 함께 확인하고, 자동 테스트가 충분하지 않으면 수동 검증 내용을 PR에 남긴다.
+
+---
+
+## 12. AI-Assisted Development Rules
+
+각 개발자는 AI를 사용할 수 있지만, 반드시 정확한 문맥을 같이 제공해야 한다.
+
+AI에 최소한 포함해야 하는 정보:
+
+- 관련 spec 파일 경로
+- 현재 작업 범위
+- 수정 가능한 파일 범위
+- 네이밍 레지스트리에 이미 정의된 이름
+
+권장 흐름:
+
+1. 관련 spec 확인
+2. 네이밍 레지스트리 확인
+3. 작업 범위 확정
+4. AI로 코드 생성 또는 수정
+5. 공유 동작이 바뀌면 문서 업데이트
+
+규칙:
+
+- AI에게 프로젝트의 무관한 부분까지 자유롭게 재설계하게 하지 않는다.
+- 문서와 충돌하는 결과는 그대로 반영하지 않는다.
+
+---
+
+## 13. 통합 규칙
+
+작업이 두 개 이상의 영역에 영향을 주면 다음 순서로 통합한다.
+
+1. 공유 문서 확인
+2. API 또는 DB 계약 확인
+3. 각 영역 구현
+4. 네이밍 레지스트리 업데이트
+5. PR 리뷰
+6. 병합
+
+---
+
+## 14. 최소 준수 사항
+
+다음 4가지는 반드시 지킨다.
+
+1. 구현 전에 관련 문서를 먼저 확인한다.
+2. `main` 브랜치에 직접 push하지 않는다.
+3. 모든 변경은 PR을 통해 검토 후 병합한다.
+4. 기능 또는 작업 단위로 브랜치를 분리한다.
+
+---
+
+## 15. 최소 병합 체크리스트
+
+병합 전 아래를 확인한다.
+
+- [ ] 브랜치 목적이 명확하다.
+- [ ] 커밋 메시지가 prefix 규칙을 따른다.
+- [ ] PR 설명에 변경 내용과 이유가 있다.
+- [ ] 공유 동작 변경이 문서에 반영되었다.
+- [ ] 새 공유 이름이 네이밍 레지스트리에 기록되었다.
+- [ ] 필요한 리뷰가 완료되었다.
+- [ ] 기본 검증이 완료되었다.
+
+---
+
+## 16. 결론
+
+이 개발 규칙의 목적은 학부 프로젝트 수준에서 다음을 달성하는 것이다.
+
+- 협업 충돌 최소화
+- 개발 흐름 단순화
+- 실제로 지킬 수 있는 규칙 유지
+
+즉, 복잡한 실무 절차를 그대로 가져오기보다 팀원 모두가 실제로 적용할 수 있는 협업 방식에 집중한다.
+
+최종 요약:
 
 ```text
-main
- ├─ feat/auth-signup-login
- ├─ feat/operator-inquiry-list
- ├─ feat/ai-message-summary
- └─ docs/collaboration-rules
-
-Each branch
-  → development
-  → PR creation
-  → review
-  → merge into main
+문서 확인 → 브랜치 생성 → 기능 개발 → 문서/네이밍 반영 → PR 검토 → main 병합
 ```
 
----
+마지막 규칙:
 
-## 15. Minimum Merge Checklist
-
-Before merge, confirm:
-
-- [ ] branch purpose is clear
-- [ ] commit messages follow the simple prefix rule
-- [ ] PR description explains the change
-- [ ] shared behavior changes are reflected in docs
-- [ ] new shared names are recorded in the naming registry
-- [ ] related owner reviewed if needed
-- [ ] basic verification was completed
-
----
-
-## 16. Final Rule
-
-If a team member is unsure whether a naming or structure change is shared, treat it as shared and document it.
-
-That is better than silently creating a merge conflict later.
+공유인지 아닌지 애매한 변경은 공유 변경으로 보고 먼저 문서화한다.
+그 편이 나중에 조용한 충돌을 만드는 것보다 낫다.

@@ -1,6 +1,6 @@
 # AI 서버 (사장님 옆자리)
 
-**담당**: 조규상 | **포트**: 8000 | **브랜치**: `ai`
+**담당**: 조규상 | **포트**: 8000 | **브랜치**: `feat/ai/*`
 
 ---
 
@@ -55,16 +55,30 @@ venv/Scripts/python run_server.py
 
 ## 협업 규칙
 
-### 브랜치 네이밍
+> 기준 문서: `think/project-handbook/07-collaboration-and-development-rules.md`
+> 문서 우선순위: `specs/` > `think/project-handbook/` > 이 문서
+
+### 핵심 원칙
+
+1. **API Contract First** — 구현 전 API 요청/응답 구조를 먼저 확정
+2. **문서 기반 개발** — 개인 추측보다 specs/ 문서를 먼저 확인
+3. **네이밍 일관성** — 공유 필드명은 임의 변경 금지, naming registry 필수 등록
+4. **기존 구조 우선** — 새 폴더/추상화는 실제 필요 시에만 추가
+
+### 브랜치 구조
 
 ```
-feat/<topic>     예: feat/ai-message-summary
-fix/<topic>      예: fix/detect-false-positive
-docs/<topic>     예: docs/api-spec-update
+main
+  ↑ (PR)
+feat/ai/<topic>     예: feat/ai-message-summary
+feat/be/<topic>     예: feat/be-inquiry-api
+feat/fe/<topic>     예: feat/fe-chat-ui
+fix/<topic>
+docs/<topic>
 ```
 
-- `main` 직접 push 금지 — 모든 작업은 PR로 merge
-- 브랜치 범위: 하나의 기능 or 명확한 작업 단위
+- `main` 직접 push 금지
+- 하나의 브랜치 = 하나의 기능/작업 단위
 
 ### 커밋 메시지
 
@@ -76,20 +90,27 @@ docs: API_SPEC.md 스트리밍 엔드포인트 추가
 
 ### PR 규칙
 
+**제목 형식**: `[AI] 기능 요약`
+
 PR에 포함해야 할 항목:
 1. 변경 내용 요약
 2. 변경 이유
 3. 관련 문서 업데이트 여부
 4. 테스트/검증 결과
-5. UI 변경 시 스크린샷
+5. FE/BE 의존성 영향 여부 (@mention)
 
-**공유 API 필드 / DB 컬럼 / 네이밍 변경 시 → naming registry 업데이트 필수**
+**병합 전 체크리스트:**
+- [ ] feat/ai 브랜치에서 작업했나?
+- [ ] 로컬 서버 정상 실행 확인
+- [ ] 공유 API 필드 변경 시 naming registry 업데이트
+- [ ] 관련 문서(API_SPEC.md 등) 함께 수정
+- [ ] FE/BE 영향 있으면 담당자 @mention
 
 ### AI 오너 주의사항
 
 - FE/BE와 공유되는 필드명은 임의로 변경 금지
 - 새 공유 필드 추가 시 `specs/00-overview/05-shared-naming-registry.md` 등록 후 PR
-- 문서 우선순위: `specs/` > `think/project-handbook/` > 이 문서
+- AI 입출력 계약 변경 시 반드시 문서 동시 수정
 
 ---
 

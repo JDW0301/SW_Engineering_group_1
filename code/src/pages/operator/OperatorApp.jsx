@@ -7,13 +7,13 @@ import OperatorInquiryDetail from "./OperatorInquiryDetail";
 import StatsPage from "./StatsPage";
 import OperatorSettings from "./OperatorSettings";
 
-const OperatorApp = ({ onLogout }) => {
+const OperatorApp = ({ onLogout, user }) => {
   const [page, setPage] = useState("main");
   const [inquiries, setInquiries] = useState(MOCK_INQUIRIES);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [sideNav, setSideNav] = useState(false);
   const [prevPage, setPrevPage] = useState("main");
-  const storeName = "패션스토어 루미";
+  const storeName = user?.storeName || "패션스토어 루미";
 
   const openInquiry = (inq) => { setPrevPage(page); setSelectedInquiry(inq); setPage("inquiryDetail"); };
 
@@ -25,7 +25,7 @@ const OperatorApp = ({ onLogout }) => {
         {page === "channel" && <ChannelPage inquiries={inquiries} openInquiry={openInquiry} />}
         {page === "inquiryDetail" && <OperatorInquiryDetail selectedInquiry={selectedInquiry} setSelectedInquiry={setSelectedInquiry} inquiries={inquiries} setInquiries={setInquiries} setPage={setPage} prevPage={prevPage} />}
         {page === "stats" && <StatsPage inquiries={inquiries} />}
-        {page === "settings" && <OperatorSettings />}
+        {page === "settings" && <OperatorSettings user={user} />}
       </div>
     </div>
   );

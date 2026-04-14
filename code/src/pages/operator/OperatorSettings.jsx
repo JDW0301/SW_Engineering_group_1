@@ -3,7 +3,7 @@ import { Bot, Store, Upload, FileText, Eye, X } from "lucide-react";
 import { Card, TabButton, Input, Button } from "../../components/ui";
 import { MOCK_FAQ } from "../../data/mockData";
 
-const OperatorSettings = () => {
+const OperatorSettings = ({ user }) => {
   const [tab, setTab] = useState("chatbot");
   const [files, setFiles] = useState([{ id: 1, name: "FAQ_안내.txt", size: "2.3KB" }, { id: 2, name: "반품정책.txt", size: "1.8KB" }]);
   const [presets, setPresets] = useState(MOCK_FAQ.slice(0, 3).map((f, i) => ({ ...f, id: i + 1 })));
@@ -67,12 +67,12 @@ const OperatorSettings = () => {
       {tab === "store" && (
         <Card className="p-4 space-y-4">
           <h3 className="font-semibold text-sm">스토어 정보</h3>
-          <Input label="전화번호" defaultValue="02-1234-5678" />
-          <Input label="주소" defaultValue="서울시 강남구" />
-          <Input label="상담 운영 시간" defaultValue="평일 09:00 ~ 18:00" />
+          <Input label="전화번호" defaultValue={user?.storePhone || "02-1234-5678"} />
+          <Input label="주소" defaultValue={user?.address || "서울시 강남구"} />
+          <Input label="상담 운영 시간" defaultValue={user?.businessHours || "평일 09:00 ~ 18:00"} />
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">소개글</label>
-            <textarea className="border rounded-lg px-3 py-2 text-sm h-24 resize-none" defaultValue="트렌디한 의류 전문 스토어" />
+            <textarea className="border rounded-lg px-3 py-2 text-sm h-24 resize-none" defaultValue={user?.description || "트렌디한 의류 전문 스토어"} />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1"><Eye size={16} /> 프리뷰</Button>

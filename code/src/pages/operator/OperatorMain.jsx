@@ -7,7 +7,6 @@ import OrderRow from "./OrderRow";
 
 const OperatorMain = ({ inquiries, openInquiry }) => {
   const [ratePeriod, setRatePeriod] = useState("7일");
-  const [countPeriod, setCountPeriod] = useState("1일");
 
   const filterByPeriod = (list, period) => {
     const now = new Date();
@@ -22,8 +21,6 @@ const OperatorMain = ({ inquiries, openInquiry }) => {
   const rateTotal = rateFiltered.length;
   const rateResolved = rateFiltered.filter(i => i.status === "RESOLVED").length;
   const rate = rateTotal ? Math.round((rateResolved / rateTotal) * 100) : 0;
-
-  const countFiltered = filterByPeriod(inquiries, countPeriod);
 
   return (
     <div className="space-y-6">
@@ -43,11 +40,8 @@ const OperatorMain = ({ inquiries, openInquiry }) => {
           </div>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-3xl font-bold text-indigo-600 mb-1">{countFiltered.length}</p>
-          <p className="text-xs text-gray-500">문의량</p>
-          <div className="flex justify-center gap-1 mt-2">
-            {["1일", "7일", "30일", "전체"].map(l => <button key={l} onClick={() => setCountPeriod(l)} className={`text-xs px-2 py-0.5 rounded ${countPeriod === l ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}>{l}</button>)}
-          </div>
+          <p className="text-3xl font-bold text-indigo-600 mb-1">{inquiries.filter(i => i.status !== "RESOLVED").length}</p>
+          <p className="text-xs text-gray-500">대기 문의</p>
         </Card>
         <Card className="p-4 text-center hidden md:block">
           <p className="text-3xl font-bold text-green-600 mb-1">{(() => {

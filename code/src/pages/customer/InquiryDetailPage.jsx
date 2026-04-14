@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Package } from "lucide-react";
-import { Avatar, StatusBadge, Button } from "../../components/ui";
+import { Avatar, StatusBadge, Button, BoardDetail } from "../../components/ui";
 import { MOCK_ORDERS } from "../../data/mockData";
 
 const InquiryDetailPage = ({ selectedInquiry, setSelectedInquiry, inquiries, setInquiries, setPage, selectedStore }) => {
@@ -17,6 +17,16 @@ const InquiryDetailPage = ({ selectedInquiry, setSelectedInquiry, inquiries, set
     setInquiries(p => p.map(i => i.id === inq.id ? updated : i));
     setInput("");
   };
+
+  if (inq.type === "문의") {
+    return (
+      <BoardDetail 
+        inquiry={inq} 
+        onBack={() => setPage(selectedStore ? "store" : "main")} 
+        isOperator={false} 
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 120px)" }}>

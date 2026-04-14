@@ -8,7 +8,7 @@ import StorePage from "./StorePage";
 import InquiryDetailPage from "./InquiryDetailPage";
 import CustomerSettings from "./CustomerSettings";
 
-const CustomerApp = ({ onLogout }) => {
+const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
   const [page, setPage] = useState("main");
   const [selectedStore, setSelectedStore] = useState(null);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
@@ -31,12 +31,12 @@ const CustomerApp = ({ onLogout }) => {
     <div className="min-h-screen bg-gray-50">
       <CustomerNav onLogout={onLogout} setPage={setPage} setShowSearch={setShowSearch} showSearch={showSearch} page={page} />
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {page === "main" && <MainPage setPage={setPage} openStore={openStore} inquiries={inquiries} openInquiry={openInquiry} />}
+        {page === "main" && <MainPage setPage={setPage} openStore={openStore} inquiries={inquiries} openInquiry={openInquiry} user={user} />}
         {page === "orders" && <OrdersPage setPage={setPage} openStore={openStore} setSelectedOrder={setSelectedOrder} />}
         {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} />}
         {page === "store" && <StorePage selectedStore={selectedStore} setPage={setPage} storeTab={storeTab} setStoreTab={setStoreTab} selectedOrder={selectedOrder} inquiries={inquiries} setInquiries={setInquiries} openInquiry={openInquiry} chatbotHistory={chatbotHistory} setChatbotHistory={setChatbotHistory} />}
         {page === "inquiryDetail" && <InquiryDetailPage selectedInquiry={selectedInquiry} setSelectedInquiry={setSelectedInquiry} inquiries={inquiries} setInquiries={setInquiries} setPage={setPage} selectedStore={selectedStore} />}
-        {page === "settings" && <CustomerSettings setPage={setPage} />}
+        {page === "settings" && <CustomerSettings setPage={setPage} user={user} onUpdateUser={onUpdateUser} />}
       </div>
     </div>
   );

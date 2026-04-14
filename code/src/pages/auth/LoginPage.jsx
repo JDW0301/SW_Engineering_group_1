@@ -2,8 +2,8 @@ import { useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { Card, Input, Button } from "../../components/ui";
 
-const LoginPage = ({ onLogin, onGoRegister, error, isSubmitting }) => {
-  const [isOperator, setIsOperator] = useState(false);
+const LoginPage = ({ onLogin, onGoRegister, error, success, isSubmitting, initialIsOperator = false }) => {
+  const [isOperator, setIsOperator] = useState(initialIsOperator);
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
 
@@ -31,6 +31,7 @@ const LoginPage = ({ onLogin, onGoRegister, error, isSubmitting }) => {
             <button onClick={() => setIsOperator(true)} className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${isOperator ? "bg-white shadow text-indigo-600" : "text-gray-500"}`}>관리자 로그인</button>
           </div>
           <div className="space-y-4">
+            {success && <div className="p-3 bg-green-50 text-green-700 text-sm rounded-md">{success}</div>}
             <Input label="아이디" placeholder="아이디를 입력하세요" value={loginId} onChange={e => setLoginId(e.target.value)} />
             <Input label="비밀번호" type="password" placeholder="비밀번호를 입력하세요" value={password} onChange={e => setPassword(e.target.value)} />
             {error && <p className="text-sm text-red-600">{error}</p>}

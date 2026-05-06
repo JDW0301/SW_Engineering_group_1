@@ -120,7 +120,9 @@ def login(payload: dict) -> dict:
             {
                 "userId": user["id"],
                 "token": refresh_token,
-                "expiresAt": build_refresh_expiry_date().astimezone(timezone.utc).replace(tzinfo=None),
+                "expiresAt": build_refresh_expiry_date()
+                .astimezone(timezone.utc)
+                .replace(tzinfo=None),
             },
         )
         connection.commit()
@@ -145,7 +147,9 @@ def refresh_auth(refresh_token: str) -> dict:
             {
                 "userId": user["id"],
                 "token": next_refresh_token,
-                "expiresAt": build_refresh_expiry_date().astimezone(timezone.utc).replace(tzinfo=None),
+                "expiresAt": build_refresh_expiry_date()
+                .astimezone(timezone.utc)
+                .replace(tzinfo=None),
             },
         )
         connection.commit()

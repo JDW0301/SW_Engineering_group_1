@@ -1,4 +1,4 @@
-# Server
+/home/donguk/project2/SW_Engineering_group_1 해당 경로 안에서 md파일들을 읽고 DB와 서버, 클라이언트를 실행하는 방법에 대해 알려주어라# Server
 
 Auth-first FastAPI server for the HelpDesk project.
 

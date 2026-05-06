@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator
 from app.config import settings
+from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
 from app.exceptions import AppError
 from app.security import verify_access_token
@@ -22,6 +23,7 @@ from app.validation import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     test_database_connection()
+    ensure_demo_customer_home_data()
     print(f"Server running on port {settings.port}")
     yield
 
@@ -103,3 +105,8 @@ async def logout_endpoint(body: dict):
 @app.get("/api/auth/me")
 async def me_endpoint(auth: dict = Depends(get_auth_payload)):
     return {"user": get_me(int(auth["sub"]))}
+
+
+@app.get("/api/customer/home")
+async def customer_home_endpoint(auth: dict = Depends(get_auth_payload)):
+    return get_customer_home(int(auth["sub"]))

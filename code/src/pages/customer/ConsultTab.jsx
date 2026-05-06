@@ -24,7 +24,10 @@ const ConsultTab = ({ store, order, inquiries, setInquiries, onOpenInquiry, chat
       id: inquiries.length + 1, storeId: store.id, storeName: store.name, type: "상담",
       status: "IN_PROGRESS", title: chosenOrder ? `${chosenOrder.productName} 관련 상담` : "일반 상담",
       orderId: chosenOrder?.id, createdAt: new Date().toLocaleString(), lastMessageAt: new Date().toLocaleString(),
-      messages: handoffMessages
+      messages: handoffMessages,
+      orderProductName: chosenOrder?.productName || null,
+      orderInfo: chosenOrder ? `${chosenOrder.productName} (${chosenOrder.orderNumber})` : null,
+      customerName: chosenOrder?.customerName || "고객",
     };
     setInquiries(p => [...p, newInq]);
     onOpenInquiry(newInq);

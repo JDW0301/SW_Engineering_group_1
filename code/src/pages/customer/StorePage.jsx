@@ -33,10 +33,10 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
       </Card>
 
       {/* Tabs */}
-      <div className="flex border-b mb-4 overflow-x-auto">
-        <TabButton active={storeTab === "chatbot" || storeTab === "consult"} onClick={() => setStoreTab("chatbot")} icon={Bot}>챗봇</TabButton>
-        <TabButton active={storeTab === "board"} onClick={() => setStoreTab("board")} icon={FileText}>문의 게시판</TabButton>
-        <TabButton active={storeTab === "myInquiry"} onClick={() => setStoreTab("myInquiry")} icon={User}>나의 문의</TabButton>
+      <div className="mb-4 flex border-b">
+        <TabButton className="min-w-0 flex-1 justify-center" active={storeTab === "chatbot" || storeTab === "consult"} onClick={() => setStoreTab("chatbot")} icon={Bot}>챗봇</TabButton>
+        <TabButton className="min-w-0 flex-1 justify-center" active={storeTab === "board"} onClick={() => setStoreTab("board")} icon={FileText}>문의 게시판</TabButton>
+        <TabButton className="min-w-0 flex-1 justify-center" active={storeTab === "myInquiry"} onClick={() => setStoreTab("myInquiry")} icon={User}>나의 문의</TabButton>
       </div>
 
       {storeTab === "chatbot" && <ChatbotTab store={selectedStore} onHandoff={(history) => { setChatbotHistory(history); setStoreTab("consult"); }} />}

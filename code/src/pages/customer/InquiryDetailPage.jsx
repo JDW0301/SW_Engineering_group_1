@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Package } from "lucide-react";
 import { Avatar, StatusBadge, Button, BoardDetail } from "../../components/ui";
-import { MOCK_ORDERS } from "../../data/mockData";
 
 const InquiryDetailPage = ({ selectedInquiry, setSelectedInquiry, inquiries, setInquiries, setPage, selectedStore }) => {
   const [input, setInput] = useState("");
@@ -42,7 +41,7 @@ const InquiryDetailPage = ({ selectedInquiry, setSelectedInquiry, inquiries, set
       {inq.orderId && (
         <div className="bg-gray-50 rounded-lg p-2 mb-3 text-xs text-gray-600 flex items-center gap-2">
           <Package size={14} />
-          <span>주문: {MOCK_ORDERS.find(o => o.id === inq.orderId)?.productName || "N/A"}</span>
+          <span>주문: {inq.orderProductName || inq.orderInfo || "N/A"}</span>
         </div>
       )}
 

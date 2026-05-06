@@ -1,10 +1,8 @@
 import { ArrowLeft, Package, Image } from "lucide-react";
 import { Card, Button } from "./index";
-import { MOCK_ORDERS } from "../../data/mockData";
 
 const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit }) => {
-  const order = MOCK_ORDERS.find(o => o.id === inquiry.orderId);
-  const orderInfo = order ? `${order.productName} (${order.orderNumber})` : null;
+  const orderInfo = inquiry.orderInfo || inquiry.orderProductName;
   
   const customerMessage = inquiry.messages.find(m => m.sender === "customer");
   const operatorMessage = inquiry.messages.find(m => m.sender === "operator");
@@ -19,7 +17,7 @@ const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit }) => {
       <Card className="p-4">
         {!isOperator && <h3 className="font-bold mb-1">{inquiry.title}</h3>}
         <p className="text-xs text-gray-500 mb-2">
-          {inquiry.createdAt} · {order ? order.customerName : "고객"}
+          {inquiry.createdAt} · {inquiry.customerName || "고객"}
         </p>
         {orderInfo && (
           <div className="flex items-center gap-1.5 mb-2 bg-gray-50 rounded px-2 py-1.5">

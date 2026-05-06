@@ -13,7 +13,7 @@ const OperatorApp = ({ onLogout, user }) => {
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [sideNav, setSideNav] = useState(false);
   const [prevPage, setPrevPage] = useState("main");
-  const storeName = user?.storeName || "패션스토어 루미";
+  const storeName = user?.storeName || user?.store?.name || "패션스토어 루미";
 
   const openInquiry = (inq) => { setPrevPage(page); setSelectedInquiry(inq); setPage("inquiryDetail"); };
 

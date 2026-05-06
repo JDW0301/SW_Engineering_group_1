@@ -21,7 +21,7 @@ const LoginPage = ({ onLogin, onGoRegister, error, success, isSubmitting, initia
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center"><MessageSquare size={22} className="text-white" /></div>
-            <h1 className="text-2xl font-bold text-gray-900">HelpDesk</h1>
+            <h1 className="text-2xl font-bold text-gray-900">사장님 옆자리</h1>
           </div>
           <p className="text-gray-500 text-sm">소규모 판매자를 위한 고객지원 플랫폼</p>
         </div>

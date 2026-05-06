@@ -1,13 +1,15 @@
 import { ChevronRight, Package, Store, MessageCircle } from "lucide-react";
 import { Card, StatusBadge } from "../../components/ui";
-import { MOCK_STORES, MOCK_ORDERS } from "../../data/mockData";
 
-const MainPage = ({ setPage, openStore, inquiries, openInquiry, user }) => (
+const MainPage = ({ setPage, openStore, inquiries, openInquiry, user, orders, stores, isHomeLoading, homeError }) => (
   <div className="space-y-6">
     <div>
       <h2 className="text-lg font-bold text-gray-900 mb-1">안녕하세요, {user?.name || "고객"}님</h2>
       <p className="text-sm text-gray-500">무엇을 도와드릴까요?</p>
     </div>
+
+    {isHomeLoading && <p className="text-sm text-gray-400">홈 데이터를 불러오는 중입니다.</p>}
+    {homeError && <p className="text-sm text-red-500">{homeError}</p>}
 
     {/* 최근 주문 */}
     <section>
@@ -16,12 +18,12 @@ const MainPage = ({ setPage, openStore, inquiries, openInquiry, user }) => (
         <button onClick={() => setPage("orders")} className="text-xs text-indigo-600 flex items-center gap-0.5">주문 목록 <ChevronRight size={14} /></button>
       </div>
       <div className="space-y-2">
-        {[...MOCK_ORDERS].sort((a, b) => b.orderedAt.localeCompare(a.orderedAt)).slice(0, 5).map(o => (
-          <Card key={o.id} className="p-3 flex items-center justify-between" onClick={() => { const s = MOCK_STORES.find(s => s.id === o.storeId); if (s) { openStore(s, "consult", o); } }}>
+        {orders.length === 0 ? <p className="text-sm text-gray-400 py-4 text-center">주문 내역이 없습니다</p> : [...orders].sort((a, b) => b.orderedAt.localeCompare(a.orderedAt)).slice(0, 5).map(o => (
+          <Card key={o.id} className="p-3 flex items-center justify-between" onClick={() => { const s = stores.find(store => store.id === o.storeId); if (s) { openStore(s, "consult", o); } }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-50 rounded-lg flex items-center justify-center"><Package size={18} className="text-indigo-500" /></div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{o.productName}</p>
+                <p className="text-sm font-medium text-gray-900">{o.productName} <span className="text-gray-400">x{o.quantity}</span></p>
                 <p className="text-xs text-gray-500">{o.storeName} · {o.orderedAt}</p>
               </div>
             </div>
@@ -35,7 +37,7 @@ const MainPage = ({ setPage, openStore, inquiries, openInquiry, user }) => (
     <section>
       <h3 className="font-semibold text-gray-800 mb-3">주문했던 스토어</h3>
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {MOCK_STORES.map(s => (
+        {stores.length === 0 ? <p className="text-sm text-gray-400 py-4">스토어 데이터가 없습니다</p> : stores.map(s => (
           <Card key={s.id} className="p-3 flex-shrink-0 w-36 text-center" onClick={() => openStore(s)}>
             <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-2"><Store size={20} className="text-indigo-500" /></div>
             <p className="text-sm font-medium text-gray-900 truncate">{s.name}</p>
@@ -80,6 +82,7 @@ const MainPage = ({ setPage, openStore, inquiries, openInquiry, user }) => (
           </div>
         </Card>
       ))}
+      {[...inquiries].filter(i => i.type === "문의").length === 0 && <p className="text-sm text-gray-400 py-4 text-center">최근 문의가 없습니다</p>}
     </section>
   </div>
 );

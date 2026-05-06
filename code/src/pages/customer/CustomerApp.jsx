@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MOCK_INQUIRIES, MOCK_BOARD_POSTS } from "../../data/mockData";
+import { useEffect, useState } from "react";
+import { getCustomerHome } from "../../api/customerHome";
 import CustomerNav from "./CustomerNav";
 import MainPage from "./MainPage";
 import OrdersPage from "./OrdersPage";
@@ -16,8 +16,43 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
   const [storeTab, setStoreTab] = useState("chatbot");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
-  const [inquiries, setInquiries] = useState(MOCK_INQUIRIES);
+  const [orders, setOrders] = useState([]);
+  const [stores, setStores] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [chatbotHistory, setChatbotHistory] = useState([]);
+  const [isHomeLoading, setIsHomeLoading] = useState(true);
+  const [homeError, setHomeError] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadCustomerHome = async () => {
+      setIsHomeLoading(true);
+      setHomeError("");
+      try {
+        const data = await getCustomerHome();
+        if (ignore) return;
+        setOrders(data.orders ?? []);
+        setStores(data.stores ?? []);
+        setInquiries(data.inquiries ?? []);
+      } catch (error) {
+        if (ignore) return;
+        setOrders([]);
+        setStores([]);
+        setInquiries([]);
+        setHomeError(error.message || "고객 홈 데이터를 불러오지 못했습니다.");
+      } finally {
+        if (!ignore) {
+          setIsHomeLoading(false);
+        }
+      }
+    };
+
+    loadCustomerHome();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const openStore = (store, tab = "chatbot", order = null) => {
     setSelectedStore(store);
@@ -31,7 +66,7 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
     <div className="min-h-screen bg-gray-50">
       <CustomerNav onLogout={onLogout} setPage={setPage} setShowSearch={setShowSearch} showSearch={showSearch} page={page} />
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {page === "main" && <MainPage setPage={setPage} openStore={openStore} inquiries={inquiries} openInquiry={openInquiry} user={user} />}
+        {page === "main" && <MainPage setPage={setPage} openStore={openStore} inquiries={inquiries} openInquiry={openInquiry} user={user} orders={orders} stores={stores} isHomeLoading={isHomeLoading} homeError={homeError} />}
         {page === "orders" && <OrdersPage setPage={setPage} openStore={openStore} setSelectedOrder={setSelectedOrder} />}
         {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} />}
         {page === "store" && <StorePage selectedStore={selectedStore} setPage={setPage} storeTab={storeTab} setStoreTab={setStoreTab} selectedOrder={selectedOrder} inquiries={inquiries} setInquiries={setInquiries} openInquiry={openInquiry} chatbotHistory={chatbotHistory} setChatbotHistory={setChatbotHistory} />}

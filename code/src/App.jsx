@@ -16,6 +16,19 @@ import {
   signupOperator,
 } from "./api/auth";
 
+function normalizeUser(user) {
+  if (!user) return user;
+
+  return {
+    ...user,
+    storeName: user.storeName || user.store?.name,
+    storePhone: user.storePhone || user.store?.phone,
+    address: user.address || user.store?.address,
+    businessHours: user.businessHours || user.store?.business_hours,
+    description: user.description || user.store?.description,
+  };
+}
+
 // ─── Main App ────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen] = useState("login");
@@ -58,21 +71,22 @@ export default function App() {
             savedProfile = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
           } catch (e) {}
         }
-        setUser({ ...user, ...savedProfile });
+        setUser({ ...normalizeUser(user), ...savedProfile });
         setScreen(user.role === "OPERATOR" ? "operator" : "customer");
       } catch {
         try {
           const refreshed = await refresh({ refreshToken });
           saveAuthTokens(refreshed.accessToken, refreshed.refreshToken);
-          const userId = refreshed.user.loginId || refreshed.user.id;
+          const refreshedUser = normalizeUser(refreshed.user);
+          const userId = refreshedUser.loginId || refreshedUser.id;
           let savedProfile = {};
           if (userId) {
             try {
               savedProfile = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
             } catch (e) {}
           }
-          setUser({ ...refreshed.user, ...savedProfile });
-          setScreen(refreshed.user.role === "OPERATOR" ? "operator" : "customer");
+          setUser({ ...refreshedUser, ...savedProfile });
+          setScreen(refreshedUser.role === "OPERATOR" ? "operator" : "customer");
         } catch {
           clearAuthTokens();
         }
@@ -100,15 +114,19 @@ export default function App() {
       }
 
       saveAuthTokens(result.accessToken, result.refreshToken);
-      const userId = result.user.loginId || result.user.id;
+      const resolvedUser = result.user.role === "OPERATOR"
+        ? (await getMe(result.accessToken)).user
+        : result.user;
+      const normalizedUser = normalizeUser(resolvedUser);
+      const userId = normalizedUser.loginId || normalizedUser.id;
       let savedProfile = {};
       if (userId) {
         try {
           savedProfile = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
         } catch (e) {}
       }
-      setUser({ ...result.user, ...savedProfile });
-      setScreen(result.user.role === "OPERATOR" ? "operator" : "customer");
+      setUser({ ...normalizedUser, ...savedProfile });
+      setScreen(normalizedUser.role === "OPERATOR" ? "operator" : "customer");
     } catch (error) {
       setAuthError(error.message);
     } finally {

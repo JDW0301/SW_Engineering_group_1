@@ -398,12 +398,19 @@ def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
             for m in body.history[-6:]
         ) + "\n---\n"
 
-    system_prompt = f"""고객센터 AI 챗봇. 아래 스토어 정보만으로 답변하라.
+    system_prompt = f"""당신은 소규모 쇼핑몰 고객센터 AI 챗봇입니다.
 
+[스토어 정보]
 {body.store_context}
 
-주문조회/결제/개인정보/재고확인/환불교환접수/정보없는질문 → "HANDOFF"만 출력.
-그 외 → 한국어로 간결하게 답변."""
+[절대 규칙]
+아래 조건에 해당하면 다른 말 없이 첫 글자부터 "HANDOFF" 한 단어만 출력하고 즉시 종료하라.
+- 특정 주문 조회 / 결제 내역 / 개인 정보 확인
+- 환불·교환·반품 접수 (방법 안내도 HANDOFF)
+- 실시간 재고 확인
+- 스토어 정보에 없는 내용
+
+위 조건에 해당하지 않으면 스토어 정보만을 근거로 한국어로 간결하게 답변하라."""
 
     user_prompt = f"{history_text}고객: {body.message}\n챗봇:"
     return system_prompt, user_prompt
@@ -425,12 +432,24 @@ async def chatbot_stream(body: ChatbotInput):
 
     system_prompt, user_prompt = _build_chatbot_messages(body)
 
+    HANDOFF_MSG = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
+    # HANDOFF 판정에 충분한 초기 버퍼 크기 (chars)
+    HANDOFF_BUFFER = 12
+
     def generate():
-        # 첫 토큰 전 즉시 전송 — 프론트에서 "생각중입니다..." 표시용
         yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
 
         accumulated = ""
-        first_token = True
+        buffer = ""          # HANDOFF 확인 전까지 토큰을 쌓아두는 버퍼
+        thinking_ended = False
+
+        def end_thinking():
+            nonlocal thinking_ended
+            if not thinking_ended:
+                thinking_ended = True
+                return f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
+            return ""
+
         try:
             stream = _resources["exaone"].chat.completions.create(
                 model="exaone-3.5-7.8b-instruct",
@@ -446,24 +465,41 @@ async def chatbot_stream(body: ChatbotInput):
             )
             for chunk in stream:
                 delta = chunk.choices[0].delta.content
-                if delta:
-                    accumulated += delta
-                    if "HANDOFF" in accumulated.upper():
-                        handoff_msg = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
-                        if first_token:
-                            yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
-                        yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': handoff_msg}, ensure_ascii=False)}\n\n"
-                        return
-                    # 첫 토큰 도착 시 thinking 종료 신호 전송
-                    if first_token:
-                        yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
-                        first_token = False
-                    yield f"data: {json.dumps({'token': delta, 'can_answer': True}, ensure_ascii=False)}\n\n"
+                if not delta:
+                    continue
 
+                accumulated += delta
+
+                # HANDOFF 감지 — 버퍼 단계든 이후 단계든 즉시 종료
+                if "HANDOFF" in accumulated.upper():
+                    yield end_thinking()
+                    yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
+                    return
+
+                # 버퍼 단계: 충분히 쌓일 때까지 FE에 보내지 않음
+                if len(accumulated) < HANDOFF_BUFFER:
+                    buffer += delta
+                    continue
+
+                # 버퍼 해제: 안전하다고 판단, 쌓인 버퍼 + 현재 토큰 전송
+                if buffer:
+                    yield end_thinking()
+                    yield f"data: {json.dumps({'token': buffer, 'can_answer': True}, ensure_ascii=False)}\n\n"
+                    buffer = ""
+
+                yield end_thinking()
+                yield f"data: {json.dumps({'token': delta, 'can_answer': True}, ensure_ascii=False)}\n\n"
+
+            # 스트림 종료 — 버퍼에 남은 내용 처리
+            if buffer and "HANDOFF" not in accumulated.upper():
+                yield end_thinking()
+                yield f"data: {json.dumps({'token': buffer, 'can_answer': True}, ensure_ascii=False)}\n\n"
+
+            yield end_thinking()
             yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
 
         except Exception:
-            yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
+            yield end_thinking()
             yield f"data: {json.dumps({'error': 'AI 모델 오류가 발생했습니다.'}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")

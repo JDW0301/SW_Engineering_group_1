@@ -4,14 +4,20 @@ import { Card, StatusBadge, Avatar, TabButton } from "../../components/ui";
 import { MOCK_ORDERS } from "../../data/mockData";
 import { generateAISummary } from "../../utils/aiSummary";
 
-const ChannelPage = ({ inquiries, openInquiry }) => {
+const toInquiryMessages = (post, replies) => [
+  { id: 1, sender: "customer", content: post.content, time: post.createdAt },
+  ...replies.map(reply => ({ id: reply.id + 1, sender: "operator", content: reply.content, time: reply.createdAt })),
+];
+
+const ChannelPage = ({ supportSessions, supportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, openSupportSession, openInquiryPost }) => {
   const [tab, setTab] = useState("consult");
   const [filter, setFilter] = useState("latest");
   const [searchQ, setSearchQ] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const list = inquiries
-    .filter(i => tab === "consult" ? i.type === "상담" : i.type === "문의")
+  const supportRows = supportSessions.map(session => ({ ...session, kind: "support", messages: supportMessagesBySessionId[session.id] || [] }));
+  const inquiryRows = inquiryPosts.map(post => ({ ...post, kind: "inquiry", messages: toInquiryMessages(post, inquiryRepliesByPostId[post.id] || []) }));
+  const list = (tab === "consult" ? supportRows : inquiryRows)
     .filter(i => !searchQ || i.title.includes(searchQ) || i.storeName.includes(searchQ) || (MOCK_ORDERS.find(o => o.id === i.orderId)?.customerName || "").includes(searchQ))
     .filter(i => !dateFrom || i.createdAt.slice(0, 10) >= dateFrom)
     .filter(i => !dateTo || i.createdAt.slice(0, 10) <= dateTo)
@@ -41,10 +47,10 @@ const ChannelPage = ({ inquiries, openInquiry }) => {
         {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(""); setDateTo(""); }} className="text-xs text-red-400 hover:text-red-600">초기화</button>}
       </div>
       <div className="space-y-2">
-        {list.map(inq => {
-          const order = MOCK_ORDERS.find(o => o.id === inq.orderId);
+        {list.map(row => {
+          const order = MOCK_ORDERS.find(o => o.id === row.orderId);
           return (
-            <Card key={inq.id} className="p-3" onClick={() => openInquiry(inq)}>
+            <Card key={`${row.kind}-${row.id}`} className="p-3" onClick={() => row.kind === "support" ? openSupportSession(row.id) : openInquiryPost(row.id)}>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <Avatar name={order?.customerName} size="w-6 h-6" bg="bg-blue-100 text-blue-600" />
@@ -52,17 +58,17 @@ const ChannelPage = ({ inquiries, openInquiry }) => {
                   {order && <span className="text-xs text-gray-400">· {order.productName} ({order.orderNumber})</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={inq.status} />
+                  <StatusBadge status={row.status} />
                   <ChevronRight size={14} className="text-gray-400" />
                 </div>
               </div>
               <div className="bg-gray-50 rounded-md px-2.5 py-1.5 mb-1">
                 <div className="flex items-start gap-1">
                   <Bot size={12} className="text-indigo-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-gray-600">{generateAISummary(inq)}</p>
+                  <p className="text-xs text-gray-600">{generateAISummary(row)}</p>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">{inq.lastMessageAt}</p>
+              <p className="text-xs text-gray-400">{row.lastMessageAt}</p>
             </Card>
           );
         })}

@@ -3,7 +3,7 @@ import { Send, ArrowRight } from "lucide-react";
 import { Avatar, Button } from "../../components/ui";
 import { MOCK_FAQ } from "../../data/mockData";
 
-const ChatbotTab = ({ store, onHandoff }) => {
+const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   const [messages, setMessages] = useState([{ id: 0, sender: "bot", content: `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?` }]);
   const [input, setInput] = useState("");
   const [showFaq, setShowFaq] = useState(true);
@@ -31,6 +31,12 @@ const ChatbotTab = ({ store, onHandoff }) => {
     setShowFaq(false);
   };
 
+  const requestHandoff = () => {
+    const title = window.prompt("문의명 입력");
+    if (!title || !title.trim()) return;
+    onCreateSupportFromChatbot({ title: title.trim(), store, messages });
+  };
+
   return (
     <div className="flex flex-col" style={{ height: "60vh" }}>
       <div className="flex-1 overflow-y-auto space-y-3 mb-3 pr-1">
@@ -56,7 +62,7 @@ const ChatbotTab = ({ store, onHandoff }) => {
         <input className="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="메시지를 입력하세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} />
         <Button onClick={send} className="rounded-xl"><Send size={16} /></Button>
       </div>
-      <button onClick={() => onHandoff(messages)} className="mt-2 text-xs text-indigo-600 hover:underline text-center flex items-center justify-center gap-1">
+      <button onClick={requestHandoff} className="mt-2 text-xs text-indigo-600 hover:underline text-center flex items-center justify-center gap-1">
         <ArrowRight size={14} /> 상담사 연결
       </button>
     </div>

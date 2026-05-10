@@ -3,29 +3,34 @@ import { ArrowLeft, Send, User, Phone, Package, Clipboard, Star, HelpCircle } fr
 import { Card, StatusBadge, Avatar, Button, BoardDetail } from "../../components/ui";
 import { MOCK_ORDERS } from "../../data/mockData";
 
-const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries, setInquiries, setPage, prevPage }) => {
+const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, setInquiryPosts, inquiryRepliesByPostId, setInquiryRepliesByPostId, setPage, prevPage }) => {
   const [input, setInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
   const [notes, setNotes] = useState([]);
   const chatEnd = useRef(null);
-  const inq = selectedInquiry;
-  if (!inq) return null;
-  useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [inq?.messages]);
+  const supportSession = selectedDetail?.kind === "support" ? supportSessions.find(session => session.id === selectedDetail.id) : null;
+  const inquiryPost = selectedDetail?.kind === "inquiry" ? inquiryPosts.find(post => post.id === selectedDetail.id) : null;
+  const detail = supportSession || inquiryPost;
+  const supportMessages = supportSession ? supportMessagesBySessionId[supportSession.id] || [] : [];
+  const inquiryReplies = inquiryPost ? inquiryRepliesByPostId[inquiryPost.id] || [] : [];
+  useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [supportMessages]);
+  if (!detail) return null;
 
-  const order = MOCK_ORDERS.find(o => o.id === inq.orderId);
+  const order = MOCK_ORDERS.find(o => o.id === detail.orderId);
 
   const sendMsg = () => {
+    if (!supportSession) return;
     if (!input.trim()) return;
-    const updated = { ...inq, messages: [...inq.messages, { id: inq.messages.length + 1, sender: "operator", content: input, time: new Date().toLocaleString() }], lastMessageAt: new Date().toLocaleString() };
-    setSelectedInquiry(updated);
-    setInquiries(p => p.map(i => i.id === inq.id ? updated : i));
+    const now = new Date().toLocaleString();
+    const nextMessage = { id: supportMessages.length + 1, supportSessionId: supportSession.id, sender: "operator", content: input, time: now };
+    setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...supportMessages, nextMessage] }));
+    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: now } : session));
     setInput("");
   };
 
   const changeStatus = (status) => {
-    const updated = { ...inq, status };
-    setSelectedInquiry(updated);
-    setInquiries(p => p.map(i => i.id === inq.id ? updated : i));
+    if (!supportSession) return;
+    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, status } : session));
   };
 
   const addNote = () => {
@@ -35,25 +40,30 @@ const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries,
   };
 
   const handleAnswerSubmit = (answer) => {
-    const updated = { 
-      ...inq, 
-      status: "RESOLVED",
-      messages: [...inq.messages, { id: inq.messages.length + 1, sender: "operator", content: answer, time: new Date().toLocaleString() }], 
-      lastMessageAt: new Date().toLocaleString() 
-    };
-    setSelectedInquiry(updated);
-    setInquiries(p => p.map(i => i.id === inq.id ? updated : i));
+    if (!inquiryPost) return;
+    const now = new Date().toLocaleString();
+    const nextReply = { id: inquiryReplies.length + 1, inquiryPostId: inquiryPost.id, authorType: "operator", content: answer, createdAt: now };
+    setInquiryRepliesByPostId(prev => ({ ...prev, [inquiryPost.id]: [...inquiryReplies, nextReply] }));
+    setInquiryPosts(prev => prev.map(post => post.id === inquiryPost.id ? { ...post, status: "RESOLVED", lastMessageAt: now } : post));
   };
+
+  const inquiryForBoard = inquiryPost ? {
+    ...inquiryPost,
+    messages: [
+      { id: 1, sender: "customer", content: inquiryPost.content, time: inquiryPost.createdAt },
+      ...inquiryReplies.map(reply => ({ id: reply.id + 1, sender: "operator", content: reply.content, time: reply.createdAt })),
+    ],
+  } : null;
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
         <button onClick={() => setPage(prevPage || "main")}><ArrowLeft size={20} /></button>
         <div className="flex-1">
-          <h3 className="font-bold">{inq.title}</h3>
-          <p className="text-xs text-gray-500">#{inq.id} · {inq.storeName} · {inq.type}</p>
+          <h3 className="font-bold">{detail.title}</h3>
+          <p className="text-xs text-gray-500">#{detail.id} · {detail.storeName} · {selectedDetail.kind === "support" ? "상담" : "문의"}</p>
         </div>
-        <StatusBadge status={inq.status} />
+        <StatusBadge status={detail.status} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -82,9 +92,9 @@ const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries,
             </Card>
           )}
 
-          {inq.type === "문의" ? (
+          {selectedDetail.kind === "inquiry" ? (
             <BoardDetail 
-              inquiry={inq} 
+              inquiry={inquiryForBoard} 
               onBack={() => setPage(prevPage || "main")} 
               isOperator={true} 
               onAnswerSubmit={handleAnswerSubmit}
@@ -95,7 +105,7 @@ const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries,
               <Card className="p-4" style={{ height: "50vh" }}>
                 <div className="h-full flex flex-col">
                   <div className="flex-1 overflow-y-auto space-y-3 mb-3">
-                    {inq.messages.map(m => (
+                    {supportMessages.map(m => (
                       <div key={m.id} className={`flex ${m.sender === "operator" ? "justify-end" : m.sender === "system" ? "justify-center" : "justify-start"}`}>
                         {m.sender === "system" ? (
                           <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{m.content}</span>
@@ -112,13 +122,13 @@ const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries,
                     ))}
                     <div ref={chatEnd} />
                   </div>
-                  {inq.status !== "RESOLVED" ? (
+                  {supportSession.status !== "RESOLVED" ? (
                     <div className="flex gap-2">
                       <input className="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="답변을 입력하세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} />
                       <Button onClick={sendMsg} className="rounded-xl"><Send size={16} /></Button>
                     </div>
                   ) : (
-                    <p className="text-center text-xs text-gray-400">해결된 문의입니다</p>
+                    <p className="text-center text-xs text-gray-400">해결된 상담입니다</p>
                   )}
                 </div>
               </Card>
@@ -126,7 +136,7 @@ const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries,
               {/* Status Controls */}
               <div className="flex flex-wrap gap-2 mt-3">
                 {["IN_PROGRESS", "RESOLVED"].map(s => (
-                  <Button key={s} size="sm" variant={inq.status === s ? "primary" : "outline"} onClick={() => changeStatus(s)}>
+                  <Button key={s} size="sm" variant={supportSession.status === s ? "primary" : "outline"} onClick={() => changeStatus(s)}>
                     {s === "IN_PROGRESS" ? "진행 중" : "해결"}
                   </Button>
                 ))}
@@ -159,7 +169,7 @@ const OperatorInquiryDetail = ({ selectedInquiry, setSelectedInquiry, inquiries,
           {/* AI Summary */}
           <Card className="p-4">
             <h4 className="font-semibold text-sm mb-2 flex items-center gap-1"><Star size={14} /> AI 요약</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">고객이 {order?.productName || "상품"} 관련하여 문의했습니다. 주요 이슈는 사이즈 교환/제품 문의이며, 현재 {inq.status === "RESOLVED" ? "해결" : "처리 중"}입니다.</p>
+            <p className="text-xs text-gray-600 leading-relaxed">고객이 {order?.productName || "상품"} 관련하여 문의했습니다. 주요 이슈는 사이즈 교환/제품 문의이며, 현재 {detail.status === "RESOLVED" ? "해결" : "처리 중"}입니다.</p>
           </Card>
 
           {/* Quick Presets */}

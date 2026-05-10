@@ -4,7 +4,8 @@ import time
 import unicodedata
 import ahocorasick
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, UploadFile, Form
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -175,10 +176,23 @@ class ChatMessage(BaseModel):
     role: str     # "customer" | "bot"
     content: str
 
+STORE_CONTEXT_DIR = Path("store_contexts")
+
 class ChatbotInput(BaseModel):
     message: str                        # 현재 고객 메시지
     history: list[ChatMessage] = []     # 이전 대화 내역
-    store_context: str                  # 사업자가 설정한 정보 (상품/정책/FAQ)
+    store_id: str = ""                  # 업로드된 txt 파일 ID (우선)
+    store_context: str = ""             # 직접 전달하는 문자열 (하위 호환)
+
+    def resolve_context(self) -> str:
+        if self.store_id:
+            path = STORE_CONTEXT_DIR / f"{self.store_id}.txt"
+            if not path.exists():
+                raise HTTPException(status_code=404, detail=f"store_id '{self.store_id}'에 해당하는 파일이 없습니다.")
+            return path.read_text(encoding="utf-8")
+        if self.store_context:
+            return self.store_context
+        raise HTTPException(status_code=400, detail="store_id 또는 store_context 중 하나는 필요합니다.")
 
 class ChatbotResponse(BaseModel):
     reply: str
@@ -327,10 +341,10 @@ def chatbot(body: ChatbotInput):
 
     if not body.message or not body.message.strip():
         raise HTTPException(status_code=400, detail="message가 비어있습니다.")
-    if not body.store_context.strip():
-        raise HTTPException(status_code=400, detail="store_context가 비어있습니다.")
     if len(body.history) > 20:
         raise HTTPException(status_code=400, detail="history는 최대 20개까지 허용됩니다.")
+
+    context = body.resolve_context()
 
     # 대화 히스토리 구성
     history_text = ""
@@ -345,7 +359,7 @@ def chatbot(body: ChatbotInput):
 아래 [스토어 정보]만을 기반으로 고객 질문에 답변하세요.
 
 [스토어 정보]
-{body.store_context}
+{context}
 
 [HANDOFF 필수 조건 - 아래 해당 시 반드시 "HANDOFF"만 출력]
 - 특정 주문의 현재 배송 상태, 위치 조회
@@ -391,6 +405,7 @@ def chatbot(body: ChatbotInput):
 
 def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
     """챗봇 system/user 메시지 구성 (chatbot, chatbot/stream 공용)"""
+    context = body.resolve_context()
     history_text = ""
     if body.history:
         history_text = "\n--- 이전 대화 ---\n" + "\n".join(
@@ -401,7 +416,7 @@ def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
     system_prompt = f"""당신은 소규모 쇼핑몰 고객센터 AI 챗봇입니다.
 
 [스토어 정보]
-{body.store_context}
+{context}
 
 [절대 규칙]
 아래 조건에 해당하면 다른 말 없이 첫 글자부터 "HANDOFF" 한 단어만 출력하고 즉시 종료하라.
@@ -425,8 +440,6 @@ async def chatbot_stream(body: ChatbotInput):
     """
     if not body.message or not body.message.strip():
         raise HTTPException(status_code=400, detail="message가 비어있습니다.")
-    if not body.store_context.strip():
-        raise HTTPException(status_code=400, detail="store_context가 비어있습니다.")
     if len(body.history) > 20:
         raise HTTPException(status_code=400, detail="history는 최대 20개까지 허용됩니다.")
 
@@ -558,6 +571,39 @@ def classify(body: ClassifyInput):
         confidence=confidence,
         latency_ms=round((time.time() - start) * 1000, 2),
     )
+
+
+@app.post("/store-context/upload")
+async def upload_store_context(
+    store_id: str = Form(...),
+    file: UploadFile = Form(...),
+):
+    if not store_id.strip():
+        raise HTTPException(status_code=400, detail="store_id가 비어있습니다.")
+    if not file.filename.endswith(".txt"):
+        raise HTTPException(status_code=400, detail="txt 파일만 허용됩니다.")
+
+    content = await file.read()
+    text = content.decode("utf-8").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="파일 내용이 비어있습니다.")
+    if len(text) > 5000:
+        raise HTTPException(status_code=400, detail="파일 내용은 5000자 이하여야 합니다.")
+
+    STORE_CONTEXT_DIR.mkdir(exist_ok=True)
+    path = STORE_CONTEXT_DIR / f"{store_id}.txt"
+    path.write_text(text, encoding="utf-8")
+
+    return {"store_id": store_id, "char_count": len(text), "ok": True}
+
+
+@app.delete("/store-context/{store_id}")
+def delete_store_context(store_id: str):
+    path = STORE_CONTEXT_DIR / f"{store_id}.txt"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"store_id '{store_id}'가 존재하지 않습니다.")
+    path.unlink()
+    return {"store_id": store_id, "deleted": True}
 
 
 @app.get("/")

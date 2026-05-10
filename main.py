@@ -433,10 +433,18 @@ async def chatbot_stream(body: ChatbotInput):
     system_prompt, user_prompt = _build_chatbot_messages(body)
 
     HANDOFF_MSG = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
+    WARNING_MSG = "욕설이 포함된 메시지는 전송할 수 없습니다. 경고가 누적되면 대화가 제한됩니다."
     # HANDOFF 판정에 충분한 초기 버퍼 크기 (chars)
     HANDOFF_BUFFER = 12
 
+    # 욕설 선제 검사 — 감지 시 LLM 호출 없이 즉시 경고 반환
+    is_profanity, _, _, _ = _analyze(body.message)
+
     def generate():
+        if is_profanity:
+            yield f"data: {json.dumps({'token': '', 'is_warning': True, 'can_answer': True, 'final': WARNING_MSG}, ensure_ascii=False)}\n\n"
+            return
+
         yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
 
         accumulated = ""

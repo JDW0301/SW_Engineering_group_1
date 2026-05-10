@@ -1,14 +1,18 @@
 import { useState } from "react";
-import { ChevronRight, Store, MessageCircle } from "lucide-react";
+import { ChevronRight, Store, MessageCircle, FileText } from "lucide-react";
 import { Card, StatusBadge, Button } from "../../components/ui";
 import OrderSummaryCard from "./OrderSummaryCard";
 
 const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSupportSession, openInquiryPost, user, orders, stores, isHomeLoading, homeError }) => {
   const [includeResolved, setIncludeResolved] = useState(false);
+  const [includeResolvedInquiries, setIncludeResolvedInquiries] = useState(false);
   const visibleSupportSessions = supportSessions
     .filter(session => includeResolved || session.status !== "RESOLVED")
     .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
-  const recentInquiryPosts = [...inquiryPosts].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5);
+  const recentInquiryPosts = inquiryPosts
+    .filter(post => includeResolvedInquiries || post.status !== "RESOLVED")
+    .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt))
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
@@ -57,22 +61,22 @@ const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSuppo
           <Button variant={!includeResolved ? "primary" : "outline"} size="sm" onClick={() => setIncludeResolved(false)}>진행 중</Button>
           <Button variant={includeResolved ? "primary" : "outline"} size="sm" onClick={() => setIncludeResolved(true)}>완료 포함</Button>
         </div>
-        {visibleSupportSessions.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center">진행 중인 상담이 없습니다</p>
-        ) : visibleSupportSessions.slice(0, 5).map(session => (
-          <Card key={session.id} className="p-3 mb-2" onClick={() => openSupportSession(session.id)}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <MessageCircle size={18} className="text-indigo-500" />
-                <div>
-                  <p className="text-sm font-medium">{session.title}</p>
-                  <p className="text-xs text-gray-500">{session.storeName}</p>
+        <div className="space-y-2">
+          {visibleSupportSessions.length === 0 ? <p className="text-sm text-gray-400 py-4 text-center">진행 중인 상담이 없습니다</p> : visibleSupportSessions.slice(0, 5).map(session => (
+            <Card key={session.id} className="p-3" onClick={() => openSupportSession(session.id)}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MessageCircle size={18} className="text-indigo-500" />
+                  <div>
+                    <p className="text-sm font-medium">{session.title}</p>
+                    <p className="text-xs text-gray-500">{session.storeName} · {session.lastMessageAt}</p>
+                  </div>
                 </div>
+                <StatusBadge status={session.status} />
               </div>
-              <StatusBadge status={session.status} />
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
       </section>
 
       {/* 최근 문의 */}
@@ -81,18 +85,26 @@ const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSuppo
           <h3 className="font-semibold text-gray-800">최근 문의</h3>
           <button onClick={() => setPage("inquiryList")} className="text-xs text-indigo-600 flex items-center gap-0.5">문의 목록 <ChevronRight size={14} /></button>
         </div>
-        {recentInquiryPosts.map(post => (
-          <Card key={post.id} className="p-3 mb-2" onClick={() => openInquiryPost(post.id)}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">{post.title}</p>
-                <p className="text-xs text-gray-500">{post.lastMessageAt}</p>
+        <div className="flex gap-2 mb-3">
+          <Button variant={!includeResolvedInquiries ? "primary" : "outline"} size="sm" onClick={() => setIncludeResolvedInquiries(false)}>진행 중</Button>
+          <Button variant={includeResolvedInquiries ? "primary" : "outline"} size="sm" onClick={() => setIncludeResolvedInquiries(true)}>완료 포함</Button>
+        </div>
+        <div className="space-y-2">
+          {recentInquiryPosts.length === 0 ? <p className="text-sm text-gray-400 py-4 text-center">최근 문의가 없습니다</p> : recentInquiryPosts.map(post => (
+            <Card key={post.id} className="p-3" onClick={() => openInquiryPost(post.id)}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText size={18} className="text-emerald-500" />
+                  <div>
+                    <p className="text-sm font-medium">{post.title}</p>
+                    <p className="text-xs text-gray-500">{post.storeName} · {post.lastMessageAt}</p>
+                  </div>
+                </div>
+                <StatusBadge status={post.status} />
               </div>
-              <StatusBadge status={post.status} />
-            </div>
-          </Card>
-        ))}
-        {recentInquiryPosts.length === 0 && <p className="text-sm text-gray-400 py-4 text-center">최근 문의가 없습니다</p>}
+            </Card>
+          ))}
+        </div>
       </section>
     </div>
   );

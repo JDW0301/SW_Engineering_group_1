@@ -1,97 +1,136 @@
-# SW_Engineering_group_1
+# AI 서버 (사장님 옆자리)
 
-AI 기반 소프트웨어공학 1조 프로젝트 문서 저장소입니다. 이 저장소는 자사몰 사업자를 위한 고객센터 운영 도메인을 중심으로, 도메인 설계(DDD)와 구현 지향 명세를 정리한 현재 기준 문서를 담고 있습니다.
+**담당**: 조규상 | **포트**: 8000 | **브랜치**: `feat/ai/*`
 
-## Overview
+---
 
-이 프로젝트는 단순 문의 게시판이 아니라 **Merchant Customer Support Operations**를 다룹니다. 핵심 관심사는 문의를 처리 상태로 관리하고, 주문/상품/고객 맥락을 연결하며, 정책과 응답 기준을 유지하고, 공격적 메시지로부터 상담자를 보호하는 운영 환경을 설계하는 것입니다.
+## 실행 방법
 
-현재 문서 기준에서 권장하는 구조는 **Modular Monolith**이며, 배포 단위 분리보다 먼저 명확한 도메인 경계와 모듈 책임을 정리하는 데 초점을 둡니다.
+```bash
+# 1. LM Studio 실행 — Exaone 3.5-7.8b 로드 후 포트 1234 서버 시작
 
-## Documented Bounded Contexts
+# 2. 의존성 설치 (최초 1회)
+python -m venv venv
+venv/Scripts/pip install -r requirements.txt
 
-프로젝트는 다음 6개의 bounded context를 기준으로 해석됩니다.
-
-1. **Case Management**
-   - 문의 생성, 상태 전이, 재오픈, 종료, 내부 메모, 운영자 응답 흐름
-2. **Customer Portal**
-   - 고객 문의 등록, 고객 채팅 응답, 고객 상태 조회
-3. **Commerce Integration**
-   - 외부 주문/상품/고객 데이터 수신, 웹훅 처리, 내부 스냅샷 반영
-4. **Knowledge Policy**
-   - FAQ, 정책 문서, 응답 프리셋, 금지/예외 응답 규칙
-5. **Safety Intelligence**
-   - 메시지 요약, 악성 표현 감지, handoff 제안, 상담자 보호 보조 판단
-6. **Identity & Governance**
-   - 계정/역할/권한, 민감정보 접근 통제, 감사/보관 정책 기준
-
-## Repository Structure
-
-```text
-.
-├── README.md
-├── AGENTS.md
-├── immediate-mvp-notes.md
-├── db/
-│   └── mysql/
-└── docs/
-    ├── ddd/
-    │   ├── active/
-    │   ├── planning/
-    │   └── archive/
-    ├── specifications/
-    │   ├── active/
-    │   │   ├── foundation/
-    │   │   ├── modules/
-    │   │   └── platform/
-    │   ├── planning/
-    │   └── archive/
-    ├── project-handbook/
-    └── agent-governance/
+# 3. 서버 실행
+venv/Scripts/python run_server.py
 ```
 
-### Main directories
+헬스 체크: `GET http://localhost:8000/health`
 
-- `docs/ddd/`: 도메인 경계, 컨텍스트, 용어, 문서 구조를 정의하는 전략 설계 문서
-- `docs/specifications/`: 실제 구현에 연결되는 현재 기준 명세 문서
-- `db/mysql/`: 초기 안전 스키마와 데이터베이스 관련 메모
-- `immediate-mvp-notes.md`: 현재 MVP 범위와 결정 상태 확인용 메모
+---
 
-## How to Read the Docs
+## 엔드포인트 요약
 
-이 저장소의 문서는 최신 active 문서를 우선 기준으로 사용합니다.
+| 메서드 | 경로 | 기능 |
+|--------|------|------|
+| POST | /detect | 욕설 감지 |
+| POST | /neutralize | 욕설 중립화 |
+| POST | /classify | 문의 분류 |
+| POST | /chatbot | 챗봇 응답 |
+| POST | /chatbot/stream | 챗봇 SSE 스트리밍 |
+| POST | /summarize | 대화 요약 |
+| GET | /health | 서버 상태 |
+| GET | / | 데모 페이지 |
 
-### Strategic design
+자세한 명세: [API_SPEC.md](API_SPEC.md)
 
-다음 순서로 읽는 것을 권장합니다.
+---
 
-1. `docs/ddd/README.md`
-2. `docs/ddd/active/domain-landscape.md`
-3. `docs/ddd/active/ubiquitous-language.md`
-4. `docs/ddd/active/bounded-contexts.md`
-5. `docs/ddd/active/context-map.md`
+## 공유 필드명 (naming registry 기준)
 
-### Implementation-facing specifications
+> `specs/00-overview/05-shared-naming-registry.md` 와 동기화 필요
 
-구현 관점에서는 다음 문서들부터 읽으면 됩니다.
+| 필드 | 엔드포인트 | 의미 | 상태 |
+|------|-----------|------|------|
+| `summary` | POST /summarize | AI 요약 결과 | ✓ 확정 |
+| `category` | POST /classify | 문의 분류 결과 | ⚠ 미확정 (`classification` 후보와 팀 확인 필요) |
+| `is_profanity` | POST /detect | 욕설 감지 여부 | ✓ 확정 |
+| `original` | POST /neutralize | 원본 텍스트 (content_raw) | ✓ 확정 |
+| `cleaned` | POST /neutralize | 필터링 텍스트 (content_display) | ✓ 확정 |
+| `can_answer` | POST /chatbot/stream | HANDOFF 여부 | ✓ 확정 |
 
-1. `docs/specifications/README.md`
-2. `docs/specifications/active/README.md`
-3. `docs/specifications/active/foundation/*`
-4. `docs/specifications/active/modules/*`
-5. `docs/specifications/active/platform/*`
+---
 
-## Notes
+## 협업 규칙
 
-- `active/` 디렉터리의 문서가 현재 기준입니다.
-- `planning/` 문서는 공백 분석과 우선순위 판단을 위한 참고 자료입니다.
-- `archive/` 문서는 비교나 이력 확인이 필요할 때만 읽는 것을 전제로 보관됩니다.
+> 기준 문서: `think/project-handbook/07-collaboration-and-development-rules.md`
+> 문서 우선순위: `specs/` > `think/project-handbook/` > 이 문서
 
-## Team
+### 핵심 원칙
 
-AI 기반 소프트웨어공학 1조
+1. **API Contract First** — 구현 전 API 요청/응답 구조를 먼저 확정
+2. **문서 기반 개발** — 개인 추측보다 specs/ 문서를 먼저 확인
+3. **네이밍 일관성** — 공유 필드명은 임의 변경 금지, naming registry 필수 등록
+4. **기존 구조 우선** — 새 폴더/추상화는 실제 필요 시에만 추가
 
-- 서재철
-- 조규상
-- 윤건호
-- 조동욱
+### 브랜치 구조
+
+```
+main
+  ↑ (PR)
+feat/ai/<topic>     예: feat/ai-message-summary
+feat/be/<topic>     예: feat/be-inquiry-api
+feat/fe/<topic>     예: feat/fe-chat-ui
+fix/<topic>
+docs/<topic>
+```
+
+- `main` 직접 push 금지
+- 하나의 브랜치 = 하나의 기능/작업 단위
+
+### 커밋 메시지
+
+```
+feat: 욕설 감지 KoELECTRA 2차 탐지 추가
+fix: CS 화이트리스트 오탐 수정
+docs: API_SPEC.md 스트리밍 엔드포인트 추가
+```
+
+### PR 규칙
+
+**제목 형식**: `[AI] 기능 요약`
+
+PR에 포함해야 할 항목:
+1. 변경 내용 요약
+2. 변경 이유
+3. 관련 문서 업데이트 여부
+4. 테스트/검증 결과
+5. FE/BE 의존성 영향 여부 (@mention)
+
+**병합 전 체크리스트:**
+- [ ] feat/ai 브랜치에서 작업했나?
+- [ ] 로컬 서버 정상 실행 확인
+- [ ] 공유 API 필드 변경 시 naming registry 업데이트
+- [ ] 관련 문서(API_SPEC.md 등) 함께 수정
+- [ ] FE/BE 영향 있으면 담당자 @mention
+
+### AI 오너 주의사항
+
+- FE/BE와 공유되는 필드명은 임의로 변경 금지
+- 새 공유 필드 추가 시 `specs/00-overview/05-shared-naming-registry.md` 등록 후 PR
+- AI 입출력 계약 변경 시 반드시 문서 동시 수정
+
+---
+
+## 탐지 구조
+
+```
+1차: lexicon (Aho-Corasick, 270개) — 명시적 욕설
+2차: KoELECTRA — lexicon 미감지 시 우회 표현 탐지
+    offensive >= 0.97  (CS 키워드 포함 문장 제외)
+    hate      >= 0.95  (CS 키워드 무관)
+
+CS 화이트리스트: 환불/배송/교환/주문/결제/상품/접수/처리/부탁/신청/문의/반품/수령/도착
+```
+
+---
+
+## 연동 정보
+
+| 환경 | 주소 |
+|------|------|
+| 로컬 | `http://localhost:8000` |
+| 교내망 | `http://203.234.62.47:8000` |
+| 외부 (Cloudflare Tunnel) | 세션마다 변경 — 실행 시 확인 |

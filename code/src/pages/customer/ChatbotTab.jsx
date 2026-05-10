@@ -4,6 +4,7 @@ import { Avatar, Button } from "../../components/ui";
 import { streamChatbotReply } from "../../api/ai";
 import { MOCK_FAQ } from "../../data/mockData";
 
+<<<<<<< HEAD
 const buildStoreContext = (store) => [
   `스토어명: ${store.name}`,
   `카테고리: ${store.category ?? "미정"}`,
@@ -21,6 +22,8 @@ const toAiHistory = (messages) => messages
     content: message.content,
   }));
 
+=======
+>>>>>>> e63ead738fb910487adf5e82f343abc4a99b3596
 const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   const [messages, setMessages] = useState([{ id: 0, sender: "bot", content: `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?` }]);
   const [input, setInput] = useState("");
@@ -121,6 +124,12 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
     onCreateSupportFromChatbot({ title: title.trim(), store, messages });
   };
 
+  const requestHandoff = () => {
+    const title = window.prompt("문의명 입력");
+    if (!title || !title.trim()) return;
+    onCreateSupportFromChatbot({ title: title.trim(), store, messages });
+  };
+
   return (
     <div className="flex flex-col" style={{ height: "60vh" }}>
       <div className="flex-1 overflow-y-auto space-y-3 mb-3 pr-1">
@@ -148,8 +157,13 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
         <input className="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="메시지를 입력하세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()} disabled={isSending} />
         <Button onClick={send} className="rounded-xl" disabled={isSending}><Send size={16} /></Button>
       </div>
+<<<<<<< HEAD
       <button onClick={requestHandoff} className={`mt-2 text-xs ${needsHandoff ? "text-red-600" : "text-indigo-600"} hover:underline text-center flex items-center justify-center gap-1`}>
         <ArrowRight size={14} /> {needsHandoff ? "상담사 연결이 필요합니다" : "상담사 연결"}
+=======
+      <button onClick={requestHandoff} className="mt-2 text-xs text-indigo-600 hover:underline text-center flex items-center justify-center gap-1">
+        <ArrowRight size={14} /> 상담사 연결
+>>>>>>> e63ead738fb910487adf5e82f343abc4a99b3596
       </button>
     </div>
   );

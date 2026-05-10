@@ -38,7 +38,11 @@ const OperatorApp = ({ onLogout, user, onUpdateUser }) => {
         {page === "channel" && <ChannelPage supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} openSupportSession={openSupportSession} openInquiryPost={openInquiryPost} />}
         {page === "inquiryDetail" && <OperatorInquiryDetail selectedDetail={selectedDetail} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} setInquiryPosts={setInquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} setInquiryRepliesByPostId={setInquiryRepliesByPostId} setPage={setPage} prevPage={prevPage} />}
         {page === "stats" && <StatsPage supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} />}
+<<<<<<< HEAD
         {page === "settings" && <OperatorSettings user={user} onUpdateUser={onUpdateUser} />}
+=======
+        {page === "settings" && <OperatorSettings user={user} />}
+>>>>>>> e63ead738fb910487adf5e82f343abc4a99b3596
       </div>
     </div>
   );

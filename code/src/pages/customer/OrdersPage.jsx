@@ -35,7 +35,11 @@ const OrdersPage = ({ setPage, openStore, setSelectedOrder, orders = MOCK_ORDERS
       </div>
       <div className="space-y-2">
         {sorted.map(o => (
+<<<<<<< HEAD
           <OrderSummaryCard key={o.id} order={o} onClick={() => { const s = storeList.find(store => store.id === o.storeId); if (s) { setSelectedOrder(o); openStore(s, "chatbot", o); } }} />
+=======
+          <OrderSummaryCard key={o.id} order={o} onClick={() => { const s = storeList.find(store => store.id === o.storeId); if (s) { setSelectedOrder(o); openStore(s, "consult", o); } }} />
+>>>>>>> e63ead738fb910487adf5e82f343abc4a99b3596
         ))}
       </div>
     </div>

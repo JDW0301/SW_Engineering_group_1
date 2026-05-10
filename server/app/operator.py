@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .database import db_connection
 from .exceptions import AppError
-from .repositories import find_store_by_owner_user_id, find_user_by_id, update_store_by_owner_user_id
+from .repositories import find_store_by_owner_user_id, find_user_by_id, update_store_by_id
 
 
 def update_operator_store(user_id: int, payload: dict) -> dict:
@@ -18,7 +18,7 @@ def update_operator_store(user_id: int, payload: dict) -> dict:
             if not store:
                 raise AppError(404, "스토어를 찾을 수 없습니다.")
 
-            update_store_by_owner_user_id(connection, user_id, payload)
+            update_store_by_id(connection, store["id"], payload)
             connection.commit()
             return find_store_by_owner_user_id(connection, user_id)
         except Exception:

@@ -105,7 +105,7 @@ def find_store_by_owner_user_id(connection, owner_user_id: int):
         return cursor.fetchone()
 
 
-def update_store_by_owner_user_id(connection, owner_user_id: int, store: dict):
+def update_store_by_id(connection, store_id: int, store: dict):
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -123,7 +123,7 @@ def update_store_by_owner_user_id(connection, owner_user_id: int, store: dict):
                 store["address"],
                 store["businessHours"],
                 store["description"],
-                owner_user_id,
+                store_id,
             ),
         )
         return cursor.rowcount

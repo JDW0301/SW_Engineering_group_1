@@ -30,6 +30,8 @@ venv/Scripts/python run_server.py
 | POST | /classify | 문의 분류 |
 | POST | /chatbot | 챗봇 응답 |
 | POST | /chatbot/stream | 챗봇 SSE 스트리밍 |
+| POST | /store-context/upload | 스토어 txt 파일 업로드 |
+| DELETE | /store-context/{store_id} | 스토어 파일 삭제 |
 | POST | /summarize | 대화 요약 |
 | GET | /health | 서버 상태 |
 | GET | / | 데모 페이지 |
@@ -50,6 +52,8 @@ venv/Scripts/python run_server.py
 | `original` | POST /neutralize | 원본 텍스트 (content_raw) | ✓ 확정 |
 | `cleaned` | POST /neutralize | 필터링 텍스트 (content_display) | ✓ 확정 |
 | `can_answer` | POST /chatbot/stream | HANDOFF 여부 | ✓ 확정 |
+| `is_warning` | POST /chatbot/stream | 욕설 감지 경고 여부 | ✓ 확정 |
+| `store_id` | POST /chatbot, /chatbot/stream | 스토어 컨텍스트 파일 ID | ✓ 확정 |
 
 ---
 

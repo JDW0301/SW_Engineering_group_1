@@ -224,19 +224,30 @@
 
 ### 대상 API
 
-- `POST /api/ai/inquiries/{inquiryId}/summary`
-- `POST /api/ai/chatbot-sessions/{sessionId}/summary`
-- `POST /api/ai/messages/{messageId}/safety-check`
+- 구현 완료된 BE-AI 프록시
+  - `GET /api/ai/health`
+  - `POST /api/ai/detect`
+  - `POST /api/ai/neutralize`
+  - `POST /api/ai/classify`
+  - `POST /api/ai/chatbot`
+  - `POST /api/ai/chatbot/stream`
+  - `POST /api/ai/summarize`
+- 추후 도메인 데이터와 연결할 API
+  - `POST /api/ai/inquiries/{inquiryId}/summary`
+  - `POST /api/ai/chatbot-sessions/{sessionId}/summary`
+  - `POST /api/ai/messages/{messageId}/safety-check`
 
 ### 수행 작업
 
-1. 실제 외부 AI 연동 전에는 규칙 기반 또는 mock 요약으로 시작한다.
-2. 고객/운영자 메시지 타임라인을 입력으로 받는다.
+1. FE가 직접 AI 서버를 호출하지 않고 BE의 `/api/ai/*` 프록시를 호출하도록 연결한다.
+2. 고객/운영자 메시지 타임라인을 AI 요청 형식으로 변환한다.
 3. 요약은 운영자 보조 카드에 표시한다.
 4. 안전 보조는 메시지 원문 삭제가 아니라 표시 완화 또는 경고 배지로 처리한다.
+5. 필요하면 문의 ID나 메시지 ID를 받아 DB 데이터를 조립한 뒤 AI 프록시를 호출하는 도메인 전용 API를 추가한다.
 
 ### 완료 기준
 
+- BE에서 AI 서버의 detect/neutralize/classify/chatbot/summarize API를 호출할 수 있다.
 - 운영자가 문의 요약을 볼 수 있다.
 - 챗봇 handoff 상담에서 챗봇 대화 요약을 볼 수 있다.
 - 안전 보조 결과가 고객 메시지 처리에 보조 신호로만 사용된다.

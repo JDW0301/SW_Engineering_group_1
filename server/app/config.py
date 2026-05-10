@@ -35,6 +35,7 @@ class JwtConfig:
 class Settings:
     port: int
     client_origin: str
+    ai_base_url: str
     db: DbConfig
     jwt: JwtConfig
 
@@ -42,6 +43,7 @@ class Settings:
 settings = Settings(
     port=int(os.getenv("PORT", "4000")),
     client_origin=os.getenv("CLIENT_ORIGIN", "http://localhost:5173"),
+    ai_base_url=os.getenv("AI_BASE_URL", "http://203.234.62.47:8000").rstrip("/"),
     db=DbConfig(
         host=require_env("DB_HOST", "127.0.0.1"),
         port=int(os.getenv("DB_PORT", "3306")),

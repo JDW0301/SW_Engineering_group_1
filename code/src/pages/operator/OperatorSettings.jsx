@@ -1,12 +1,59 @@
 import { useState } from "react";
 import { Bot, Store, Upload, FileText, Eye, X } from "lucide-react";
+import { updateOperatorStore } from "../../api/operator";
 import { Card, TabButton, Input, Button } from "../../components/ui";
 import { MOCK_FAQ } from "../../data/mockData";
 
-const OperatorSettings = ({ user }) => {
+const OperatorSettings = ({ user, onUpdateUser }) => {
   const [tab, setTab] = useState("chatbot");
   const [files, setFiles] = useState([{ id: 1, name: "FAQ_안내.txt", size: "2.3KB" }, { id: 2, name: "반품정책.txt", size: "1.8KB" }]);
   const [presets, setPresets] = useState(MOCK_FAQ.slice(0, 3).map((f, i) => ({ ...f, id: i + 1 })));
+  const [storeForm, setStoreForm] = useState({
+    storeName: user?.storeName || user?.store?.name || "",
+    storePhone: user?.storePhone || user?.store?.phone || "",
+    address: user?.address || user?.store?.address || "",
+    businessHours: user?.businessHours || user?.store?.business_hours || "",
+    description: user?.description || user?.store?.description || "",
+  });
+  const [storeError, setStoreError] = useState("");
+  const [storeSuccess, setStoreSuccess] = useState("");
+  const [isStoreSaving, setIsStoreSaving] = useState(false);
+
+  const updateStoreField = (field, value) => {
+    setStoreForm(prev => ({ ...prev, [field]: value }));
+    setStoreError("");
+    setStoreSuccess("");
+  };
+
+  const saveStore = async () => {
+    setStoreError("");
+    setStoreSuccess("");
+    setIsStoreSaving(true);
+
+    try {
+      const { store } = await updateOperatorStore(storeForm);
+      onUpdateUser?.({
+        storeName: store.name,
+        storePhone: store.phone,
+        address: store.address,
+        businessHours: store.business_hours,
+        description: store.description,
+        store,
+      });
+      setStoreForm({
+        storeName: store.name || "",
+        storePhone: store.phone || "",
+        address: store.address || "",
+        businessHours: store.business_hours || "",
+        description: store.description || "",
+      });
+      setStoreSuccess("스토어 정보가 저장되었습니다.");
+    } catch (error) {
+      setStoreError(error.message || "스토어 정보를 저장하지 못했습니다.");
+    } finally {
+      setIsStoreSaving(false);
+    }
+  };
 
   return (
     <div>
@@ -67,16 +114,19 @@ const OperatorSettings = ({ user }) => {
       {tab === "store" && (
         <Card className="p-4 space-y-4">
           <h3 className="font-semibold text-sm">스토어 정보</h3>
-          <Input label="전화번호" defaultValue={user?.storePhone || "02-1234-5678"} />
-          <Input label="주소" defaultValue={user?.address || "서울시 강남구"} />
-          <Input label="상담 운영 시간" defaultValue={user?.businessHours || "평일 09:00 ~ 18:00"} />
+          {storeSuccess && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{storeSuccess}</p>}
+          {storeError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{storeError}</p>}
+          <Input label="스토어명" value={storeForm.storeName} onChange={event => updateStoreField("storeName", event.target.value)} placeholder="스토어명을 입력하세요" />
+          <Input label="전화번호" value={storeForm.storePhone} onChange={event => updateStoreField("storePhone", event.target.value)} />
+          <Input label="주소" value={storeForm.address} onChange={event => updateStoreField("address", event.target.value)} />
+          <Input label="상담 운영 시간" value={storeForm.businessHours} onChange={event => updateStoreField("businessHours", event.target.value)} />
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-gray-700">소개글</label>
-            <textarea className="border rounded-lg px-3 py-2 text-sm h-24 resize-none" defaultValue={user?.description || "트렌디한 의류 전문 스토어"} />
+            <textarea className="border rounded-lg px-3 py-2 text-sm h-24 resize-none" value={storeForm.description} onChange={event => updateStoreField("description", event.target.value)} />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1"><Eye size={16} /> 프리뷰</Button>
-            <Button className="flex-1">저장</Button>
+            <Button className="flex-1" onClick={saveStore} disabled={isStoreSaving}>{isStoreSaving ? "저장 중..." : "저장"}</Button>
           </div>
         </Card>
       )}

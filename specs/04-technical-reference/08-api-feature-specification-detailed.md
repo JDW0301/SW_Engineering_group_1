@@ -44,6 +44,15 @@
 - 서버 API prefix: `/api`
 - 프론트엔드 개발 서버는 Vite proxy 또는 같은 origin proxy를 통해 `/api/...`로 요청한다고 본다.
 
+### 기능별 경로 규칙
+
+- 인증 API는 `/api/auth/...` 아래에 둔다.
+- 고객 전용 API는 `/api/customer/...` 아래에 둔다.
+- 운영자 전용 API는 `/api/operator/...` 아래에 둔다.
+- 문의와 상담의 공통 흐름은 `/api/inquiries/...` 아래에 둔다.
+- AI 서버 연동은 FE가 AI 서버를 직접 호출하지 않고 `/api/ai/...` 프록시를 우선 사용한다.
+- 새 API를 추가할 때는 위 경로 중 가장 가까운 기능 그룹에 배치하고, 애매한 경우 문의 중심 흐름은 `/api/inquiries/...`를 우선 검토한다.
+
 ### 인증 방식
 
 - 보호 API는 `Authorization: Bearer {accessToken}` 헤더를 사용한다.
@@ -51,11 +60,22 @@
 - refresh token은 DB의 `refresh_token` 테이블에도 저장된다.
 - refresh token 갱신 시 기존 token은 `revoked_at`으로 폐기하고 새 token을 발급한다.
 
+### 역할 제한 규칙
+
+- 고객 화면에서만 사용하는 API는 `role = CUSTOMER`인 사용자만 접근할 수 있게 한다.
+- 운영자 화면에서만 사용하는 API는 `role = OPERATOR`인 사용자만 접근할 수 있게 한다.
+- 운영자 API는 운영자가 소유한 store 기준으로 조회 범위를 제한한다.
+- 공통 인증 API 중 회원가입, 로그인, refresh, logout은 역할 제한보다 토큰 발급과 세션 처리 흐름을 우선한다.
+- 역할이 맞지 않으면 `403`과 `{ "message": "...", "details": ... }` 형태의 오류를 반환한다.
+
 ### 공통 성공 응답 원칙
 
 - JSON 응답을 기본으로 한다.
-- 사용자에게 보여줄 메시지가 필요한 경우 `message` 필드를 포함한다.
+- 이 프로젝트는 현재 구현과 맞추기 위해 `{ data: ... }` 래퍼를 강제하지 않고, 기능별 루트 필드를 직접 반환하는 방식을 사용한다.
+- 사용자에게 보여줄 메시지가 필요한 경우 `message` 필드를 함께 포함한다.
 - 데이터 응답은 기능별 루트 필드에 담는다. 예: `user`, `orders`, `stores`, `inquiries`.
+- 새 API도 특별한 이유가 없으면 현재 방식처럼 직접 객체 반환을 따른다.
+- 외부 AI 원 서버 응답을 그대로 전달하는 `/api/ai/...` 프록시는 AI 서버 응답 구조를 유지한다.
 
 ### 공통 오류 응답
 
@@ -76,6 +96,23 @@
 - `404`: 대상 사용자 또는 리소스 없음
 - `409`: 중복 아이디 또는 중복 이메일
 - `500`: 처리되지 않은 서버 오류
+
+### 프론트엔드 API 파일 규칙
+
+- 프론트엔드에서 API 호출 코드는 `code/src/api/*.js`에 기능별로 분리한다.
+- 인증 관련 호출과 token 저장/조회는 `code/src/api/auth.js`에서 관리한다.
+- 고객 홈처럼 특정 기능에 묶인 호출은 `code/src/api/customerHome.js`처럼 별도 파일로 둔다.
+- 새 기능을 서버 API로 연결할 때는 화면 컴포넌트에서 `fetch`를 직접 반복하지 않고, 먼저 `code/src/api/기능명.js` 파일을 만든다.
+- API 파일명은 화면명이 아니라 기능 기준으로 정한다. 예: `inquiries.js`, `operatorInquiries.js`, `chatbot.js`, `ai.js`.
+
+### 백엔드 파일 분리 규칙
+
+- FastAPI endpoint 선언은 `server/main.py`에 둔다.
+- 요청 검증은 `server/app/validation.py` 또는 기능별 검증 함수에서 처리한다.
+- 비즈니스 로직은 `server/app/*.py`의 기능별 파일에 둔다. 예: `auth.py`, `customer_home.py`, `ai_client.py`.
+- DB 접근 SQL은 가능한 한 `server/app/repositories.py`의 repository 함수로 분리한다.
+- endpoint 함수는 요청을 받고, 인증/검증 후 비즈니스 로직 함수를 호출하는 얇은 계층으로 유지한다.
+- 새 API를 추가할 때는 `main.py`에 SQL과 복잡한 처리 흐름을 직접 길게 작성하지 않는다.
 
 ## 4. 현재 구현된 API
 
@@ -514,6 +551,35 @@ refresh token을 폐기하여 로그아웃 처리한다.
 - `code/src/pages/customer/CustomerApp.jsx`
 - `code/src/pages/customer/MainPage.jsx`
 
+## 4.4 BE-AI 프록시 API
+
+백엔드가 AI 서버와 통신하는 프록시 API다. FE는 AI 서버를 직접 호출하지 않고 BE의 `/api/ai/*` 경로를 호출할 수 있다.
+
+### 연결 대상
+
+- 기본 AI 서버: `http://203.234.62.47:8000`
+- 설정값: `AI_BASE_URL`
+- 구현 파일: `server/app/ai_client.py`, `server/main.py`
+
+### 구현된 엔드포인트
+
+| Method | Path | 인증 | AI 원 서버 경로 | 설명 |
+|---|---|---|---|---|
+| GET | `/api/ai/health` | 불필요 | `GET /health` | AI 서버 상태 확인 |
+| POST | `/api/ai/detect` | 필요 | `POST /detect` | 욕설 감지 |
+| POST | `/api/ai/neutralize` | 필요 | `POST /neutralize` | 욕설 중립화 |
+| POST | `/api/ai/classify` | 필요 | `POST /classify` | 문의 분류 |
+| POST | `/api/ai/chatbot` | 필요 | `POST /chatbot` | 챗봇 일반 응답 |
+| POST | `/api/ai/chatbot/stream` | 필요 | `POST /chatbot/stream` | 챗봇 SSE 스트리밍 |
+| POST | `/api/ai/summarize` | 필요 | `POST /summarize` | 대화 요약 |
+
+### 동작 원칙
+
+- `/api/ai/health`를 제외한 프록시 API는 기존 BE access token 인증을 요구한다.
+- 요청 body와 응답 body는 AI 원 서버 명세를 그대로 유지한다.
+- AI 서버 연결 실패나 원 서버 오류는 `AppError` 형식으로 변환해 반환한다.
+- 스트리밍 챗봇은 `text/event-stream`으로 AI 서버의 SSE 라인을 전달한다.
+
 ## 5. 현재 DB에는 있으나 API는 아직 미구현인 기능
 
 아래 기능들은 `schema.sql` 또는 기존 명세에 근거가 있지만, 현재 `server/main.py`에는 엔드포인트가 없다. 따라서 “계획 API”로 분류한다.
@@ -643,11 +709,20 @@ refresh token을 폐기하여 로그아웃 처리한다.
 
 ## 5.4 안전 보조 및 요약 API
 
-### 예정 엔드포인트
+### 구현된 프록시 엔드포인트
 
-- `POST /api/ai/inquiries/{inquiryId}/summary`: 문의 요약 생성
-- `POST /api/ai/chatbot-sessions/{sessionId}/summary`: 챗봇 세션 요약 생성
-- `POST /api/ai/messages/{messageId}/safety-check`: 악성 표현 감지
+- `POST /api/ai/detect`: 악성 표현 감지
+- `POST /api/ai/neutralize`: 고객 노출용 표시 완화 텍스트 생성
+- `POST /api/ai/classify`: 문의 분류
+- `POST /api/ai/chatbot`: 챗봇 일반 응답
+- `POST /api/ai/chatbot/stream`: 챗봇 SSE 응답
+- `POST /api/ai/summarize`: 대화 요약
+
+### 아직 남은 도메인 전용 엔드포인트
+
+- `POST /api/ai/inquiries/{inquiryId}/summary`: 문의 ID 기준 요약 생성
+- `POST /api/ai/chatbot-sessions/{sessionId}/summary`: 챗봇 세션 ID 기준 요약 생성
+- `POST /api/ai/messages/{messageId}/safety-check`: 메시지 ID 기준 악성 표현 감지
 
 ### 기능 목적
 
@@ -662,7 +737,7 @@ refresh token을 폐기하여 로그아웃 처리한다.
 ### 현재 화면 상태
 
 - `OperatorMain.jsx`와 `OperatorInquiryDetail.jsx`는 `generateAISummary` 또는 하드코딩 문구로 요약을 표시한다.
-- 서버 API는 아직 없다.
+- BE-AI 프록시 API는 구현되었지만, 해당 화면들이 아직 프록시 API를 호출하지는 않는다.
 
 ## 5.5 검색 및 지표 API
 
@@ -769,7 +844,7 @@ refresh token을 폐기하여 로그아웃 처리한다.
 | 문의 | 다수 | `/api/inquiries...` | 예정 | 필요 | 문의/상담 생성, 조회, 메시지, 상태 |
 | 챗봇 | 다수 | `/api/chatbot...` | 예정 | 필요 | 챗봇 세션, 메시지, handoff |
 | 지식 | 다수 | `/api/stores/{storeId}/faqs...` | 예정 | 필요 | FAQ, 프리셋, 지식 파일 |
-| AI 보조 | 다수 | `/api/ai...` | 예정 | 필요 | 요약, 안전 보조 |
+| AI 보조 | 다수 | `/api/ai...` | 일부 구현 | 필요 | BE-AI 프록시 구현, 화면 연결은 남음 |
 | 검색/지표 | 다수 | `/api/operator...` | 예정 | 필요 | 문의 검색, KPI 조회 |
 | 커머스 | 다수 | `/api/orders...`, `/api/products...` | 예정 | 필요 | 주문/상품 snapshot 조회 |
 | claim/link | 다수 | `/api/claims...` | 예정 | 필요 | 외부 주문과 로컬 계정 연결 |

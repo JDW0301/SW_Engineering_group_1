@@ -105,6 +105,30 @@ def find_store_by_owner_user_id(connection, owner_user_id: int):
         return cursor.fetchone()
 
 
+def update_store_by_owner_user_id(connection, owner_user_id: int, store: dict):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE store
+            SET name = %s,
+                phone = %s,
+                address = %s,
+                business_hours = %s,
+                description = %s
+            WHERE owner_user_id = %s
+            """,
+            (
+                store["name"],
+                store["phone"],
+                store["address"],
+                store["businessHours"],
+                store["description"],
+                owner_user_id,
+            ),
+        )
+        return cursor.rowcount
+
+
 def create_refresh_token_record(connection, payload: dict):
     with connection.cursor() as cursor:
         cursor.execute(

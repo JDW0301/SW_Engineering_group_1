@@ -4,17 +4,20 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
+from app.ai_client import get_ai_health, post_ai_json, stream_ai_chatbot
 from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator
 from app.config import settings
 from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
 from app.exceptions import AppError
+from app.operator import update_operator_store
 from app.security import verify_access_token
 from app.validation import (
     validate_customer_signup,
     validate_login,
+    validate_operator_store_update,
     validate_operator_signup,
     validate_refresh,
 )
@@ -110,3 +113,44 @@ async def me_endpoint(auth: dict = Depends(get_auth_payload)):
 @app.get("/api/customer/home")
 async def customer_home_endpoint(auth: dict = Depends(get_auth_payload)):
     return get_customer_home(int(auth["sub"]))
+
+
+@app.patch("/api/operator/store")
+async def update_operator_store_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    payload = validate_operator_store_update(body)
+    return {"store": update_operator_store(int(auth["sub"]), payload)}
+
+
+@app.get("/api/ai/health")
+async def ai_health_endpoint():
+    return get_ai_health()
+
+
+@app.post("/api/ai/detect")
+async def ai_detect_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    return post_ai_json("/detect", body, timeout=10)
+
+
+@app.post("/api/ai/neutralize")
+async def ai_neutralize_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    return post_ai_json("/neutralize", body, timeout=10)
+
+
+@app.post("/api/ai/classify")
+async def ai_classify_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    return post_ai_json("/classify", body, timeout=20)
+
+
+@app.post("/api/ai/chatbot")
+async def ai_chatbot_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    return post_ai_json("/chatbot", body, timeout=30)
+
+
+@app.post("/api/ai/chatbot/stream")
+async def ai_chatbot_stream_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    return StreamingResponse(stream_ai_chatbot(body), media_type="text/event-stream")
+
+
+@app.post("/api/ai/summarize")
+async def ai_summarize_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    return post_ai_json("/summarize", body, timeout=30)

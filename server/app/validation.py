@@ -55,3 +55,21 @@ def validate_refresh(body: dict) -> dict:
     return {
         "refreshToken": require_string(body.get("refreshToken"), "리프레시 토큰"),
     }
+
+
+def optional_string(value) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value.strip() or None
+    return None
+
+
+def validate_operator_store_update(body: dict) -> dict:
+    return {
+        "name": require_string(body.get("storeName"), "스토어명"),
+        "phone": optional_string(body.get("storePhone")),
+        "address": optional_string(body.get("address")),
+        "businessHours": optional_string(body.get("businessHours")),
+        "description": optional_string(body.get("description")),
+    }

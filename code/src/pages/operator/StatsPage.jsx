@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { Card } from "../../components/ui";
 
-const StatsPage = ({ inquiries }) => {
+const StatsPage = ({ supportSessions, supportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId }) => {
   const [ratePeriod, setRatePeriod] = useState("7일");
   const [countPeriod, setCountPeriod] = useState("1일");
   const [inquiryRatePeriod, setInquiryRatePeriod] = useState("7일");
+  const supportRows = supportSessions.map(session => ({ ...session, kind: "support", messages: supportMessagesBySessionId[session.id] || [] }));
+  const inquiryRows = inquiryPosts.map(post => ({
+    ...post,
+    kind: "inquiry",
+    messages: [
+      { id: 1, sender: "customer", content: post.content, time: post.createdAt },
+      ...(inquiryRepliesByPostId[post.id] || []).map(reply => ({ id: reply.id + 1, sender: "operator", content: reply.content, time: reply.createdAt })),
+    ],
+  }));
+  const displayRows = [...supportRows, ...inquiryRows];
 
   const filterByPeriod = (list, period) => {
     const now = new Date();
@@ -15,20 +25,20 @@ const StatsPage = ({ inquiries }) => {
     });
   };
 
-  const consultFiltered = filterByPeriod(inquiries.filter(i => i.type === "상담"), ratePeriod);
+  const consultFiltered = filterByPeriod(supportRows, ratePeriod);
   const consultTotal = consultFiltered.length;
   const consultResolved = consultFiltered.filter(i => i.status === "RESOLVED").length;
   const consultRate = consultTotal ? Math.round((consultResolved / consultTotal) * 100) : 0;
 
-  const inquiryFiltered = filterByPeriod(inquiries.filter(i => i.type === "문의"), inquiryRatePeriod);
+  const inquiryFiltered = filterByPeriod(inquiryRows, inquiryRatePeriod);
   const inquiryTotal = inquiryFiltered.length;
   const inquiryResolved = inquiryFiltered.filter(i => i.status === "RESOLVED").length;
   const inquiryRate = inquiryTotal ? Math.round((inquiryResolved / inquiryTotal) * 100) : 0;
 
-  const countFiltered = filterByPeriod(inquiries, countPeriod);
+  const countFiltered = filterByPeriod(displayRows, countPeriod);
 
   const avgResponseTime = (() => {
-    const times = inquiries.filter(i => i.messages && i.messages.length >= 2).map(inq => {
+    const times = displayRows.filter(i => i.messages && i.messages.length >= 2).map(inq => {
       const firstCustomer = inq.messages.find(m => m.sender === "customer");
       const firstOperator = inq.messages.find(m => m.sender === "operator");
       if (!firstCustomer || !firstOperator || !firstCustomer.time || !firstOperator.time) return null;

@@ -1,260 +1,136 @@
-# SW_Engineering_group_1
+# AI 서버 (사장님 옆자리)
 
-소규모 판매자를 위한 고객지원 플랫폼 프로젝트입니다.
+**담당**: 조규상 | **포트**: 8000 | **브랜치**: `feat/ai/*`
 
-- 프론트엔드: React + Vite
-- 백엔드: FastAPI
-- DB: MySQL
+---
 
-## 1. 프로젝트 구조
-
-```text
-SW_Engineering_group_1/
-├─ code/        # 프론트엔드
-├─ server/      # 백엔드
-├─ specs/       # 명세 문서
-├─ think/       # 기획/정리 문서
-└─ data/        # 참고 데이터
-```
-
-## 2. 처음 실행하는 사람 기준 빠른 시작
-
-저장소를 clone한 뒤 프로젝트 루트에서 아래 한 줄만 실행하면 됩니다.
+## 실행 방법
 
 ```bash
-./start-dev.sh
+# 1. LM Studio 실행 — Exaone 3.5-7.8b 로드 후 포트 1234 서버 시작
+
+# 2. 의존성 설치 (최초 1회)
+python -m venv venv
+venv/Scripts/pip install -r requirements.txt
+
+# 3. 서버 실행
+venv/Scripts/python run_server.py
 ```
 
-이 스크립트가 자동으로 처리하는 일:
+헬스 체크: `GET http://localhost:8000/health`
 
-1. 필수 명령어 확인
-2. `server/.env` 생성
-3. 프론트 `node_modules` 설치
-4. 서버 Python 패키지 설치
-5. 로컬 MySQL 데이터 디렉토리 초기화
-6. DB 실행 및 스키마 반영
-7. 서버 실행
-8. 프론트 실행
+---
 
-종료:
+## 엔드포인트 요약
 
-```bash
-./stop-dev.sh
+| 메서드 | 경로 | 기능 |
+|--------|------|------|
+| POST | /detect | 욕설 감지 |
+| POST | /neutralize | 욕설 중립화 |
+| POST | /classify | 문의 분류 |
+| POST | /chatbot | 챗봇 응답 |
+| POST | /chatbot/stream | 챗봇 SSE 스트리밍 |
+| POST | /summarize | 대화 요약 |
+| GET | /health | 서버 상태 |
+| GET | / | 데모 페이지 |
+
+자세한 명세: [API_SPEC.md](API_SPEC.md)
+
+---
+
+## 공유 필드명 (naming registry 기준)
+
+> `specs/00-overview/05-shared-naming-registry.md` 와 동기화 필요
+
+| 필드 | 엔드포인트 | 의미 | 상태 |
+|------|-----------|------|------|
+| `summary` | POST /summarize | AI 요약 결과 | ✓ 확정 |
+| `category` | POST /classify | 문의 분류 결과 | ⚠ 미확정 (`classification` 후보와 팀 확인 필요) |
+| `is_profanity` | POST /detect | 욕설 감지 여부 | ✓ 확정 |
+| `original` | POST /neutralize | 원본 텍스트 (content_raw) | ✓ 확정 |
+| `cleaned` | POST /neutralize | 필터링 텍스트 (content_display) | ✓ 확정 |
+| `can_answer` | POST /chatbot/stream | HANDOFF 여부 | ✓ 확정 |
+
+---
+
+## 협업 규칙
+
+> 기준 문서: `think/project-handbook/07-collaboration-and-development-rules.md`
+> 문서 우선순위: `specs/` > `think/project-handbook/` > 이 문서
+
+### 핵심 원칙
+
+1. **API Contract First** — 구현 전 API 요청/응답 구조를 먼저 확정
+2. **문서 기반 개발** — 개인 추측보다 specs/ 문서를 먼저 확인
+3. **네이밍 일관성** — 공유 필드명은 임의 변경 금지, naming registry 필수 등록
+4. **기존 구조 우선** — 새 폴더/추상화는 실제 필요 시에만 추가
+
+### 브랜치 구조
+
+```
+main
+  ↑ (PR)
+feat/ai/<topic>     예: feat/ai-message-summary
+feat/be/<topic>     예: feat/be-inquiry-api
+feat/fe/<topic>     예: feat/fe-chat-ui
+fix/<topic>
+docs/<topic>
 ```
 
-프론트 접속 주소는 보통 아래입니다.
+- `main` 직접 push 금지
+- 하나의 브랜치 = 하나의 기능/작업 단위
 
-```text
-http://localhost:5173
+### 커밋 메시지
+
+```
+feat: 욕설 감지 KoELECTRA 2차 탐지 추가
+fix: CS 화이트리스트 오탐 수정
+docs: API_SPEC.md 스트리밍 엔드포인트 추가
 ```
 
-포트가 이미 사용 중이면 `5174`, `5175`처럼 자동 변경될 수 있습니다. 실제 포트는 `.dev-run/frontend.log`에서 확인할 수 있습니다.
+### PR 규칙
 
-## 3. 실행 전 준비
+**제목 형식**: `[AI] 기능 요약`
 
-### WSL 사용 시 주의
+PR에 포함해야 할 항목:
+1. 변경 내용 요약
+2. 변경 이유
+3. 관련 문서 업데이트 여부
+4. 테스트/검증 결과
+5. FE/BE 의존성 영향 여부 (@mention)
 
-이 프로젝트는 WSL에서 실행할 경우 **Linux용 Node.js**를 사용하는 것을 권장합니다.
+**병합 전 체크리스트:**
+- [ ] feat/ai 브랜치에서 작업했나?
+- [ ] 로컬 서버 정상 실행 확인
+- [ ] 공유 API 필드 변경 시 naming registry 업데이트
+- [ ] 관련 문서(API_SPEC.md 등) 함께 수정
+- [ ] FE/BE 영향 있으면 담당자 @mention
 
-Windows Node가 WSL 경로를 직접 읽으면 Vite가 잘못된 디렉토리를 서빙해서 `404` 또는 무한 로딩이 발생할 수 있습니다.
+### AI 오너 주의사항
 
-### WSL용 Node 설치
+- FE/BE와 공유되는 필드명은 임의로 변경 금지
+- 새 공유 필드 추가 시 `specs/00-overview/05-shared-naming-registry.md` 등록 후 PR
+- AI 입출력 계약 변경 시 반드시 문서 동시 수정
 
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-source ~/.bashrc
+---
 
-nvm install --lts
-nvm use --lts
-nvm alias default 'lts/*'
+## 탐지 구조
 
-node -v
-npm -v
-which node
-which npm
+```
+1차: lexicon (Aho-Corasick, 270개) — 명시적 욕설
+2차: KoELECTRA — lexicon 미감지 시 우회 표현 탐지
+    offensive >= 0.97  (CS 키워드 포함 문장 제외)
+    hate      >= 0.95  (CS 키워드 무관)
+
+CS 화이트리스트: 환불/배송/교환/주문/결제/상품/접수/처리/부탁/신청/문의/반품/수령/도착
 ```
 
-`which node` 결과가 `/home/.../.nvm/...` 형태면 정상입니다.
+---
 
-## 4. 의존성 수동 설치
+## 연동 정보
 
-### 프론트엔드
-
-```bash
-cd code
-npm install
-```
-
-### 백엔드
-
-```bash
-cd server
-python3 -m pip install --target .pydeps -r requirements.txt
-```
-
-## 5. DB 수동 실행
-
-이 프로젝트는 로컬 MySQL 인스턴스를 프로젝트 내부의 `.local-mysql/` 아래에서 실행하도록 구성했습니다.
-
-### DB 시작
-
-```bash
-nohup mysqld --no-defaults \
-  --datadir="$(pwd)/.local-mysql/data" \
-  --socket="$(pwd)/.local-mysql/run/mysql.sock" \
-  --port=3307 \
-  --bind-address=127.0.0.1 \
-  --pid-file="$(pwd)/.local-mysql/run/mysql.pid" \
-  --log-error="$(pwd)/.local-mysql/run/mysql.err" \
-  > "$(pwd)/.local-mysql/run/mysql.out" 2>&1 &
-```
-
-### DB 확인
-
-```bash
-mysqladmin --socket="$(pwd)/.local-mysql/run/mysql.sock" -u root ping
-```
-
-정상 응답:
-
-```bash
-mysqld is alive
-```
-
-### DB 접속
-
-```bash
-mysql --socket="$(pwd)/.local-mysql/run/mysql.sock" -u root swe_helpdesk
-```
-
-## 6. 서버 수동 실행
-
-```bash
-cd server
-PYTHONPATH="$(pwd)/.pydeps:$(pwd)" python3 -m uvicorn main:app --host 0.0.0.0 --port 4000
-```
-
-정상 실행 시:
-
-```bash
-Server running on port 4000
-```
-
-헬스 체크:
-
-```bash
-http://localhost:4000/api/health
-```
-
-정상 응답:
-
-```json
-{"message":"ok"}
-```
-
-## 7. 프론트엔드 수동 실행
-
-```bash
-cd code
-npm run dev -- --host 0.0.0.0
-```
-
-정상 실행 시 예시:
-
-```bash
-Local:   http://localhost:5173/
-```
-
-브라우저 접속:
-
-```text
-http://localhost:5173
-```
-
-포트가 이미 사용 중이면 `5174`, `5175`처럼 자동 변경될 수 있습니다.
-
-## 8. 테스트 계정
-
-### 고객 계정
-
-- 아이디: `customer01`
-- 이메일: `customer01@example.com`
-- 비밀번호: `1234`
-
-### 운영자 계정
-
-- 아이디: `operator01`
-- 이메일: `operator01@example.com`
-- 비밀번호: `1234`
-
-## 9. 실행 순서 요약
-
-### 자동 실행 스크립트
-
-루트 디렉토리에서 아래 스크립트를 실행하면 됩니다.
-
-```bash
-./start-dev.sh
-```
-
-종료:
-
-```bash
-./stop-dev.sh
-```
-
-`start-dev.sh`는 아래 순서로 자동 실행합니다.
-
-1. DB 실행
-2. 서버 실행
-3. 프론트 실행
-
-프론트 포트는 Vite가 자동으로 잡기 때문에, 실제 접속 포트는 `.dev-run/frontend.log`에서 확인할 수 있습니다.
-
-### 터미널 1: DB
-
-```bash
-nohup mysqld --no-defaults \
-  --datadir="$(pwd)/.local-mysql/data" \
-  --socket="$(pwd)/.local-mysql/run/mysql.sock" \
-  --port=3307 \
-  --bind-address=127.0.0.1 \
-  --pid-file="$(pwd)/.local-mysql/run/mysql.pid" \
-  --log-error="$(pwd)/.local-mysql/run/mysql.err" \
-  > "$(pwd)/.local-mysql/run/mysql.out" 2>&1 &
-```
-
-### 터미널 2: 서버
-
-```bash
-cd server
-PYTHONPATH="$(pwd)/.pydeps:$(pwd)" python3 -m uvicorn main:app --host 0.0.0.0 --port 4000
-```
-
-### 터미널 3: 프론트
-
-```bash
-cd code
-npm run dev -- --host 0.0.0.0
-```
-
-## 10. 종료 방법
-
-### DB 종료
-
-```bash
-mysqladmin --socket="$(pwd)/.local-mysql/run/mysql.sock" -u root shutdown
-```
-
-### 서버 종료
-
-실행 중인 터미널에서 `Ctrl + C`
-
-### 프론트 종료
-
-실행 중인 터미널에서 `Ctrl + C`
-
-## 11. 참고
-
-- 백엔드 기준으로 회원가입 / 로그인 / 토큰 발급 / `/api/auth/me` 동작 확인 완료
-- 운영자 회원가입 시 `store` 테이블도 함께 생성되도록 구현됨
+| 환경 | 주소 |
+|------|------|
+| 로컬 | `http://localhost:8000` |
+| 교내망 | `http://203.234.62.47:8000` |
+| 외부 (Cloudflare Tunnel) | 세션마다 변경 — 실행 시 확인 |

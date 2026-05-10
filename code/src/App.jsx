@@ -177,6 +177,6 @@ export default function App() {
   if (screen === "login") return <LoginPage onLogin={handleLogin} onGoRegister={type => { setRegisterType(type); setAuthError(""); setAuthSuccess(""); setScreen("register"); }} error={authError} success={authSuccess} isSubmitting={isSubmitting} initialIsOperator={registerType === "operator"} />;
   if (screen === "register") return <RegisterPage type={registerType} onBack={() => { setAuthError(""); setAuthSuccess(""); setScreen("login"); }} onRegister={handleRegister} error={authError} isSubmitting={isSubmitting} />;
   if (screen === "customer") return <CustomerApp onLogout={handleLogout} user={user} onUpdateUser={handleUpdateUser} />;
-  if (screen === "operator") return <OperatorApp onLogout={handleLogout} user={user} />;
+  if (screen === "operator") return <OperatorApp onLogout={handleLogout} user={user} onUpdateUser={handleUpdateUser} />;
   return null;
 }

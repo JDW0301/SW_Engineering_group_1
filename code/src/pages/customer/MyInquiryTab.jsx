@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, StatusBadge, Button } from "../../components/ui";
 
-const MyInquiryTab = ({ inquiries, onOpenInquiry }) => {
+const MyInquiryTab = ({ supportSessions, inquiryPosts, onOpenSupportSession, onOpenInquiryPost }) => {
   const [mode, setMode] = useState("consult");
   return (
     <div>
@@ -11,15 +11,15 @@ const MyInquiryTab = ({ inquiries, onOpenInquiry }) => {
       </div>
       {mode === "consult" ? (
         <div className="space-y-2">
-          {inquiries.filter(i => i.type === "상담").length === 0 ? <p className="text-sm text-gray-400 text-center py-4">상담 기록이 없습니다</p> :
-            inquiries.filter(i => i.type === "상담").map(inq => (
-              <Card key={inq.id} className="p-3" onClick={() => onOpenInquiry(inq)}>
+          {supportSessions.length === 0 ? <p className="text-sm text-gray-400 text-center py-4">상담 기록이 없습니다</p> :
+            supportSessions.map(session => (
+              <Card key={session.id} className="p-3" onClick={() => onOpenSupportSession(session.id)}>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium">{inq.title}</p>
-                    <p className="text-xs text-gray-500">{inq.createdAt}</p>
+                    <p className="text-sm font-medium">{session.title}</p>
+                    <p className="text-xs text-gray-500">{session.createdAt}</p>
                   </div>
-                  <StatusBadge status={inq.status} />
+                  <StatusBadge status={session.status} />
                 </div>
               </Card>
             ))
@@ -27,15 +27,15 @@ const MyInquiryTab = ({ inquiries, onOpenInquiry }) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {inquiries.filter(i => i.type === "문의").length === 0 ? <p className="text-sm text-gray-400 text-center py-4">문의 기록이 없습니다</p> :
-            inquiries.filter(i => i.type === "문의").map(inq => (
-              <Card key={inq.id} className="p-3" onClick={() => onOpenInquiry(inq)}>
+          {inquiryPosts.length === 0 ? <p className="text-sm text-gray-400 text-center py-4">문의 기록이 없습니다</p> :
+            inquiryPosts.map(post => (
+              <Card key={post.id} className="p-3" onClick={() => onOpenInquiryPost(post.id)}>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium">{inq.title}</p>
-                    <p className="text-xs text-gray-500">{inq.createdAt}</p>
+                    <p className="text-sm font-medium">{post.title}</p>
+                    <p className="text-xs text-gray-500">{post.createdAt}</p>
                   </div>
-                  <StatusBadge status={inq.status} />
+                  <StatusBadge status={post.status} />
                 </div>
               </Card>
             ))

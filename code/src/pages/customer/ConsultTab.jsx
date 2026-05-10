@@ -3,35 +3,22 @@ import { Clock, Plus } from "lucide-react";
 import { Card, StatusBadge, Button } from "../../components/ui";
 import { MOCK_ORDERS } from "../../data/mockData";
 
-const ConsultTab = ({ store, order, inquiries, setInquiries, onOpenInquiry, chatbotHistory = [], clearChatbotHistory }) => {
+const ConsultTab = ({ store, order, supportSessions, onOpenSupportSession, createSupportSession }) => {
   const [selectingOrder, setSelectingOrder] = useState(false);
   const [chosenOrder, setChosenOrder] = useState(order || null);
   const storeOrders = MOCK_ORDERS.filter(o => o.storeId === store.id);
-  const activeInq = inquiries.find(i => i.storeId === store.id && i.status === "IN_PROGRESS");
+  const activeSupport = supportSessions.find(session => session.storeId === store.id && session.status === "IN_PROGRESS");
 
   const startConsult = () => {
-    const handoffMessages = chatbotHistory.length > 0
-      ? [
-          { id: 1, sender: "system", content: "챗봇에서 상담으로 전환되었습니다." },
-          ...chatbotHistory.filter(m => m.sender !== "bot").map((m, idx) => ({
-            id: idx + 2, sender: "customer", content: m.content, time: new Date().toLocaleString()
-          })),
-          { id: chatbotHistory.length + 2, sender: "system", content: `[챗봇 대화 요약] 고객이 챗봇에서 ${chatbotHistory.filter(m => m.sender === "user").length}건의 질문을 했으며, 해결되지 않아 상담사 연결을 요청했습니다.` }
-        ]
-      : [{ id: 1, sender: "system", content: "상담이 시작되었습니다." }];
-
-    const newInq = {
-      id: inquiries.length + 1, storeId: store.id, storeName: store.name, type: "상담",
-      status: "IN_PROGRESS", title: chosenOrder ? `${chosenOrder.productName} 관련 상담` : "일반 상담",
-      orderId: chosenOrder?.id, createdAt: new Date().toLocaleString(), lastMessageAt: new Date().toLocaleString(),
-      messages: handoffMessages,
-      orderProductName: chosenOrder?.productName || null,
-      orderInfo: chosenOrder ? `${chosenOrder.productName} (${chosenOrder.orderNumber})` : null,
-      customerName: chosenOrder?.customerName || "고객",
-    };
-    setInquiries(p => [...p, newInq]);
-    onOpenInquiry(newInq);
-    if (clearChatbotHistory) clearChatbotHistory();
+    const now = new Date().toLocaleString();
+    const newSession = createSupportSession({
+      title: chosenOrder ? `${chosenOrder.productName} 관련 상담` : "일반 상담",
+      store,
+      order: chosenOrder,
+      source: "manual",
+      initialMessages: [{ sender: "system", content: "상담이 시작되었습니다.", time: now }],
+    });
+    onOpenSupportSession(newSession.id);
   };
 
   return (
@@ -41,12 +28,12 @@ const ConsultTab = ({ store, order, inquiries, setInquiries, onOpenInquiry, chat
         <p className="text-indigo-600 mt-1">{store.operatingHours}</p>
       </div>
 
-      {activeInq ? (
-        <Card className="p-4" onClick={() => onOpenInquiry(activeInq)}>
+      {activeSupport ? (
+        <Card className="p-4" onClick={() => onOpenSupportSession(activeSupport.id)}>
           <p className="text-sm font-medium mb-1">진행 중인 상담</p>
-          <p className="text-xs text-gray-500">{activeInq.title}</p>
+          <p className="text-xs text-gray-500">{activeSupport.title}</p>
           <div className="flex justify-between items-center mt-2">
-            <StatusBadge status={activeInq.status} />
+            <StatusBadge status={activeSupport.status} />
           </div>
         </Card>
       ) : (

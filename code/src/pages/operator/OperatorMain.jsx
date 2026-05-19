@@ -49,12 +49,13 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[...supportRows].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5).map(session => {
             const order = orders.find(o => o.id === session.orderId);
+            const customerName = order?.customerName || session.customerName || "고객";
             return (
               <Card key={session.id} className="p-3" onClick={() => openSupportSession(session.id)}>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <Avatar name={order?.customerName} size="w-6 h-6" bg="bg-blue-100 text-blue-600" />
-                    <span className="text-sm font-semibold text-gray-800">{order?.customerName || "고객"}</span>
+                    <Avatar name={customerName} size="w-6 h-6" bg="bg-blue-100 text-blue-600" />
+                    <span className="text-sm font-semibold text-gray-800">{customerName}</span>
                   </div>
                   <StatusBadge status={session.status} />
                 </div>
@@ -78,12 +79,13 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
         <p className="text-xs font-medium text-gray-500 mt-5 mb-2">최근 문의</p>
         {[...inquiryRows].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5).map(post => {
           const order = orders.find(o => o.id === post.orderId);
+          const customerName = order?.customerName || post.customerName || "고객";
           return (
             <Card key={post.id} className="p-3 mb-2" onClick={() => openInquiryPost(post.id)}>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <Avatar name={order?.customerName} size="w-6 h-6" bg="bg-emerald-100 text-emerald-600" />
-                  <span className="text-sm font-semibold text-gray-800">{order?.customerName || "고객"}</span>
+                  <Avatar name={customerName} size="w-6 h-6" bg="bg-emerald-100 text-emerald-600" />
+                  <span className="text-sm font-semibold text-gray-800">{customerName}</span>
                   {order && <span className="text-xs text-gray-400">· {order.productName}</span>}
                 </div>
                 <div className="flex items-center gap-2">

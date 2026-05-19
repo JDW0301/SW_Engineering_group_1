@@ -4,9 +4,9 @@ from .database import db_connection
 from .exceptions import AppError
 
 
-def list_store_inquiries(store_id: int) -> list[dict]:
+def list_store_inquiries(store_id: int, user_id: int) -> list[dict]:
     with db_connection() as connection:
-        return _fetch_inquiries(connection, "ip.store_id = %s", (store_id,))
+        return _fetch_inquiries(connection, "ip.store_id = %s", (store_id,), current_user_id=user_id, mask_secret=True)
 
 
 def list_my_inquiries(user_id: int) -> list[dict]:
@@ -51,7 +51,7 @@ def create_inquiry(user_id: int, payload: dict) -> dict:
             raise
 
 
-def _fetch_inquiries(connection, where_sql: str, params: tuple) -> list[dict]:
+def _fetch_inquiries(connection, where_sql: str, params: tuple, current_user_id: int | None = None, mask_secret: bool = False) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
@@ -80,7 +80,7 @@ def _fetch_inquiries(connection, where_sql: str, params: tuple) -> list[dict]:
         )
         rows = cursor.fetchall()
 
-    return [_format_inquiry(connection, row) for row in rows]
+    return [_format_inquiry(connection, row, current_user_id, mask_secret) for row in rows]
 
 
 def _fetch_inquiry_by_id(connection, inquiry_id: int) -> dict:
@@ -90,18 +90,23 @@ def _fetch_inquiry_by_id(connection, inquiry_id: int) -> dict:
     return rows[0]
 
 
-def _format_inquiry(connection, row: dict) -> dict:
+def _format_inquiry(connection, row: dict, current_user_id: int | None = None, mask_secret: bool = False) -> dict:
+    is_mine = current_user_id is not None and row["author_user_id"] == current_user_id
+    is_hidden_secret = mask_secret and row["is_secret"] and not is_mine
     order_meta = _fetch_order_meta(connection, row["order_id"], row["customer_name"])
-    replies = _fetch_replies(connection, row["id"])
+    replies = [] if is_hidden_secret else _fetch_replies(connection, row["id"])
+    title = "비밀글 입니다." if is_hidden_secret else row["title"]
+    content = "" if is_hidden_secret else row["content"]
     return {
         "id": row["id"],
         "storeId": row["store_id"],
         "storeName": row["store_name"],
         "status": "RESOLVED" if row["inquiry_status"] in {"ANSWERED", "CLOSED"} else "IN_PROGRESS",
-        "title": row["title"],
+        "title": title,
         "orderId": row["order_id"],
-        "content": row["content"],
+        "content": content,
         "isSecret": bool(row["is_secret"]),
+        "isMine": is_mine,
         "createdAt": _format_date(row["created_at"]),
         "lastMessageAt": _format_date(row["last_message_at"]),
         "customerName": row["customer_name"],
@@ -109,7 +114,7 @@ def _format_inquiry(connection, row: dict) -> dict:
         "orderProductName": order_meta["productName"],
         "replies": replies,
         "messages": [
-            {"id": 1, "sender": "customer", "content": row["content"], "time": _format_date(row["created_at"])},
+            {"id": 1, "sender": "customer", "content": content, "time": _format_date(row["created_at"])},
             *[
                 {"id": index + 2, "sender": "operator", "content": reply["content"], "time": reply["createdAt"]}
                 for index, reply in enumerate(replies)

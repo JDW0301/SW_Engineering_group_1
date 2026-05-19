@@ -41,8 +41,8 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
       .then(items => {
         if (!ignore) setFaqs(items);
       })
-      .catch(loadError => {
-        if (!ignore) setError(loadError.message);
+      .catch(() => {
+        if (!ignore) setFaqs([]);
       })
       .finally(() => {
         if (!ignore) setIsFaqLoading(false);

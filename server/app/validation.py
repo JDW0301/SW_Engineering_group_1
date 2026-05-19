@@ -51,6 +51,14 @@ def validate_login(body: dict) -> dict:
     }
 
 
+def validate_customer_profile_update(body: dict) -> dict:
+    return {
+        "name": require_string(body.get("name"), "이름"),
+        "phone": require_string(body.get("phone"), "전화번호"),
+        "email": require_email(body.get("email")),
+    }
+
+
 def validate_refresh(body: dict) -> dict:
     return {
         "refreshToken": require_string(body.get("refreshToken"), "리프레시 토큰"),

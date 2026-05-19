@@ -48,12 +48,13 @@ const ChannelPage = ({ orders, supportSessions, supportMessagesBySessionId, inqu
       <div className="space-y-2">
         {list.map(row => {
           const order = orders.find(o => o.id === row.orderId);
+          const customerName = order?.customerName || row.customerName || "고객";
           return (
             <Card key={`${row.kind}-${row.id}`} className="p-3" onClick={() => row.kind === "support" ? openSupportSession(row.id) : openInquiryPost(row.id)}>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
-                  <Avatar name={order?.customerName} size="w-6 h-6" bg="bg-blue-100 text-blue-600" />
-                  <span className="text-sm font-semibold">{order?.customerName || "고객"}</span>
+                  <Avatar name={customerName} size="w-6 h-6" bg="bg-blue-100 text-blue-600" />
+                  <span className="text-sm font-semibold">{customerName}</span>
                   {order && <span className="text-xs text-gray-400">· {order.productName} ({order.orderNumber})</span>}
                 </div>
                 <div className="flex items-center gap-2">

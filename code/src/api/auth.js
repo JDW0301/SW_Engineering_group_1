@@ -2,12 +2,13 @@ const ACCESS_TOKEN_KEY = "helpdesk_access_token";
 const REFRESH_TOKEN_KEY = "helpdesk_refresh_token";
 
 async function request(path, options = {}) {
+  const { headers, ...requestOptions } = options;
   const response = await fetch(`/api${path}`, {
+    ...requestOptions,
     headers: {
       "Content-Type": "application/json",
-      ...(options.headers ?? {}),
+      ...(headers ?? {}),
     },
-    ...options,
   });
 
   const data = await response.json().catch(() => ({}));
@@ -78,5 +79,15 @@ export async function getMe(accessToken) {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
+  });
+}
+
+export async function updateCustomerProfile(payload) {
+  return request("/customer/profile", {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${getAccessToken()}`,
+    },
+    body: JSON.stringify(payload),
   });
 }

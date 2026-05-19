@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.ai_client import get_ai_health, post_ai_json, stream_ai_chatbot
-from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator
+from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator, update_customer_profile
 from app.config import settings
 from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
@@ -29,6 +29,7 @@ from app.operator_workspace import (
 )
 from app.validation import (
     validate_customer_signup,
+    validate_customer_profile_update,
     validate_login,
     validate_inquiry_create,
     validate_operator_store_update,
@@ -132,6 +133,12 @@ async def me_endpoint(auth: dict = Depends(get_auth_payload)):
     return {"user": get_me(int(auth["sub"]))}
 
 
+@app.patch("/api/customer/profile")
+async def update_customer_profile_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    payload = validate_customer_profile_update(body)
+    return {"user": update_customer_profile(int(auth["sub"]), payload)}
+
+
 @app.get("/api/customer/home")
 async def customer_home_endpoint(auth: dict = Depends(get_auth_payload)):
     return get_customer_home(int(auth["sub"]))
@@ -152,7 +159,7 @@ async def list_store_faqs_endpoint(store_id: int, auth: dict = Depends(get_auth_
 async def list_inquiries_endpoint(storeId: int | None = Query(default=None), auth: dict = Depends(get_auth_payload)):
     if storeId is None:
         return {"inquiries": list_my_inquiries(int(auth["sub"]))}
-    return {"inquiries": list_store_inquiries(storeId)}
+    return {"inquiries": list_store_inquiries(storeId, int(auth["sub"]))}
 
 
 @app.post("/api/inquiries", status_code=201)

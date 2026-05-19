@@ -43,13 +43,6 @@ export default function App() {
     if (!user) return;
     const newUser = { ...user, ...updatedFields };
     setUser(newUser);
-    const userId = user.loginId || user.id;
-    if (userId) {
-      try {
-        const saved = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
-        localStorage.setItem(`profile_${userId}`, JSON.stringify({ ...saved, ...updatedFields }));
-      } catch (e) {}
-    }
   };
 
   useEffect(() => {
@@ -64,28 +57,14 @@ export default function App() {
 
       try {
         const { user } = await getMe(accessToken);
-        const userId = user.loginId || user.id;
-        let savedProfile = {};
-        if (userId) {
-          try {
-            savedProfile = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
-          } catch (e) {}
-        }
-        setUser({ ...normalizeUser(user), ...savedProfile });
+        setUser(normalizeUser(user));
         setScreen(user.role === "OPERATOR" ? "operator" : "customer");
       } catch {
         try {
           const refreshed = await refresh({ refreshToken });
           saveAuthTokens(refreshed.accessToken, refreshed.refreshToken);
           const refreshedUser = normalizeUser(refreshed.user);
-          const userId = refreshedUser.loginId || refreshedUser.id;
-          let savedProfile = {};
-          if (userId) {
-            try {
-              savedProfile = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
-            } catch (e) {}
-          }
-          setUser({ ...refreshedUser, ...savedProfile });
+          setUser(refreshedUser);
           setScreen(refreshedUser.role === "OPERATOR" ? "operator" : "customer");
         } catch {
           clearAuthTokens();
@@ -118,14 +97,7 @@ export default function App() {
         ? (await getMe(result.accessToken)).user
         : result.user;
       const normalizedUser = normalizeUser(resolvedUser);
-      const userId = normalizedUser.loginId || normalizedUser.id;
-      let savedProfile = {};
-      if (userId) {
-        try {
-          savedProfile = JSON.parse(localStorage.getItem(`profile_${userId}`) || "{}");
-        } catch (e) {}
-      }
-      setUser({ ...normalizedUser, ...savedProfile });
+      setUser(normalizedUser);
       setScreen(normalizedUser.role === "OPERATOR" ? "operator" : "customer");
     } catch (error) {
       setAuthError(error.message);

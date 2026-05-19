@@ -15,6 +15,7 @@ from .repositories import (
     find_user_by_login_id,
     revoke_all_refresh_tokens_for_user,
     revoke_refresh_token,
+    update_user_profile_by_id,
 )
 from .security import (
     build_refresh_expiry_date,
@@ -182,6 +183,16 @@ def get_me(user_id: int) -> dict:
             response["store"] = find_store_by_owner_user_id(connection, user["id"])
 
         return response
+
+
+def update_customer_profile(user_id: int, payload: dict) -> dict:
+    with db_connection() as connection:
+        user = find_user_by_id(connection, user_id)
+        if not user or user["role"] != "CUSTOMER":
+            raise AppError(404, "이용자 계정을 찾을 수 없습니다.")
+        update_user_profile_by_id(connection, user_id, payload)
+        connection.commit()
+        return get_me(user_id)
 
 
 def logout_all_devices(user_id: int) -> None:

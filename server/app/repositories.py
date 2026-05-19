@@ -43,6 +43,21 @@ def find_user_by_id(connection, user_id: int):
         return cursor.fetchone()
 
 
+def update_user_profile_by_id(connection, user_id: int, profile: dict):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE app_user
+            SET name = %s,
+                phone = %s,
+                email = %s
+            WHERE id = %s AND role = 'CUSTOMER'
+            """,
+            (profile["name"], profile["phone"], profile["email"], user_id),
+        )
+        return cursor.rowcount
+
+
 def create_user(connection, user: dict):
     with connection.cursor() as cursor:
         cursor.execute(

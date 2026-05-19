@@ -133,13 +133,15 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
       <div className="space-y-2">
         {error && <p className="text-sm text-red-500">{error}</p>}
         {isLoading && <p className="text-sm text-gray-400 text-center py-4">문의 목록을 불러오는 중입니다.</p>}
-        {localPosts.map((p, index) => (
-          <Card key={p.id} className="p-3" onClick={() => !p.isSecret && setSelectedPost(p)}>
+        {localPosts.map((p, index) => {
+          const canOpenPost = !p.isSecret || p.isMine;
+          return (
+          <Card key={p.id} className="p-3" onClick={canOpenPost ? () => setSelectedPost(p) : undefined}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-gray-400">#{localPosts.length - index}</span>
                 {p.isSecret && <Lock size={12} className="text-gray-400" />}
-                <span className="text-sm">{p.isSecret ? "비밀글 입니다." : p.title}</span>
+                <span className="text-sm">{canOpenPost ? p.title : "비밀글 입니다."}</span>
               </div>
               <div className="flex items-center gap-2">
                 <StatusBadge status={p.status} />
@@ -147,7 +149,8 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
               </div>
             </div>
           </Card>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

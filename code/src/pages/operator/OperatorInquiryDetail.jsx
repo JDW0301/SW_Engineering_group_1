@@ -1,50 +1,58 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, User, Phone, Package, Clipboard, Star, HelpCircle } from "lucide-react";
 import { Card, StatusBadge, Avatar, Button, BoardDetail } from "../../components/ui";
-import { MOCK_ORDERS } from "../../data/mockData";
+import { createSupportMessage, updateSupportStatus } from "../../api/support";
+import { createInquiryReply, createInternalNote } from "../../api/operatorWorkspace";
 
-const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, setInquiryPosts, inquiryRepliesByPostId, setInquiryRepliesByPostId, setPage, prevPage }) => {
+const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, setInquiryPosts, inquiryRepliesByPostId, setInquiryRepliesByPostId, setPage, prevPage, orders, notesByTarget, setNotesByTarget, presets = [] }) => {
   const [input, setInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
-  const [notes, setNotes] = useState([]);
   const chatEnd = useRef(null);
   const supportSession = selectedDetail?.kind === "support" ? supportSessions.find(session => session.id === selectedDetail.id) : null;
   const inquiryPost = selectedDetail?.kind === "inquiry" ? inquiryPosts.find(post => post.id === selectedDetail.id) : null;
   const detail = supportSession || inquiryPost;
   const supportMessages = supportSession ? supportMessagesBySessionId[supportSession.id] || [] : [];
   const inquiryReplies = inquiryPost ? inquiryRepliesByPostId[inquiryPost.id] || [] : [];
+  const noteKey = selectedDetail ? `${selectedDetail.kind}-${selectedDetail.id}` : "";
+  const notes = notesByTarget[noteKey] || [];
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [supportMessages]);
   if (!detail) return null;
 
-  const order = MOCK_ORDERS.find(o => o.id === detail.orderId);
+  const order = orders.find(o => o.id === detail.orderId);
+  const customerInfo = order || detail;
 
-  const sendMsg = () => {
+  const sendMsg = async () => {
     if (!supportSession) return;
     if (!input.trim()) return;
-    const now = new Date().toLocaleString();
-    const nextMessage = { id: supportMessages.length + 1, supportSessionId: supportSession.id, sender: "operator", content: input, time: now };
-    setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...supportMessages, nextMessage] }));
-    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: now } : session));
+    const content = input;
     setInput("");
+    const nextMessage = await createSupportMessage(supportSession.id, content);
+    setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...supportMessages, nextMessage] }));
+    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: nextMessage.time } : session));
   };
 
-  const changeStatus = (status) => {
+  const changeStatus = async (status) => {
     if (!supportSession) return;
-    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, status } : session));
+    const updated = await updateSupportStatus(supportSession.id, status);
+    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? updated : session));
   };
 
-  const addNote = () => {
+  const addNote = async () => {
     if (!noteInput.trim()) return;
-    setNotes(p => [...p, { id: p.length + 1, content: noteInput, time: new Date().toLocaleString() }]);
+    const note = await createInternalNote({
+      supportSessionId: supportSession?.id || null,
+      inquiryPostId: inquiryPost?.id || null,
+      content: noteInput,
+    });
+    setNotesByTarget(prev => ({ ...prev, [noteKey]: [...(prev[noteKey] || []), note] }));
     setNoteInput("");
   };
 
-  const handleAnswerSubmit = (answer) => {
+  const handleAnswerSubmit = async (answer) => {
     if (!inquiryPost) return;
-    const now = new Date().toLocaleString();
-    const nextReply = { id: inquiryReplies.length + 1, inquiryPostId: inquiryPost.id, authorType: "operator", content: answer, createdAt: now };
+    const nextReply = await createInquiryReply(inquiryPost.id, answer);
     setInquiryRepliesByPostId(prev => ({ ...prev, [inquiryPost.id]: [...inquiryReplies, nextReply] }));
-    setInquiryPosts(prev => prev.map(post => post.id === inquiryPost.id ? { ...post, status: "RESOLVED", lastMessageAt: now } : post));
+    setInquiryPosts(prev => prev.map(post => post.id === inquiryPost.id ? { ...post, status: "RESOLVED", lastMessageAt: nextReply.createdAt } : post));
   };
 
   const inquiryForBoard = inquiryPost ? {
@@ -70,24 +78,26 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Customer & Order Info */}
-          {order && (
+          {(order || customerInfo?.customerName) && (
             <Card className="p-3 mb-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1"><User size={12} /> 고객 정보</p>
                   <div className="text-sm space-y-0.5">
-                    <p className="font-medium">{order.customerName}</p>
-                    <p className="text-gray-500 flex items-center gap-1"><Phone size={11} /> {order.phone}</p>
+                    <p className="font-medium">{customerInfo.customerName}</p>
+                    <p className="text-gray-500 flex items-center gap-1"><Phone size={11} /> {customerInfo.phone}</p>
                   </div>
                 </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1"><Package size={12} /> 주문 정보</p>
-                  <div className="text-sm space-y-0.5">
-                    <p>{order.productName} x{order.quantity}</p>
-                    <p className="text-gray-500">{order.orderNumber} · {order.orderedAt}</p>
-                    <p className="font-medium">{order.totalPrice.toLocaleString()}원</p>
+                {order && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1"><Package size={12} /> 주문 정보</p>
+                    <div className="text-sm space-y-0.5">
+                      <p>{order.productName} x{order.quantity}</p>
+                      <p className="text-gray-500">{order.orderNumber} · {order.orderedAt}</p>
+                      <p className="font-medium">{order.totalPrice.toLocaleString()}원</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </Card>
           )}
@@ -176,9 +186,10 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
           <Card className="p-4">
             <h4 className="font-semibold text-sm mb-2 flex items-center gap-1"><HelpCircle size={14} /> 빠른 답변</h4>
             <div className="space-y-1">
-              {["교환/반품은 7일 이내 가능합니다.", "배송은 1~3 영업일 소요됩니다.", "확인 후 안내드리겠습니다."].map((preset, i) => (
-                <button key={i} onClick={() => setInput(preset)} className="block w-full text-left px-2 py-1.5 bg-gray-50 rounded text-xs hover:bg-gray-100 transition">{preset}</button>
+              {presets.map((preset) => (
+                <button key={preset.id} onClick={() => setInput(preset.content)} className="block w-full text-left px-2 py-1.5 bg-gray-50 rounded text-xs hover:bg-gray-100 transition">{preset.title}</button>
               ))}
+              {presets.length === 0 && <p className="text-xs text-gray-400">저장된 프리셋이 없습니다</p>}
             </div>
           </Card>
         </div>

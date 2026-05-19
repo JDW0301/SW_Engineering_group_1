@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { listOperatorInquiries } from "../../api/inquiries";
-import { MOCK_INQUIRY_POSTS, MOCK_INQUIRY_REPLIES_BY_POST_ID, MOCK_SUPPORT_MESSAGES_BY_SESSION_ID, MOCK_SUPPORT_SESSIONS } from "../../data/mockData";
+import { getOperatorWorkspace, getOperatorSettings } from "../../api/operatorWorkspace";
 import OperatorNav from "./OperatorNav";
 import OperatorMain from "./OperatorMain";
 import ChannelPage from "./ChannelPage";
@@ -10,22 +10,30 @@ import OperatorSettings from "./OperatorSettings";
 
 const OperatorApp = ({ onLogout, user, onUpdateUser }) => {
   const [page, setPage] = useState("main");
-  const [supportSessions, setSupportSessions] = useState(MOCK_SUPPORT_SESSIONS);
-  const [supportMessagesBySessionId, setSupportMessagesBySessionId] = useState(MOCK_SUPPORT_MESSAGES_BY_SESSION_ID);
-  const [inquiryPosts, setInquiryPosts] = useState(MOCK_INQUIRY_POSTS);
-  const [inquiryRepliesByPostId, setInquiryRepliesByPostId] = useState(MOCK_INQUIRY_REPLIES_BY_POST_ID);
+  const [supportSessions, setSupportSessions] = useState([]);
+  const [supportMessagesBySessionId, setSupportMessagesBySessionId] = useState({});
+  const [inquiryPosts, setInquiryPosts] = useState([]);
+  const [inquiryRepliesByPostId, setInquiryRepliesByPostId] = useState({});
   const [selectedDetail, setSelectedDetail] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [notesByTarget, setNotesByTarget] = useState({});
+  const [presets, setPresets] = useState([]);
   const [sideNav, setSideNav] = useState(false);
   const [prevPage, setPrevPage] = useState("main");
   const storeName = user?.storeName || user?.store?.name || "패션스토어 루미";
 
   useEffect(() => {
     let ignore = false;
-    listOperatorInquiries()
-      .then(posts => {
+    Promise.all([getOperatorWorkspace(), listOperatorInquiries(), getOperatorSettings()])
+      .then(([workspace, posts, settings]) => {
         if (ignore) return;
+        setOrders(workspace.orders ?? []);
+        setSupportSessions(workspace.supportSessions ?? []);
+        setSupportMessagesBySessionId(workspace.supportMessagesBySessionId ?? {});
+        setNotesByTarget(workspace.notesByTarget ?? {});
         setInquiryPosts(posts);
         setInquiryRepliesByPostId(Object.fromEntries(posts.map(post => [post.id, post.replies || []])));
+        setPresets(settings.presets ?? []);
       })
       .catch(() => {});
     return () => {
@@ -49,11 +57,11 @@ const OperatorApp = ({ onLogout, user, onUpdateUser }) => {
     <div className="min-h-screen bg-gray-50">
       <OperatorNav page={page} setPage={setPage} onLogout={onLogout} sideNav={sideNav} setSideNav={setSideNav} storeName={storeName} />
       <div className="max-w-5xl mx-auto px-4 py-6">
-        {page === "main" && <OperatorMain supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} openSupportSession={openSupportSession} openInquiryPost={openInquiryPost} />}
-        {page === "channel" && <ChannelPage supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} openSupportSession={openSupportSession} openInquiryPost={openInquiryPost} />}
-        {page === "inquiryDetail" && <OperatorInquiryDetail selectedDetail={selectedDetail} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} setInquiryPosts={setInquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} setInquiryRepliesByPostId={setInquiryRepliesByPostId} setPage={setPage} prevPage={prevPage} />}
+        {page === "main" && <OperatorMain orders={orders} supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} openSupportSession={openSupportSession} openInquiryPost={openInquiryPost} />}
+        {page === "channel" && <ChannelPage orders={orders} supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} openSupportSession={openSupportSession} openInquiryPost={openInquiryPost} />}
+        {page === "inquiryDetail" && <OperatorInquiryDetail selectedDetail={selectedDetail} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} setInquiryPosts={setInquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} setInquiryRepliesByPostId={setInquiryRepliesByPostId} setPage={setPage} prevPage={prevPage} orders={orders} notesByTarget={notesByTarget} setNotesByTarget={setNotesByTarget} presets={presets} />}
         {page === "stats" && <StatsPage supportSessions={supportSessions} supportMessagesBySessionId={supportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} />}
-        {page === "settings" && <OperatorSettings user={user} onUpdateUser={onUpdateUser} />}
+        {page === "settings" && <OperatorSettings user={user} onUpdateUser={onUpdateUser} onPresetsChange={setPresets} />}
       </div>
     </div>
   );

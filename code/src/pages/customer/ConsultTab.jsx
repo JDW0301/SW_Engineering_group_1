@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { Clock, Plus } from "lucide-react";
 import { Card, StatusBadge, Button } from "../../components/ui";
-import { MOCK_ORDERS } from "../../data/mockData";
 
-const ConsultTab = ({ store, order, supportSessions, onOpenSupportSession, createSupportSession }) => {
+const ConsultTab = ({ store, order, orders = [], supportSessions, onOpenSupportSession, createSupportSession }) => {
   const [selectingOrder, setSelectingOrder] = useState(false);
   const [chosenOrder, setChosenOrder] = useState(order || null);
-  const storeOrders = MOCK_ORDERS.filter(o => o.storeId === store.id);
+  const storeOrders = orders.filter(o => o.storeId === store.id);
   const activeSupport = supportSessions.find(session => session.storeId === store.id && session.status === "IN_PROGRESS");
 
-  const startConsult = () => {
+  const startConsult = async () => {
     const now = new Date().toLocaleString();
-    const newSession = createSupportSession({
+    const newSession = await createSupportSession({
       title: chosenOrder ? `${chosenOrder.productName} 관련 상담` : "일반 상담",
       store,
       order: chosenOrder,

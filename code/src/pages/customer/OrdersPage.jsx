@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { MOCK_STORES, MOCK_ORDERS } from "../../data/mockData";
 import OrderSummaryCard from "./OrderSummaryCard";
 
-const OrdersPage = ({ setPage, openStore, setSelectedOrder, orders = MOCK_ORDERS, stores = MOCK_STORES }) => {
+const OrdersPage = ({ setPage, openStore, setSelectedOrder, orders = [], stores = [] }) => {
   const [filter, setFilter] = useState("latest");
   const [storeFilter, setStoreFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const orderList = orders.length > 0 ? orders : MOCK_ORDERS;
-  const storeList = stores.length > 0 ? stores : MOCK_STORES;
+  const orderList = orders;
+  const storeList = stores;
   const sorted = [...orderList]
     .filter(o => storeFilter === "all" || o.storeId === parseInt(storeFilter))
     .filter(o => !dateFrom || o.orderedAt >= dateFrom)
@@ -34,6 +33,7 @@ const OrdersPage = ({ setPage, openStore, setSelectedOrder, orders = MOCK_ORDERS
         <input type="date" className="border rounded-lg px-3 py-1.5 text-sm" value={dateTo} onChange={e => setDateTo(e.target.value)} placeholder="종료일" />
       </div>
       <div className="space-y-2">
+        {sorted.length === 0 && <p className="text-sm text-gray-400 py-8 text-center">주문 내역이 없습니다</p>}
         {sorted.map(o => (
           <OrderSummaryCard key={o.id} order={o} onClick={() => { const s = storeList.find(store => store.id === o.storeId); if (s) { setSelectedOrder(o); openStore(s, "chatbot", o); } }} />
         ))}

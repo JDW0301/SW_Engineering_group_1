@@ -205,6 +205,14 @@ DEMO_INQUIRY_POSTS = [
     },
 ]
 
+DEMO_FAQS = [
+    {"question": "배송은 얼마나 걸리나요?", "answer": "주문 확인 후 1~3 영업일 내 발송되며, 발송 후 1~2일 내 수령 가능합니다."},
+    {"question": "교환/반품은 어떻게 하나요?", "answer": "수령 후 7일 이내 문의 게시판이나 상담으로 접수해주시면 교환/반품을 안내해드립니다."},
+    {"question": "결제 수단은 무엇이 있나요?", "answer": "신용카드, 계좌이체, 간편결제 이용이 가능합니다."},
+    {"question": "회원 등급 혜택이 있나요?", "answer": "현재 별도 등급 혜택은 없으며, 추후 업데이트 예정입니다."},
+    {"question": "영업시간 외 문의는 어떻게 하나요?", "answer": "챗봇 기본 답변은 바로 확인할 수 있고, 상담사 연결 답변은 영업시간 내 순차적으로 처리됩니다."},
+]
+
 
 def ensure_demo_customer_home_data() -> None:
     with db_connection() as connection:
@@ -248,6 +256,13 @@ def ensure_demo_customer_home_data() -> None:
                 if post["reply"]:
                     _ensure_inquiry_reply(connection, post_id, operator_id, post["reply"])
 
+            for store in DEMO_STORES:
+                for sort_order, faq in enumerate(DEMO_FAQS):
+                    _ensure_faq(connection, store_ids[store["key"]], faq, sort_order)
+                _ensure_response_preset(connection, store_ids[store["key"]], "배송 안내", "배송은 보통 1~3 영업일 정도 소요됩니다.")
+                _ensure_response_preset(connection, store_ids[store["key"]], "교환/반품 안내", "교환/반품은 상품 수령 후 7일 이내 접수해 주세요.")
+                _ensure_knowledge_file(connection, store_ids[store["key"]], f"{store['name']}_상담안내.txt")
+
             connection.commit()
         except Exception:
             connection.rollback()
@@ -264,10 +279,14 @@ def get_customer_home(user_id: int) -> dict:
 
         orders = _fetch_orders(connection, user_id)
         stores = _fetch_ordered_stores(connection, user_id)
-        inquiries = _fetch_support_inquiries(connection, user) + _fetch_board_inquiries(connection, user)
+        support_sessions = _fetch_support_inquiries(connection, user)
+        board_inquiries = _fetch_board_inquiries(connection, user)
+        inquiries = support_sessions + board_inquiries
         return {
             "orders": orders,
             "stores": stores,
+            "supportSessions": support_sessions,
+            "supportMessagesBySessionId": {session["id"]: session["messages"] for session in support_sessions},
             "inquiries": sorted(inquiries, key=lambda item: item["lastMessageAt"], reverse=True),
         }
 
@@ -500,6 +519,54 @@ def _ensure_inquiry_reply(connection, inquiry_post_id: int, author_user_id: int,
             VALUES (%s, %s, %s, %s, %s)
             """,
             (inquiry_post_id, author_user_id, reply["content"], reply["created_at"], reply["created_at"]),
+        )
+
+
+def _ensure_faq(connection, store_id: int, faq: dict, sort_order: int) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM faq WHERE store_id = %s AND question = %s LIMIT 1",
+            (store_id, faq["question"]),
+        )
+        if cursor.fetchone():
+            return
+        cursor.execute(
+            """
+            INSERT INTO faq (store_id, question, answer, sort_order)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (store_id, faq["question"], faq["answer"], sort_order),
+        )
+
+
+def _ensure_response_preset(connection, store_id: int, title: str, content: str) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM response_preset WHERE store_id = %s AND title = %s LIMIT 1",
+            (store_id, title),
+        )
+        if cursor.fetchone():
+            return
+        cursor.execute(
+            "INSERT INTO response_preset (store_id, title, content) VALUES (%s, %s, %s)",
+            (store_id, title, content),
+        )
+
+
+def _ensure_knowledge_file(connection, store_id: int, file_name: str) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM chatbot_knowledge_file WHERE store_id = %s AND file_name = %s LIMIT 1",
+            (store_id, file_name),
+        )
+        if cursor.fetchone():
+            return
+        cursor.execute(
+            """
+            INSERT INTO chatbot_knowledge_file (store_id, file_name, file_url, is_active)
+            VALUES (%s, %s, %s, TRUE)
+            """,
+            (store_id, file_name, f"local://{file_name}"),
         )
 
 

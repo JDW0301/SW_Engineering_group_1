@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { ArrowLeft, Search, Store } from "lucide-react";
 import { Card } from "../../components/ui";
-import { MOCK_STORES } from "../../data/mockData";
 
-const SearchPage = ({ setPage, openStore, searchQuery }) => {
+const SearchPage = ({ setPage, openStore, searchQuery, stores = [] }) => {
   const [q, setQ] = useState(searchQuery);
   const [tab, setTab] = useState("all");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const cats = ["all", "의류", "음식", "전자기기", "생활용품", "기타"];
-  const results = MOCK_STORES.filter(s => (tab === "all" || s.category === tab) && (!q || s.name.includes(q)));
-  const suggestions = q.length > 0 ? MOCK_STORES.filter(s => s.name.includes(q)).slice(0, 5) : [];
+  const cats = ["all", ...Array.from(new Set(stores.map(store => store.category).filter(Boolean)))];
+  const results = stores.filter(s => (tab === "all" || s.category === tab) && (!q || s.name.includes(q)));
+  const suggestions = q.length > 0 ? stores.filter(s => s.name.includes(q)).slice(0, 5) : [];
 
   return (
     <div>

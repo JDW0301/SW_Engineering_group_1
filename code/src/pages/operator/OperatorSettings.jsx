@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bot, Store, Upload, FileText, Eye, X } from "lucide-react";
 import { updateOperatorStore } from "../../api/operator";
+import { createKnowledgeFile, deleteKnowledgeFile, getOperatorSettings, saveOperatorPresets } from "../../api/operatorWorkspace";
 import { Card, TabButton, Input, Button } from "../../components/ui";
-import { MOCK_FAQ } from "../../data/mockData";
 
-const OperatorSettings = ({ user, onUpdateUser }) => {
+const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
   const [tab, setTab] = useState("chatbot");
-  const [files, setFiles] = useState([{ id: 1, name: "FAQ_안내.txt", size: "2.3KB" }, { id: 2, name: "반품정책.txt", size: "1.8KB" }]);
-  const [presets, setPresets] = useState(MOCK_FAQ.slice(0, 3).map((f, i) => ({ ...f, id: i + 1 })));
+  const [files, setFiles] = useState([]);
+  const [presets, setPresets] = useState([]);
+  const [fileName, setFileName] = useState("");
+  const [settingsMessage, setSettingsMessage] = useState("");
   const [storeForm, setStoreForm] = useState({
     storeName: user?.storeName || user?.store?.name || "",
     storePhone: user?.storePhone || user?.store?.phone || "",
@@ -18,6 +20,48 @@ const OperatorSettings = ({ user, onUpdateUser }) => {
   const [storeError, setStoreError] = useState("");
   const [storeSuccess, setStoreSuccess] = useState("");
   const [isStoreSaving, setIsStoreSaving] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    getOperatorSettings()
+      .then(data => {
+        if (ignore) return;
+        setFiles(data.files ?? []);
+        setPresets(data.presets ?? []);
+        onPresetsChange?.(data.presets ?? []);
+      })
+      .catch(() => {});
+    return () => { ignore = true; };
+  }, [onPresetsChange]);
+
+  const updatePreset = (index, field, value) => {
+    setPresets(prev => {
+      const next = [...prev];
+      next[index] = { ...(next[index] || {}), [field]: value };
+      return next;
+    });
+    setSettingsMessage("");
+  };
+
+  const savePresets = async () => {
+    const saved = await saveOperatorPresets(presets.map(preset => ({ title: preset.title || "", content: preset.content || "" })));
+    setPresets(saved);
+    onPresetsChange?.(saved);
+    setSettingsMessage("프리셋이 DB에 저장되었습니다.");
+  };
+
+  const addFile = async () => {
+    if (!fileName.trim()) return;
+    const file = await createKnowledgeFile(fileName.trim());
+    setFiles(prev => [file, ...prev]);
+    setFileName("");
+    setSettingsMessage("지식 파일이 DB에 저장되었습니다.");
+  };
+
+  const removeFile = async (id) => {
+    await deleteKnowledgeFile(id);
+    setFiles(prev => prev.filter(file => file.id !== id));
+  };
 
   const updateStoreField = (field, value) => {
     setStoreForm(prev => ({ ...prev, [field]: value }));
@@ -68,21 +112,25 @@ const OperatorSettings = ({ user, onUpdateUser }) => {
           {/* Knowledge Files */}
           <Card className="p-4">
             <h3 className="font-semibold text-sm mb-3">챗봇 적용 정보 관리</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-3 hover:border-indigo-400 cursor-pointer transition">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-3">
               <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500">txt 파일을 드래그하거나 클릭하여 업로드</p>
+              <div className="flex gap-2">
+                <Input value={fileName} onChange={event => setFileName(event.target.value)} placeholder="저장할 txt 파일명" />
+                <Button onClick={addFile}>추가</Button>
+              </div>
             </div>
+            {settingsMessage && <p className="text-sm text-green-600 mb-2">{settingsMessage}</p>}
             <div className="space-y-2">
               {files.map(f => (
                 <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
                   <div className="flex items-center gap-2">
                     <FileText size={14} className="text-gray-400" />
                     <span className="text-sm">{f.name}</span>
-                    <span className="text-xs text-gray-400">{f.size}</span>
+                    <span className="text-xs text-gray-400">{f.uploadedAt}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <button className="p-1 hover:bg-gray-200 rounded"><Eye size={14} /></button>
-                    <button onClick={() => setFiles(p => p.filter(x => x.id !== f.id))} className="p-1 hover:bg-red-100 rounded text-red-500"><X size={14} /></button>
+                    <button onClick={() => removeFile(f.id)} className="p-1 hover:bg-red-100 rounded text-red-500"><X size={14} /></button>
                   </div>
                 </div>
               ))}
@@ -93,20 +141,20 @@ const OperatorSettings = ({ user, onUpdateUser }) => {
           <Card className="p-4">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-semibold text-sm">프리셋 관리 (최대 5개)</h3>
-              <Button size="sm" variant="outline" onClick={() => setPresets([])}>초기화</Button>
+              <Button size="sm" variant="outline" onClick={() => { setPresets([]); setSettingsMessage(""); }}>초기화</Button>
             </div>
             <div className="space-y-3">
               {[0, 1, 2, 3, 4].map(i => (
                 <div key={i} className="border rounded-lg p-3">
-                  <Input label={`질문 ${i + 1}`} defaultValue={presets[i]?.question || ""} placeholder="자주 묻는 질문" />
+                  <Input label={`프리셋 제목 ${i + 1}`} value={presets[i]?.title || ""} onChange={event => updatePreset(i, "title", event.target.value)} placeholder="예: 배송 안내" />
                   <div className="mt-2">
                     <label className="text-sm font-medium text-gray-700">답변</label>
-                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm h-16 resize-none mt-1" defaultValue={presets[i]?.answer || ""} placeholder="답변 내용" />
+                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm h-16 resize-none mt-1" value={presets[i]?.content || ""} onChange={event => updatePreset(i, "content", event.target.value)} placeholder="답변 내용" />
                   </div>
                 </div>
               ))}
             </div>
-            <Button className="w-full mt-3">저장</Button>
+            <Button className="w-full mt-3" onClick={savePresets}>저장</Button>
           </Card>
         </div>
       )}

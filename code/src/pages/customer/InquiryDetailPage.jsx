@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Package } from "lucide-react";
 import { Avatar, StatusBadge, Button, Card } from "../../components/ui";
+import { createSupportMessage } from "../../api/support";
 
 const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, setPage }) => {
   const [input, setInput] = useState("");
@@ -14,14 +15,14 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
 
   if (!selectedDetail) return null;
 
-  const sendMsg = () => {
+  const sendMsg = async () => {
     if (!supportSession) return;
     if (!input.trim()) return;
-    const now = new Date().toLocaleString();
-    const nextMessage = { id: supportMessages.length + 1, supportSessionId: supportSession.id, sender: "customer", content: input, time: now };
-    setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...supportMessages, nextMessage] }));
-    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: now } : session));
+    const content = input;
     setInput("");
+    const nextMessage = await createSupportMessage(supportSession.id, content);
+    setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...supportMessages, nextMessage] }));
+    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: nextMessage.time } : session));
   };
 
   if (selectedDetail.kind === "inquiry") {

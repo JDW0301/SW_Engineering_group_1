@@ -100,3 +100,67 @@ def validate_inquiry_create(body: dict) -> dict:
         "orderId": optional_int(body.get("orderId"), "주문"),
         "isSecret": bool(is_secret),
     }
+
+
+def validate_support_session_create(body: dict) -> dict:
+    messages = body.get("initialMessages", [])
+    if not isinstance(messages, list):
+        messages = []
+    return {
+        "storeId": require_int(body.get("storeId"), "스토어"),
+        "orderId": optional_int(body.get("orderId"), "주문"),
+        "initialMessages": [
+            {
+                "sender": optional_string(message.get("sender")) or "SYSTEM",
+                "content": require_string(message.get("content"), "메시지"),
+            }
+            for message in messages
+            if isinstance(message, dict) and optional_string(message.get("content"))
+        ],
+    }
+
+
+def validate_support_message_create(body: dict) -> dict:
+    return {"content": require_string(body.get("content"), "메시지")}
+
+
+def validate_support_status_update(body: dict) -> dict:
+    status = require_string(body.get("status"), "상태")
+    if status not in {"OPEN", "IN_PROGRESS", "RESOLVED", "EXPIRED"}:
+        raise AppError(400, "상태 형식이 올바르지 않습니다.")
+    return {"status": status}
+
+
+def validate_inquiry_reply_create(body: dict) -> dict:
+    return {"content": require_string(body.get("content"), "답변")}
+
+
+def validate_internal_note_create(body: dict) -> dict:
+    return {
+        "supportSessionId": optional_int(body.get("supportSessionId"), "상담"),
+        "inquiryPostId": optional_int(body.get("inquiryPostId"), "문의"),
+        "content": require_string(body.get("content"), "메모"),
+    }
+
+
+def validate_preset_save(body: dict) -> dict:
+    raw_presets = body.get("presets", [])
+    if not isinstance(raw_presets, list):
+        raw_presets = []
+    presets = []
+    for preset in raw_presets:
+        if not isinstance(preset, dict):
+            continue
+        title = optional_string(preset.get("title"))
+        content = optional_string(preset.get("content"))
+        if title and content:
+            presets.append({"title": title[:150], "content": content})
+    return {"presets": presets}
+
+
+def validate_knowledge_file_create(body: dict) -> dict:
+    file_name = require_string(body.get("fileName"), "파일명")
+    return {
+        "fileName": file_name[:255],
+        "fileUrl": optional_string(body.get("fileUrl")),
+    }

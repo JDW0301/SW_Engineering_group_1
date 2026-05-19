@@ -314,6 +314,27 @@ CREATE TABLE IF NOT EXISTS store_stat_daily (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS operator_internal_note (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    operator_user_id BIGINT UNSIGNED NOT NULL,
+    support_session_id BIGINT UNSIGNED NULL,
+    inquiry_post_id BIGINT UNSIGNED NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_operator_note_operator_user_id (operator_user_id),
+    KEY idx_operator_note_support_session_id (support_session_id),
+    KEY idx_operator_note_inquiry_post_id (inquiry_post_id),
+    CONSTRAINT fk_operator_note_operator_user
+        FOREIGN KEY (operator_user_id) REFERENCES app_user(id),
+    CONSTRAINT fk_operator_note_support_session
+        FOREIGN KEY (support_session_id) REFERENCES support_session(id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_operator_note_inquiry_post
+        FOREIGN KEY (inquiry_post_id) REFERENCES inquiry_post(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS refresh_token (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     user_id BIGINT UNSIGNED NOT NULL,

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Send, ArrowRight } from "lucide-react";
 import { Avatar, Button } from "../../components/ui";
 import { streamChatbotReply } from "../../api/ai";
-import { MOCK_FAQ } from "../../data/mockData";
+import { listStoreFaqs } from "../../api/faqs";
 
 const buildStoreContext = (store) => [
   `스토어명: ${store.name}`,
@@ -29,8 +29,26 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   const [error, setError] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [needsHandoff, setNeedsHandoff] = useState(false);
+  const [faqs, setFaqs] = useState([]);
+  const [isFaqLoading, setIsFaqLoading] = useState(true);
   const chatEnd = useRef(null);
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  useEffect(() => {
+    let ignore = false;
+    setIsFaqLoading(true);
+    listStoreFaqs(store.id)
+      .then(items => {
+        if (!ignore) setFaqs(items);
+      })
+      .catch(loadError => {
+        if (!ignore) setError(loadError.message);
+      })
+      .finally(() => {
+        if (!ignore) setIsFaqLoading(false);
+      });
+    return () => { ignore = true; };
+  }, [store.id]);
 
   const sendMessage = async (messageText) => {
     const trimmed = messageText.trim();
@@ -112,7 +130,16 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   };
 
   const askFaq = (faq) => {
-    sendMessage(faq.question);
+    const now = Date.now();
+    setMessages(prev => [
+      ...prev,
+      { id: now, sender: "user", content: faq.question },
+      { id: now + 1, sender: "bot", content: faq.answer },
+    ]);
+    setShowFaq(false);
+    setError("");
+    setStatus("");
+    setNeedsHandoff(false);
   };
 
   const requestHandoff = () => {
@@ -139,7 +166,9 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
       {showFaq && (
         <div className="mb-3 space-y-1">
           <p className="text-xs text-gray-400 mb-1">자주 묻는 질문</p>
-          {MOCK_FAQ.map(f => (
+          {isFaqLoading && <p className="text-xs text-gray-400 px-3 py-2">질문을 불러오는 중입니다.</p>}
+          {!isFaqLoading && faqs.length === 0 && <p className="text-xs text-gray-400 px-3 py-2">등록된 질문이 없습니다.</p>}
+          {faqs.map(f => (
             <button key={f.id} onClick={() => askFaq(f)} className="block w-full text-left px-3 py-2 bg-indigo-50 rounded-lg text-sm text-indigo-700 hover:bg-indigo-100 transition">{f.question}</button>
           ))}
         </div>

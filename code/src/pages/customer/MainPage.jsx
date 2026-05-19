@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ChevronRight, Store, MessageCircle, FileText } from "lucide-react";
 import { Card, StatusBadge, Button } from "../../components/ui";
-import { MOCK_STORES } from "../../data/mockData";
 import OrderSummaryCard from "./OrderSummaryCard";
 
 const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSupportSession, openInquiryPost, user, orders, stores, isHomeLoading, homeError }) => {
@@ -14,7 +13,7 @@ const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSuppo
     .filter(post => includeResolvedInquiries || post.status !== "RESOLVED")
     .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt))
     .slice(0, 5);
-  const displayStores = MOCK_STORES.length > 0 ? MOCK_STORES : stores;
+  const displayStores = stores;
   const findOrderStore = (order) => stores.find(store => store.id === order.storeId)
     || displayStores.find(store => store.id === order.storeId)
     || displayStores.find(store => store.name === order.storeName);

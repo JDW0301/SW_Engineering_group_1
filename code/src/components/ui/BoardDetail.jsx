@@ -1,4 +1,4 @@
-import { ArrowLeft, Package, Image } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import { Card, Button } from "./index";
 
 const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit }) => {

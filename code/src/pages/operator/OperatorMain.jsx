@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Package, Bot, ChevronRight } from "lucide-react";
 import { Card, StatusBadge, Avatar } from "../../components/ui";
-import { MOCK_ORDERS } from "../../data/mockData";
 import { generateAISummary } from "../../utils/aiSummary";
 import OrderRow from "./OrderRow";
 
@@ -10,7 +9,7 @@ const toInquiryMessages = (post, replies) => [
   ...replies.map(reply => ({ id: reply.id + 1, sender: "operator", content: reply.content, time: reply.createdAt })),
 ];
 
-const OperatorMain = ({ supportSessions, supportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, openSupportSession, openInquiryPost }) => {
+const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, openSupportSession, openInquiryPost }) => {
   const [ratePeriod, setRatePeriod] = useState("7일");
   const supportRows = supportSessions.map(session => ({ ...session, kind: "support", messages: supportMessagesBySessionId[session.id] || [] }));
   const inquiryRows = inquiryPosts.map(post => ({ ...post, kind: "inquiry", messages: toInquiryMessages(post, inquiryRepliesByPostId[post.id] || []) }));
@@ -49,7 +48,7 @@ const OperatorMain = ({ supportSessions, supportMessagesBySessionId, inquiryPost
         <p className="text-xs font-medium text-gray-500 mb-2">최근 상담</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[...supportRows].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5).map(session => {
-            const order = MOCK_ORDERS.find(o => o.id === session.orderId);
+            const order = orders.find(o => o.id === session.orderId);
             return (
               <Card key={session.id} className="p-3" onClick={() => openSupportSession(session.id)}>
                 <div className="flex items-center justify-between mb-1.5">
@@ -78,7 +77,7 @@ const OperatorMain = ({ supportSessions, supportMessagesBySessionId, inquiryPost
         </div>
         <p className="text-xs font-medium text-gray-500 mt-5 mb-2">최근 문의</p>
         {[...inquiryRows].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5).map(post => {
-          const order = MOCK_ORDERS.find(o => o.id === post.orderId);
+          const order = orders.find(o => o.id === post.orderId);
           return (
             <Card key={post.id} className="p-3 mb-2" onClick={() => openInquiryPost(post.id)}>
               <div className="flex items-center justify-between mb-1.5">
@@ -106,7 +105,7 @@ const OperatorMain = ({ supportSessions, supportMessagesBySessionId, inquiryPost
       {/* Orders */}
       <section>
         <h3 className="font-semibold text-gray-800 mb-3">최근 주문 목록</h3>
-        {MOCK_ORDERS.filter(o => o.storeId === 1).slice(0, 10).map(o => (
+        {orders.slice(0, 10).map(o => (
           <OrderRow key={o.id} order={o} supportSessions={supportSessions} inquiryPosts={inquiryPosts} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />
         ))}
       </section>

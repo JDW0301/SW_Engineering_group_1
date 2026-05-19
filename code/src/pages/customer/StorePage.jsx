@@ -41,7 +41,7 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
       </div>
 
       {storeTab === "chatbot" && <ChatbotTab store={selectedStore} onCreateSupportFromChatbot={onCreateSupportFromChatbot} />}
-      {storeTab === "consult" && <ConsultTab store={selectedStore} order={selectedOrder} supportSessions={supportSessions} setSupportSessions={setSupportSessions} setSupportMessagesBySessionId={setSupportMessagesBySessionId} onOpenSupportSession={openSupportSession} createSupportSession={createSupportSession} />}
+      {storeTab === "consult" && <ConsultTab store={selectedStore} order={selectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} setSupportMessagesBySessionId={setSupportMessagesBySessionId} onOpenSupportSession={openSupportSession} createSupportSession={createSupportSession} />}
       {storeTab === "board" && <BoardTab store={selectedStore} posts={inquiryPosts.filter(p => p.storeId === selectedStore.id)} orders={orders} onInquiryCreated={handleInquiryCreated} />}
       {storeTab === "myInquiry" && <MyInquiryTab store={selectedStore} supportSessions={supportSessions.filter(session => session.storeId === selectedStore.id)} inquiryPosts={inquiryPosts.filter(post => post.storeId === selectedStore.id)} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />}
     </div>

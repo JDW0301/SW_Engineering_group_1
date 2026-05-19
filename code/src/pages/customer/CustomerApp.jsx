@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCustomerHome } from "../../api/customerHome";
 import { listMyInquiries } from "../../api/inquiries";
-import { MOCK_INQUIRY_POSTS, MOCK_INQUIRY_REPLIES_BY_POST_ID, MOCK_SUPPORT_MESSAGES_BY_SESSION_ID, MOCK_SUPPORT_SESSIONS } from "../../data/mockData";
+import { createSupportSession as createSupportSessionApi } from "../../api/support";
 import CustomerNav from "./CustomerNav";
 import MainPage from "./MainPage";
 import OrdersPage from "./OrdersPage";
@@ -19,14 +19,14 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
   const [detailBackPage, setDetailBackPage] = useState("main");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [storeTab, setStoreTab] = useState("chatbot");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   const [orders, setOrders] = useState([]);
   const [stores, setStores] = useState([]);
-  const [supportSessions, setSupportSessions] = useState(MOCK_SUPPORT_SESSIONS);
-  const [supportMessagesBySessionId, setSupportMessagesBySessionId] = useState(MOCK_SUPPORT_MESSAGES_BY_SESSION_ID);
-  const [inquiryPosts, setInquiryPosts] = useState(MOCK_INQUIRY_POSTS);
-  const [inquiryRepliesByPostId, setInquiryRepliesByPostId] = useState(MOCK_INQUIRY_REPLIES_BY_POST_ID);
+  const [supportSessions, setSupportSessions] = useState([]);
+  const [supportMessagesBySessionId, setSupportMessagesBySessionId] = useState({});
+  const [inquiryPosts, setInquiryPosts] = useState([]);
+  const [inquiryRepliesByPostId, setInquiryRepliesByPostId] = useState({});
   const [isHomeLoading, setIsHomeLoading] = useState(true);
   const [homeError, setHomeError] = useState("");
 
@@ -41,11 +41,19 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
         if (ignore) return;
         setOrders(data.orders ?? []);
         setStores(data.stores ?? []);
-        setInquiryPosts(await listMyInquiries());
+        setSupportSessions(data.supportSessions ?? []);
+        setSupportMessagesBySessionId(data.supportMessagesBySessionId ?? {});
+        const posts = await listMyInquiries();
+        setInquiryPosts(posts);
+        setInquiryRepliesByPostId(Object.fromEntries(posts.map(post => [post.id, post.replies || []])));
       } catch (error) {
         if (ignore) return;
         setOrders([]);
         setStores([]);
+        setSupportSessions([]);
+        setSupportMessagesBySessionId({});
+        setInquiryPosts([]);
+        setInquiryRepliesByPostId({});
         setHomeError(error.message || "고객 홈 데이터를 불러오지 못했습니다.");
       } finally {
         if (!ignore) {
@@ -79,37 +87,24 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
     setPage("inquiryDetail");
   };
 
-  const createSupportSession = ({ title, store, order = selectedOrder, source = "manual", initialMessages = [] }) => {
-    const now = new Date().toLocaleString();
-    const nextId = Math.max(0, ...supportSessions.map(session => session.id)) + 1;
-    const newSession = {
-      id: nextId,
+  const createSupportSession = async ({ title, store, order = selectedOrder, source = "manual", initialMessages = [] }) => {
+    const session = await createSupportSessionApi({
       storeId: store.id,
-      storeName: store.name,
-      status: "IN_PROGRESS",
-      title,
       orderId: order?.id || null,
-      createdAt: now,
-      lastMessageAt: now,
-      orderInfo: order ? `${order.productName} (${order.orderNumber})` : null,
-      orderProductName: order?.productName || null,
-      customerName: order?.customerName || user?.name || "고객",
+      initialMessages: initialMessages.length > 0 ? initialMessages : [{ sender: "system", content: title }],
       source,
-    };
-    setSupportSessions(prev => [newSession, ...prev]);
-    setSupportMessagesBySessionId(prev => ({
-      ...prev,
-      [nextId]: initialMessages.map((message, index) => ({ ...message, id: index + 1, supportSessionId: nextId })),
-    }));
-    return newSession;
+    });
+    setSupportSessions(prev => [session, ...prev.filter(item => item.id !== session.id)]);
+    setSupportMessagesBySessionId(prev => ({ ...prev, [session.id]: session.messages || [] }));
+    return session;
   };
 
-  const createSupportFromChatbot = ({ title, store, messages }) => {
+  const createSupportFromChatbot = async ({ title, store, messages }) => {
     const now = new Date().toLocaleString();
     const chatbotMessages = messages
       .filter(message => message.sender === "user")
       .map(message => ({ sender: "customer", content: message.content, time: now }));
-    createSupportSession({
+    await createSupportSession({
       title,
       store,
       order: selectedOrder,
@@ -129,7 +124,7 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {page === "main" && <MainPage setPage={setPage} openStore={openStore} supportSessions={supportSessions} inquiryPosts={inquiryPosts} openSupportSession={(id) => openSupportSession(id, "main")} openInquiryPost={(id) => openInquiryPost(id, "main")} user={user} orders={orders} stores={stores} isHomeLoading={isHomeLoading} homeError={homeError} />}
         {page === "orders" && <OrdersPage setPage={setPage} openStore={openStore} setSelectedOrder={setSelectedOrder} orders={orders} stores={stores} />}
-        {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} />}
+        {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} stores={stores} />}
         {page === "store" && <StorePage selectedStore={selectedStore} setPage={setPage} storeTab={storeTab} setStoreTab={setStoreTab} selectedOrder={selectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} setInquiryPosts={setInquiryPosts} openSupportSession={(id) => openSupportSession(id, "store")} openInquiryPost={(id) => openInquiryPost(id, "store")} onCreateSupportFromChatbot={createSupportFromChatbot} createSupportSession={createSupportSession} />}
         {page === "supportList" && <CustomerSupportListPage setPage={setPage} supportSessions={supportSessions} openSupportSession={openSupportSession} />}
         {page === "inquiryList" && <CustomerInquiryListPage setPage={setPage} inquiryPosts={inquiryPosts} openInquiryPost={openInquiryPost} />}

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Search, MessageCircle, FileText, Bot, ChevronRight } from "lucide-react";
 import { Card, StatusBadge, Avatar, TabButton } from "../../components/ui";
-import { MOCK_ORDERS } from "../../data/mockData";
 import { generateAISummary } from "../../utils/aiSummary";
 
 const toInquiryMessages = (post, replies) => [
@@ -9,7 +8,7 @@ const toInquiryMessages = (post, replies) => [
   ...replies.map(reply => ({ id: reply.id + 1, sender: "operator", content: reply.content, time: reply.createdAt })),
 ];
 
-const ChannelPage = ({ supportSessions, supportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, openSupportSession, openInquiryPost }) => {
+const ChannelPage = ({ orders, supportSessions, supportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, openSupportSession, openInquiryPost }) => {
   const [tab, setTab] = useState("consult");
   const [filter, setFilter] = useState("latest");
   const [searchQ, setSearchQ] = useState("");
@@ -18,7 +17,7 @@ const ChannelPage = ({ supportSessions, supportMessagesBySessionId, inquiryPosts
   const supportRows = supportSessions.map(session => ({ ...session, kind: "support", messages: supportMessagesBySessionId[session.id] || [] }));
   const inquiryRows = inquiryPosts.map(post => ({ ...post, kind: "inquiry", messages: toInquiryMessages(post, inquiryRepliesByPostId[post.id] || []) }));
   const list = (tab === "consult" ? supportRows : inquiryRows)
-    .filter(i => !searchQ || i.title.includes(searchQ) || i.storeName.includes(searchQ) || (MOCK_ORDERS.find(o => o.id === i.orderId)?.customerName || "").includes(searchQ))
+    .filter(i => !searchQ || i.title.includes(searchQ) || i.storeName.includes(searchQ) || (orders.find(o => o.id === i.orderId)?.customerName || i.customerName || "").includes(searchQ))
     .filter(i => !dateFrom || i.createdAt.slice(0, 10) >= dateFrom)
     .filter(i => !dateTo || i.createdAt.slice(0, 10) <= dateTo)
     .sort((a, b) => filter === "latest" ? b.lastMessageAt.localeCompare(a.lastMessageAt) : a.lastMessageAt.localeCompare(b.lastMessageAt));
@@ -48,7 +47,7 @@ const ChannelPage = ({ supportSessions, supportMessagesBySessionId, inquiryPosts
       </div>
       <div className="space-y-2">
         {list.map(row => {
-          const order = MOCK_ORDERS.find(o => o.id === row.orderId);
+          const order = orders.find(o => o.id === row.orderId);
           return (
             <Card key={`${row.kind}-${row.id}`} className="p-3" onClick={() => row.kind === "support" ? openSupportSession(row.id) : openInquiryPost(row.id)}>
               <div className="flex items-center justify-between mb-1.5">

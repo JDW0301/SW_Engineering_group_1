@@ -4,12 +4,13 @@ import ChatbotTab from "./ChatbotTab";
 import ConsultTab from "./ConsultTab";
 import BoardTab from "./BoardTab";
 import MyInquiryTab from "./MyInquiryTab";
-import { MOCK_BOARD_POSTS } from "../../data/mockData";
 
-const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrder, supportSessions, setSupportSessions, setSupportMessagesBySessionId, inquiryPosts, openSupportSession, openInquiryPost, onCreateSupportFromChatbot, createSupportSession }) => {
+const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrder, orders, supportSessions, setSupportSessions, setSupportMessagesBySessionId, inquiryPosts, setInquiryPosts, openSupportSession, openInquiryPost, onCreateSupportFromChatbot, createSupportSession }) => {
   if (!selectedStore) return null;
 
-  const boardPosts = MOCK_BOARD_POSTS;
+  const handleInquiryCreated = (post) => {
+    setInquiryPosts(prev => [post, ...prev.filter(item => item.id !== post.id)]);
+  };
 
   return (
     <div>
@@ -41,7 +42,7 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
 
       {storeTab === "chatbot" && <ChatbotTab store={selectedStore} onCreateSupportFromChatbot={onCreateSupportFromChatbot} />}
       {storeTab === "consult" && <ConsultTab store={selectedStore} order={selectedOrder} supportSessions={supportSessions} setSupportSessions={setSupportSessions} setSupportMessagesBySessionId={setSupportMessagesBySessionId} onOpenSupportSession={openSupportSession} createSupportSession={createSupportSession} />}
-      {storeTab === "board" && <BoardTab store={selectedStore} posts={boardPosts.filter(p => p.storeId === selectedStore.id)} />}
+      {storeTab === "board" && <BoardTab store={selectedStore} posts={inquiryPosts.filter(p => p.storeId === selectedStore.id)} orders={orders} onInquiryCreated={handleInquiryCreated} />}
       {storeTab === "myInquiry" && <MyInquiryTab store={selectedStore} supportSessions={supportSessions.filter(session => session.storeId === selectedStore.id)} inquiryPosts={inquiryPosts.filter(post => post.storeId === selectedStore.id)} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />}
     </div>
   );

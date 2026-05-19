@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCustomerHome } from "../../api/customerHome";
+import { listMyInquiries } from "../../api/inquiries";
 import { MOCK_INQUIRY_POSTS, MOCK_INQUIRY_REPLIES_BY_POST_ID, MOCK_SUPPORT_MESSAGES_BY_SESSION_ID, MOCK_SUPPORT_SESSIONS } from "../../data/mockData";
 import CustomerNav from "./CustomerNav";
 import MainPage from "./MainPage";
@@ -40,6 +41,7 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
         if (ignore) return;
         setOrders(data.orders ?? []);
         setStores(data.stores ?? []);
+        setInquiryPosts(await listMyInquiries());
       } catch (error) {
         if (ignore) return;
         setOrders([]);
@@ -128,7 +130,7 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
         {page === "main" && <MainPage setPage={setPage} openStore={openStore} supportSessions={supportSessions} inquiryPosts={inquiryPosts} openSupportSession={(id) => openSupportSession(id, "main")} openInquiryPost={(id) => openInquiryPost(id, "main")} user={user} orders={orders} stores={stores} isHomeLoading={isHomeLoading} homeError={homeError} />}
         {page === "orders" && <OrdersPage setPage={setPage} openStore={openStore} setSelectedOrder={setSelectedOrder} orders={orders} stores={stores} />}
         {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} />}
-        {page === "store" && <StorePage selectedStore={selectedStore} setPage={setPage} storeTab={storeTab} setStoreTab={setStoreTab} selectedOrder={selectedOrder} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} openSupportSession={(id) => openSupportSession(id, "store")} openInquiryPost={(id) => openInquiryPost(id, "store")} onCreateSupportFromChatbot={createSupportFromChatbot} createSupportSession={createSupportSession} />}
+        {page === "store" && <StorePage selectedStore={selectedStore} setPage={setPage} storeTab={storeTab} setStoreTab={setStoreTab} selectedOrder={selectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} setInquiryPosts={setInquiryPosts} openSupportSession={(id) => openSupportSession(id, "store")} openInquiryPost={(id) => openInquiryPost(id, "store")} onCreateSupportFromChatbot={createSupportFromChatbot} createSupportSession={createSupportSession} />}
         {page === "supportList" && <CustomerSupportListPage setPage={setPage} supportSessions={supportSessions} openSupportSession={openSupportSession} />}
         {page === "inquiryList" && <CustomerInquiryListPage setPage={setPage} inquiryPosts={inquiryPosts} openInquiryPost={openInquiryPost} />}
         {page === "inquiryDetail" && <InquiryDetailPage selectedDetail={selectedDetail} detailBackPage={detailBackPage} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} inquiryRepliesByPostId={inquiryRepliesByPostId} setInquiryRepliesByPostId={setInquiryRepliesByPostId} setPage={setPage} />}

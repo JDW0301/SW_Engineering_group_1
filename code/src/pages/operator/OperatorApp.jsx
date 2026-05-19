@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { listOperatorInquiries } from "../../api/inquiries";
 import { MOCK_INQUIRY_POSTS, MOCK_INQUIRY_REPLIES_BY_POST_ID, MOCK_SUPPORT_MESSAGES_BY_SESSION_ID, MOCK_SUPPORT_SESSIONS } from "../../data/mockData";
 import OperatorNav from "./OperatorNav";
 import OperatorMain from "./OperatorMain";
@@ -17,6 +18,20 @@ const OperatorApp = ({ onLogout, user, onUpdateUser }) => {
   const [sideNav, setSideNav] = useState(false);
   const [prevPage, setPrevPage] = useState("main");
   const storeName = user?.storeName || user?.store?.name || "패션스토어 루미";
+
+  useEffect(() => {
+    let ignore = false;
+    listOperatorInquiries()
+      .then(posts => {
+        if (ignore) return;
+        setInquiryPosts(posts);
+        setInquiryRepliesByPostId(Object.fromEntries(posts.map(post => [post.id, post.replies || []])));
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const openSupportSession = (sessionId) => {
     setPrevPage(page);

@@ -73,3 +73,30 @@ def validate_operator_store_update(body: dict) -> dict:
         "businessHours": optional_string(body.get("businessHours")),
         "description": optional_string(body.get("description")),
     }
+
+
+def optional_int(value, field_name: str) -> int | None:
+    if value is None or value == "":
+        return None
+    if isinstance(value, int):
+        return value
+    raise AppError(400, f"{field_name} 형식이 올바르지 않습니다.")
+
+
+def require_int(value, field_name: str) -> int:
+    if isinstance(value, int):
+        return value
+    raise AppError(400, f"{field_name}은(는) 필수입니다.")
+
+
+def validate_inquiry_create(body: dict) -> dict:
+    content = require_string(body.get("content"), "본문")
+    title = optional_string(body.get("title")) or f"{content[:20]}..."
+    is_secret = body.get("isSecret", False)
+    return {
+        "storeId": require_int(body.get("storeId"), "스토어"),
+        "title": title[:200],
+        "content": content,
+        "orderId": optional_int(body.get("orderId"), "주문"),
+        "isSecret": bool(is_secret),
+    }

@@ -30,6 +30,23 @@
 - 고객 전용 계정 연결과 주문 claim은 별도 문서에서 설명한다.
 - 챗봇, 지식, AI 보조, 검색/지표는 각각 필요한 최소 범위만 정의한다.
 
+## 현재 구현 반영 메모
+
+2026-05-19 기준 현재 브랜치에서는 목업/로컬 state로만 보이던 주요 화면을 DB seed와 API로 연결했다.
+
+현재 화면에서 사용 중인 핵심 테이블은 아래 문서에 나뉘어 있다.
+
+- 공통 계정, 스토어, 문의, 메시지, 내부 메모: `03-required-db-core-and-inquiry.md`
+- 고객 주문/스토어 맥락: `04-required-db-customer-and-linking.md`
+- 상담 세션/메시지: `05-required-db-chatbot.md`
+- FAQ, 응답 프리셋, 챗봇 지식 파일: `06-required-db-knowledge-and-ai.md`
+
+스토어별 운영자 연결은 별도 권한 테이블을 만들지 않고 `store.owner_user_id -> app_user.id`로 단순하게 처리한다.
+
+운영자 workspace 조회는 로그인한 운영자 계정이 소유한 store만 대상으로 주문, 상담, 문의를 모아 보여준다.
+
+FAQ는 `faq_article`의 스토어별 active row를 조회하며, 고객 챗봇 화면에서 FAQ 버튼을 누르면 AI 서버 호출 없이 DB 답변을 즉시 표시한다.
+
 ## 의도적으로 아직 확장하지 않는 것
 
 - 무거운 감사 로그

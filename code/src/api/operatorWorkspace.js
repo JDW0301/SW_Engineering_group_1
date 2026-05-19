@@ -47,10 +47,10 @@ export async function saveOperatorPresets(presets) {
   return data.presets ?? [];
 }
 
-export async function createKnowledgeFile(fileName) {
+export async function createKnowledgeFile(fileName, fileContent) {
   const data = await request("/operator/settings/files", {
     method: "POST",
-    body: JSON.stringify({ fileName }),
+    body: JSON.stringify({ fileName, fileContent }),
   });
   return data.file;
 }

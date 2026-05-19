@@ -287,6 +287,7 @@ CREATE TABLE IF NOT EXISTS chatbot_knowledge_file (
     store_id BIGINT UNSIGNED NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_url VARCHAR(500) NOT NULL,
+    file_content MEDIUMTEXT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),

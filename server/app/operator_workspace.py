@@ -31,7 +31,22 @@ def ensure_operator_workspace_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
                 """
             )
+            _ensure_chatbot_knowledge_file_content_column(cursor)
         connection.commit()
+
+
+def _ensure_chatbot_knowledge_file_content_column(cursor) -> None:
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS column_count
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'chatbot_knowledge_file'
+          AND COLUMN_NAME = 'file_content'
+        """
+    )
+    if cursor.fetchone()["column_count"] == 0:
+        cursor.execute("ALTER TABLE chatbot_knowledge_file ADD COLUMN file_content MEDIUMTEXT NULL AFTER file_url")
 
 
 def get_operator_workspace(user_id: int) -> dict:
@@ -126,10 +141,15 @@ def create_knowledge_file(user_id: int, payload: dict) -> dict:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO chatbot_knowledge_file (store_id, file_name, file_url, is_active)
-                    VALUES (%s, %s, %s, TRUE)
+                    INSERT INTO chatbot_knowledge_file (store_id, file_name, file_url, file_content, is_active)
+                    VALUES (%s, %s, %s, %s, TRUE)
                     """,
-                    (store["id"], payload["fileName"], payload.get("fileUrl") or f"local://{payload['fileName']}"),
+                    (
+                        store["id"],
+                        payload["fileName"],
+                        payload.get("fileUrl") or f"local://{payload['fileName']}",
+                        payload.get("fileContent"),
+                    ),
                 )
                 file_id = cursor.lastrowid
             connection.commit()
@@ -287,7 +307,7 @@ def _fetch_files(connection, store_id: int) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT id, file_name, file_url, is_active, uploaded_at
+            SELECT id, file_name, file_url, file_content, is_active, uploaded_at
             FROM chatbot_knowledge_file
             WHERE store_id = %s
             ORDER BY uploaded_at DESC, id DESC
@@ -302,7 +322,7 @@ def _fetch_file(connection, file_id: int) -> dict:
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT id, file_name, file_url, is_active, uploaded_at
+            SELECT id, file_name, file_url, file_content, is_active, uploaded_at
             FROM chatbot_knowledge_file
             WHERE id = %s
             LIMIT 1
@@ -317,6 +337,7 @@ def _format_file(row: dict) -> dict:
         "id": row["id"],
         "name": row["file_name"],
         "fileUrl": row["file_url"],
+        "content": row.get("file_content"),
         "isActive": bool(row["is_active"]),
         "uploadedAt": _format_date(row["uploaded_at"]),
     }

@@ -19,6 +19,22 @@
 
 새 고객 메시지에 따라 문의가 다시 열리는 동작은 별도 핵심 API라기보다 문의 상태 규칙의 일부로 이해한다.
 
+현재 구현된 문의/상담 관련 API는 아래 흐름을 기준으로 한다.
+
+| Method | Path | 화면 목적 |
+|---|---|---|
+| `GET` | `/api/customer/inquiries` | 고객 내 문의 목록 조회 |
+| `POST` | `/api/customer/inquiries` | 고객 새 문의 작성 |
+| `GET` | `/api/operator/workspace` | 운영자 주문/상담/문의 workspace 조회 |
+| `POST` | `/api/operator/inquiries/{inquiry_id}/replies` | 운영자 문의 답변 작성 |
+| `GET` | `/api/operator/notes` | 운영자 내부 메모 조회 |
+| `POST` | `/api/operator/notes` | 운영자 내부 메모 저장 |
+| `GET` | `/api/support-sessions` | 고객/운영자 상담 세션 목록 조회 |
+| `POST` | `/api/support-sessions` | 상담 세션 생성 |
+| `GET` | `/api/support-sessions/{session_id}/messages` | 상담 메시지 조회 |
+| `POST` | `/api/support-sessions/{session_id}/messages` | 상담 메시지 저장 |
+| `PATCH` | `/api/support-sessions/{session_id}/status` | 상담 상태 변경 |
+
 ## 고객 포털 API
 
 - 고객 로그인
@@ -31,6 +47,14 @@
 - claim 상태 조회
 - 필요한 경우의 mock verification 요청
 - mock verification 결과 확인
+
+현재 고객 홈/스토어/주문 화면은 DB API를 우선 사용한다.
+
+| Method | Path | 화면 목적 |
+|---|---|---|
+| `GET` | `/api/customer/home` | 고객 홈에 필요한 주문/스토어 요약 조회 |
+| `GET` | `/api/customer/orders` | 고객 주문 목록 조회 |
+| `GET` | `/api/customer/stores` | 고객이 이용한 스토어 목록 조회 |
 
 ## 챗봇 API
 
@@ -46,6 +70,22 @@
 - 응답 프리셋 조회
 - 챗봇 지식 파일 업로드
 - 활성 지식 파일 목록 조회
+
+현재 구현된 지식/설정 API는 아래와 같다.
+
+| Method | Path | 화면 목적 |
+|---|---|---|
+| `GET` | `/api/stores/{store_id}/faqs` | 스토어별 활성 FAQ 조회 |
+| `GET` | `/api/operator/settings` | 운영자 스토어 설정/프리셋/파일 조회 |
+| `PATCH` | `/api/operator/settings` | 운영자 스토어 설정 저장 |
+| `GET` | `/api/operator/settings/presets` | 운영자 응답 프리셋 조회 |
+| `POST` | `/api/operator/settings/presets` | 운영자 응답 프리셋 추가 |
+| `GET` | `/api/operator/settings/files` | 운영자 지식 파일 목록 조회 |
+| `POST` | `/api/operator/settings/files` | 운영자 txt 지식 파일명과 원문 저장 |
+
+FAQ 버튼 클릭은 AI API가 아니라 `/api/stores/{store_id}/faqs` 응답의 DB 답변을 바로 표시한다.
+
+운영자 지식 파일은 `.txt` 업로드를 기준으로 하며, 요청에는 업로드한 원본 파일명과 txt 원문을 함께 보낸다. 화면에서는 저장된 원문으로 미리보기와 다운로드를 제공한다.
 
 ## 안전 보조 및 요약 API
 

@@ -33,6 +33,12 @@
 - `is_active`
 - `created_at`
 
+현재 구현에서는 스토어별 FAQ seed를 넣어 고객 챗봇 화면의 FAQ 버튼에 사용한다.
+
+- API: `GET /api/stores/{store_id}/faqs`
+- 클릭 동작: AI 서버를 거치지 않고 DB FAQ 답변을 즉시 채팅에 표시
+- 자유 입력 질문은 기존처럼 AI chatbot stream API를 사용
+
 ### `policy_document`
 
 반품, 환불, 배송 같은 운영 기준 문서다.
@@ -60,6 +66,8 @@
 - `is_active`
 - `created_at`
 
+현재 구현에서는 운영자 설정/응답 영역에서 조회하고 추가할 수 있는 DB-backed 프리셋으로 사용한다.
+
 ### `chatbot_knowledge_file`
 
 챗봇이 참고하는 지식 파일의 메타데이터다.
@@ -70,10 +78,17 @@
 - `store_id` (optional)
 - `file_name`
 - `file_url` 또는 `storage_key`
+- `file_content` (optional, uploaded txt content)
 - `is_active`
 - `created_at`
 
 실제 임베딩 저장까지 먼저 설계할 필요는 없고, 파일 관리와 활성 여부 정도면 충분하다.
+
+현재 구현은 운영자 화면에서 `.txt` 파일을 드래그 앤 드롭 또는 업로드 버튼으로 추가하고, 업로드한 원본 파일명과 txt 원문을 저장한다.
+
+- 파일명: 업로드한 `.txt` 원본 파일명
+- 미리보기: DB에 저장된 txt 원문 표시
+- 다운로드: DB에 저장된 txt 원문을 원본 파일명으로 다운로드
 
 ### `ai_summary`
 

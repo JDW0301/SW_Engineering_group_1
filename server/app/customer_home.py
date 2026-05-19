@@ -23,6 +23,38 @@ DEMO_OPERATOR = {
     "password": "1234",
 }
 
+DEMO_STORE_OPERATORS = {
+    "fashion-lumi": DEMO_OPERATOR,
+    "bakery": {
+        "login_id": "operator_bakery",
+        "email": "operator_bakery@example.com",
+        "name": "빵집 관리자",
+        "phone": "010-2222-3333",
+        "password": "1234",
+    },
+    "techzone": {
+        "login_id": "operator_techzone",
+        "email": "operator_techzone@example.com",
+        "name": "테크존 관리자",
+        "phone": "010-3333-4444",
+        "password": "1234",
+    },
+    "greenlife": {
+        "login_id": "operator_greenlife",
+        "email": "operator_greenlife@example.com",
+        "name": "그린라이프 관리자",
+        "phone": "010-4444-5555",
+        "password": "1234",
+    },
+    "bookcafe": {
+        "login_id": "operator_bookcafe",
+        "email": "operator_bookcafe@example.com",
+        "name": "북카페 관리자",
+        "phone": "010-5555-6666",
+        "password": "1234",
+    },
+}
+
 DEMO_STORES = [
     {
         "key": "fashion-lumi",
@@ -218,11 +250,13 @@ def ensure_demo_customer_home_data() -> None:
     with db_connection() as connection:
         try:
             customer_id = _ensure_user(connection, DEMO_CUSTOMER, "CUSTOMER")
-            operator_id = _ensure_user(connection, DEMO_OPERATOR, "OPERATOR")
 
             store_ids = {}
+            store_operator_ids = {}
             product_ids = {}
             for store in DEMO_STORES:
+                operator_id = _ensure_user(connection, DEMO_STORE_OPERATORS[store["key"]], "OPERATOR")
+                store_operator_ids[store["key"]] = operator_id
                 store_id = _ensure_store(connection, operator_id, store)
                 store_ids[store["key"]] = store_id
                 product_ids[store["key"]] = _ensure_product(connection, store_id, store)
@@ -238,12 +272,12 @@ def ensure_demo_customer_home_data() -> None:
                     connection,
                     store_ids[session["store_key"]],
                     customer_id,
-                    operator_id,
+                    store_operator_ids[session["store_key"]],
                     order_ids[session["order_number"]],
                     session,
                 )
                 for message in session["messages"]:
-                    _ensure_support_message(connection, session_id, customer_id, operator_id, message)
+                    _ensure_support_message(connection, session_id, customer_id, store_operator_ids[session["store_key"]], message)
 
             for post in DEMO_INQUIRY_POSTS:
                 post_id = _ensure_inquiry_post(
@@ -254,7 +288,7 @@ def ensure_demo_customer_home_data() -> None:
                     post,
                 )
                 if post["reply"]:
-                    _ensure_inquiry_reply(connection, post_id, operator_id, post["reply"])
+                    _ensure_inquiry_reply(connection, post_id, store_operator_ids[post["store_key"]], post["reply"])
 
             for store in DEMO_STORES:
                 for sort_order, faq in enumerate(DEMO_FAQS):
@@ -263,10 +297,40 @@ def ensure_demo_customer_home_data() -> None:
                 _ensure_response_preset(connection, store_ids[store["key"]], "교환/반품 안내", "교환/반품은 상품 수령 후 7일 이내 접수해 주세요.")
                 _ensure_knowledge_file(connection, store_ids[store["key"]], f"{store['name']}_상담안내.txt")
 
+            _relink_store_owned_records(connection)
+
             connection.commit()
         except Exception:
             connection.rollback()
             raise
+
+
+def _relink_store_owned_records(connection) -> None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE support_session ss
+            JOIN store s ON s.id = ss.store_id
+            SET ss.operator_user_id = s.owner_user_id
+            """
+        )
+        cursor.execute(
+            """
+            UPDATE support_message sm
+            JOIN support_session ss ON ss.id = sm.support_session_id
+            JOIN store s ON s.id = ss.store_id
+            SET sm.sender_user_id = s.owner_user_id
+            WHERE sm.sender_type = 'OPERATOR'
+            """
+        )
+        cursor.execute(
+            """
+            UPDATE inquiry_post_reply ipr
+            JOIN inquiry_post ip ON ip.id = ipr.inquiry_post_id
+            JOIN store s ON s.id = ip.store_id
+            SET ipr.author_user_id = s.owner_user_id
+            """
+        )
 
 
 def get_customer_home(user_id: int) -> dict:
@@ -305,10 +369,23 @@ def _find_user_by_id(connection, user_id: int):
 
 def _ensure_user(connection, user: dict, role: str) -> int:
     existing = _find_user_by_login_id(connection, user["login_id"])
-    if existing:
-        return existing["id"]
-
     with connection.cursor() as cursor:
+        if existing:
+            cursor.execute(
+                """
+                UPDATE app_user
+                SET email = %s,
+                    password_hash = %s,
+                    name = %s,
+                    phone = %s,
+                    role = %s,
+                    status = 'ACTIVE'
+                WHERE id = %s
+                """,
+                (user["email"], hash_password(user["password"]), user["name"], user["phone"], role, existing["id"]),
+            )
+            return existing["id"]
+
         cursor.execute(
             """
             INSERT INTO app_user (login_id, email, password_hash, name, phone, role, status)
@@ -325,13 +402,35 @@ def _ensure_store(connection, owner_user_id: int, store: dict) -> int:
             """
             SELECT id
             FROM store
-            WHERE owner_user_id = %s AND name = %s
+            WHERE name = %s
             LIMIT 1
             """,
-            (owner_user_id, store["name"]),
+            (store["name"],),
         )
         existing = cursor.fetchone()
         if existing:
+            cursor.execute(
+                """
+                UPDATE store
+                SET owner_user_id = %s,
+                    category = %s,
+                    description = %s,
+                    phone = %s,
+                    address = %s,
+                    business_hours = %s,
+                    status = 'ACTIVE'
+                WHERE id = %s
+                """,
+                (
+                    owner_user_id,
+                    store["category"],
+                    store["description"],
+                    store["phone"],
+                    store["address"],
+                    store["business_hours"],
+                    existing["id"],
+                ),
+            )
             return existing["id"]
 
         cursor.execute(
@@ -377,6 +476,18 @@ def _ensure_order(connection, user_id: int, store_id: int, order: dict) -> int:
         cursor.execute("SELECT id FROM order_table WHERE order_number = %s LIMIT 1", (order["order_number"],))
         existing = cursor.fetchone()
         if existing:
+            cursor.execute(
+                """
+                UPDATE order_table
+                SET user_id = %s,
+                    store_id = %s,
+                    total_price = %s,
+                    order_status = 'DELIVERED',
+                    ordered_at = %s
+                WHERE id = %s
+                """,
+                (user_id, store_id, order["total_price"], order["ordered_at"], existing["id"]),
+            )
             return existing["id"]
 
         cursor.execute(
@@ -421,6 +532,18 @@ def _ensure_support_session(connection, store_id: int, customer_user_id: int, op
         )
         existing = cursor.fetchone()
         if existing:
+            cursor.execute(
+                """
+                UPDATE support_session
+                SET store_id = %s,
+                    operator_user_id = %s,
+                    support_status = %s,
+                    created_at = %s,
+                    last_message_at = %s
+                WHERE id = %s
+                """,
+                (store_id, operator_user_id, session["status"], session["created_at"], session["last_message_at"], existing["id"]),
+            )
             return existing["id"]
 
         cursor.execute(
@@ -467,7 +590,17 @@ def _ensure_support_message(connection, support_session_id: int, customer_user_i
             """,
             (support_session_id, message["sender"], message["content"]),
         )
-        if cursor.fetchone():
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute(
+                """
+                UPDATE support_message
+                SET sender_user_id = %s,
+                    created_at = %s
+                WHERE id = %s
+                """,
+                (sender_user_id, message["created_at"], existing["id"]),
+            )
             return
 
         cursor.execute(
@@ -492,6 +625,19 @@ def _ensure_inquiry_post(connection, store_id: int, author_user_id: int, order_i
         )
         existing = cursor.fetchone()
         if existing:
+            cursor.execute(
+                """
+                UPDATE inquiry_post
+                SET store_id = %s,
+                    order_id = %s,
+                    content = %s,
+                    inquiry_status = %s,
+                    created_at = %s,
+                    updated_at = %s
+                WHERE id = %s
+                """,
+                (store_id, order_id, post["content"], post["status"], post["created_at"], post["created_at"], existing["id"]),
+            )
             return existing["id"]
 
         cursor.execute(
@@ -510,7 +656,18 @@ def _ensure_inquiry_reply(connection, inquiry_post_id: int, author_user_id: int,
             "SELECT id FROM inquiry_post_reply WHERE inquiry_post_id = %s AND content = %s LIMIT 1",
             (inquiry_post_id, reply["content"]),
         )
-        if cursor.fetchone():
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute(
+                """
+                UPDATE inquiry_post_reply
+                SET author_user_id = %s,
+                    created_at = %s,
+                    updated_at = %s
+                WHERE id = %s
+                """,
+                (author_user_id, reply["created_at"], reply["created_at"], existing["id"]),
+            )
             return
 
         cursor.execute(

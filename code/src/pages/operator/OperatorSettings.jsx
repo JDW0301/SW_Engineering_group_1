@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Bot, Store, Upload, FileText, Eye, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bot, Store, Upload, FileText, Eye, X, Download } from "lucide-react";
 import { updateOperatorStore } from "../../api/operator";
 import { createKnowledgeFile, deleteKnowledgeFile, getOperatorSettings, saveOperatorPresets } from "../../api/operatorWorkspace";
 import { Card, TabButton, Input, Button } from "../../components/ui";
@@ -8,8 +8,10 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
   const [tab, setTab] = useState("chatbot");
   const [files, setFiles] = useState([]);
   const [presets, setPresets] = useState([]);
-  const [fileName, setFileName] = useState("");
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
   const [settingsMessage, setSettingsMessage] = useState("");
+  const fileInputRef = useRef(null);
   const [storeForm, setStoreForm] = useState({
     storeName: user?.storeName || user?.store?.name || "",
     storePhone: user?.storePhone || user?.store?.phone || "",
@@ -50,17 +52,58 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
     setSettingsMessage("프리셋이 DB에 저장되었습니다.");
   };
 
-  const addFile = async () => {
-    if (!fileName.trim()) return;
-    const file = await createKnowledgeFile(fileName.trim());
-    setFiles(prev => [file, ...prev]);
-    setFileName("");
-    setSettingsMessage("지식 파일이 DB에 저장되었습니다.");
+  const readTextFile = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsText(file, "UTF-8");
+  });
+
+  const uploadFile = async (file) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".txt")) {
+      setSettingsMessage("txt 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
+    const content = await readTextFile(file);
+    const savedFile = await createKnowledgeFile(file.name, content);
+    setFiles(prev => [savedFile, ...prev]);
+    setPreviewFile(savedFile);
+    setSettingsMessage("txt 파일이 DB에 저장되었습니다.");
+  };
+
+  const uploadSelectedFile = async (event) => {
+    await uploadFile(event.target.files?.[0]);
+    event.target.value = "";
+  };
+
+  const dropFile = async (event) => {
+    event.preventDefault();
+    setIsDraggingFile(false);
+    await uploadFile(event.dataTransfer.files?.[0]);
+  };
+
+  const addFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const downloadFile = (file) => {
+    const blob = new Blob([file.content || ""], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   const removeFile = async (id) => {
     await deleteKnowledgeFile(id);
     setFiles(prev => prev.filter(file => file.id !== id));
+    setPreviewFile(prev => (prev?.id === id ? null : prev));
   };
 
   const updateStoreField = (field, value) => {
@@ -112,11 +155,21 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
           {/* Knowledge Files */}
           <Card className="p-4">
             <h3 className="font-semibold text-sm mb-3">챗봇 적용 정보 관리</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-3">
+            <div
+              className={`border-2 border-dashed rounded-lg p-6 mb-3 text-center transition-colors ${isDraggingFile ? "border-blue-400 bg-blue-50" : "border-gray-300 bg-white"}`}
+              onDragOver={event => {
+                event.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragLeave={() => setIsDraggingFile(false)}
+              onDrop={dropFile}
+            >
               <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-              <div className="flex gap-2">
-                <Input value={fileName} onChange={event => setFileName(event.target.value)} placeholder="저장할 txt 파일명" />
-                <Button onClick={addFile}>추가</Button>
+              <p className="text-sm font-medium text-gray-700">txt 파일을 드래그 앤 드롭하세요</p>
+              <p className="text-xs text-gray-400 mt-1">업로드한 원본 파일명으로 저장됩니다.</p>
+              <div className="mt-4 flex justify-center">
+                <input ref={fileInputRef} type="file" accept=".txt,text/plain" className="hidden" onChange={uploadSelectedFile} />
+                <Button onClick={addFile}>업로드</Button>
               </div>
             </div>
             {settingsMessage && <p className="text-sm text-green-600 mb-2">{settingsMessage}</p>}
@@ -129,12 +182,25 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
                     <span className="text-xs text-gray-400">{f.uploadedAt}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button className="p-1 hover:bg-gray-200 rounded"><Eye size={14} /></button>
+                    <button onClick={() => setPreviewFile(f)} className="p-1 hover:bg-gray-200 rounded" aria-label={`${f.name} 미리보기`}><Eye size={14} /></button>
+                    <button onClick={() => downloadFile(f)} className="p-1 hover:bg-gray-200 rounded" aria-label={`${f.name} 다운로드`}><Download size={14} /></button>
                     <button onClick={() => removeFile(f.id)} className="p-1 hover:bg-red-100 rounded text-red-500"><X size={14} /></button>
                   </div>
                 </div>
               ))}
             </div>
+            {previewFile && (
+              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <Eye size={14} />
+                    <span>{previewFile.name} 미리보기</span>
+                  </div>
+                  <button onClick={() => setPreviewFile(null)} className="p-1 hover:bg-gray-200 rounded text-gray-500" aria-label="미리보기 닫기"><X size={14} /></button>
+                </div>
+                <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-white p-3 text-xs leading-5 text-gray-700">{previewFile.content || "내용이 비어 있습니다."}</pre>
+              </div>
+            )}
           </Card>
 
           {/* Presets */}

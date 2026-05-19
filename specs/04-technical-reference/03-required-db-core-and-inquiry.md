@@ -43,11 +43,18 @@
 필수 필드:
 
 - `id`
+- `owner_user_id` (operator account, optional)
 - `name`
 - `external_reference_id` (optional)
 - `is_searchable`
 
 이 테이블은 고객의 스토어 선택, 스토어 검색, 문의 대상 지정에 필요하다.
+
+현재 구현에서는 스토어별 운영자 연결도 이 테이블에서 처리한다.
+
+- `store.owner_user_id`는 해당 스토어를 관리하는 `app_user` 운영자 계정을 가리킨다.
+- 운영자 workspace는 이 연결을 기준으로 자기 스토어의 주문, 상담, 문의만 보여준다.
+- 별도 권한 테이블은 만들지 않고 학생 프로젝트 수준의 단순 소유 관계로 관리한다.
 
 ### `inquiry`
 
@@ -117,10 +124,13 @@
 
 운영자 앱에서 고객 메시지와 구분되는 내부 기록을 만들기 위해 필요하다.
 
+현재 구현 테이블명은 `operator_internal_note`이며, 운영자 workspace의 내부 메모 패널에서 조회/저장한다.
+
 ## 필수 관계
 
 - `inquiry.local_user_account_id -> local_user_account.id`
 - `inquiry.store_id -> store.id`
+- `store.owner_user_id -> app_user.id` 또는 같은 의미의 로컬 운영자 계정 id
 - `inquiry.order_snapshot_id -> order_snapshot.id` (optional)
 - `inquiry.product_snapshot_id -> product_snapshot.id` (optional)
 - `inquiry.linked_chatbot_session_id -> chatbot_session.id` (optional, canonical)

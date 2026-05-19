@@ -163,4 +163,5 @@ def validate_knowledge_file_create(body: dict) -> dict:
     return {
         "fileName": file_name[:255],
         "fileUrl": optional_string(body.get("fileUrl")),
+        "fileContent": optional_string(body.get("fileContent")),
     }

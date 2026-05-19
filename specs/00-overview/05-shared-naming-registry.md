@@ -52,6 +52,10 @@ Update this file when a new shared name is introduced or changed, including:
 | Auth role | `OPERATOR` | Operator user role | FE / BE / DB | Backend | 2026-04-13 | Shared auth role |
 | Account status | `ACTIVE` | Active account state | FE / BE / DB | Backend | 2026-04-13 | Default active user |
 | Account status | `INACTIVE` | Inactive account state | FE / BE / DB | Backend | 2026-04-13 | Disabled user state |
+| DB column | `store.owner_user_id` | Operator account that owns/manages a store | DB / BE / Operator API | Backend | 2026-05-19 | Used to filter operator workspace per store |
+| API route | `/api/stores/{store_id}/faqs` | Store-scoped active FAQ list | FE / BE / DB | Backend | 2026-05-19 | FAQ click shows DB answer without AI call |
+| API route | `/api/operator/workspace` | Operator dashboard data for the logged-in operator's store | FE / BE / DB | Backend | 2026-05-19 | Returns orders, support sessions, inquiries |
+| DB column | `chatbot_knowledge_file.file_content` | Uploaded txt knowledge file body | FE / BE / DB | Backend | 2026-05-19 | Used for operator preview and download |
 
 ---
 

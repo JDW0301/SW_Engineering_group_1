@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from app.ai_client import get_ai_health, post_ai_json, stream_ai_chatbot
 from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator, update_customer_profile
+from app.chatbot_context import enrich_chatbot_payload
 from app.config import settings
 from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
@@ -265,12 +266,12 @@ async def ai_classify_endpoint(body: dict, auth: dict = Depends(get_auth_payload
 
 @app.post("/api/ai/chatbot")
 async def ai_chatbot_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
-    return post_ai_json("/chatbot", body, timeout=30)
+    return post_ai_json("/chatbot", enrich_chatbot_payload(body), timeout=30)
 
 
 @app.post("/api/ai/chatbot/stream")
 async def ai_chatbot_stream_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
-    return StreamingResponse(stream_ai_chatbot(body), media_type="text/event-stream")
+    return StreamingResponse(stream_ai_chatbot(enrich_chatbot_payload(body)), media_type="text/event-stream")
 
 
 @app.post("/api/ai/summarize")

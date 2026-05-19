@@ -35,6 +35,15 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   useEffect(() => {
+    setMessages([{ id: 0, sender: "bot", content: `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?` }]);
+    setInput("");
+    setShowFaq(true);
+    setStatus("");
+    setError("");
+    setNeedsHandoff(false);
+  }, [store.id, store.name]);
+
+  useEffect(() => {
     let ignore = false;
     setIsFaqLoading(true);
     listStoreFaqs(store.id)
@@ -71,6 +80,7 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
     try {
       await streamChatbotReply(
         {
+          storeId: store.id,
           message: trimmed,
           history: toAiHistory(nextMessages),
           store_context: buildStoreContext(store),
@@ -136,7 +146,6 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
       { id: now, sender: "user", content: faq.question },
       { id: now + 1, sender: "bot", content: faq.answer },
     ]);
-    setShowFaq(false);
     setError("");
     setStatus("");
     setNeedsHandoff(false);
@@ -153,7 +162,7 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
       <div className="flex-1 overflow-y-auto space-y-3 mb-3 pr-1">
         {messages.map(m => (
           <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
-            {m.sender === "bot" && <Avatar name="B" bg="bg-green-100 text-green-600" />}
+            {m.sender === "bot" && <Avatar name={store.name} bg="bg-green-100 text-green-600" />}
             <div className={`max-w-xs mx-2 px-3 py-2 rounded-2xl text-sm ${m.sender === "user" ? "bg-indigo-600 text-white rounded-br-md" : "bg-gray-100 text-gray-800 rounded-bl-md"}`}>
               {m.content || "..."}
             </div>

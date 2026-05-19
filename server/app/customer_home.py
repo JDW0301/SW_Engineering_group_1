@@ -237,13 +237,66 @@ DEMO_INQUIRY_POSTS = [
     },
 ]
 
-DEMO_FAQS = [
-    {"question": "배송은 얼마나 걸리나요?", "answer": "주문 확인 후 1~3 영업일 내 발송되며, 발송 후 1~2일 내 수령 가능합니다."},
-    {"question": "교환/반품은 어떻게 하나요?", "answer": "수령 후 7일 이내 문의 게시판이나 상담으로 접수해주시면 교환/반품을 안내해드립니다."},
-    {"question": "결제 수단은 무엇이 있나요?", "answer": "신용카드, 계좌이체, 간편결제 이용이 가능합니다."},
-    {"question": "회원 등급 혜택이 있나요?", "answer": "현재 별도 등급 혜택은 없으며, 추후 업데이트 예정입니다."},
-    {"question": "영업시간 외 문의는 어떻게 하나요?", "answer": "챗봇 기본 답변은 바로 확인할 수 있고, 상담사 연결 답변은 영업시간 내 순차적으로 처리됩니다."},
+COMMON_DEMO_FAQ_QUESTIONS = [
+    "배송은 얼마나 걸리나요?",
+    "교환/반품은 어떻게 하나요?",
+    "결제 수단은 무엇이 있나요?",
+    "회원 등급 혜택이 있나요?",
+    "영업시간 외 문의는 어떻게 하나요?",
 ]
+
+DEMO_FAQS_BY_STORE = {
+    "bakery": [
+        {"question": "케이크 예약은 며칠 전에 해야 하나요?", "answer": "기본 케이크는 하루 전, 레터링 케이크는 최소 2일 전 예약을 권장드립니다."},
+        {"question": "당일 만든 빵인가요?", "answer": "매장 판매 빵은 매일 아침 매장에서 직접 구워 준비합니다."},
+        {"question": "알레르기 성분을 확인할 수 있나요?", "answer": "상품별 원재료와 알레르기 성분은 문의 주시면 바로 확인해드립니다."},
+    ],
+    "fashion-lumi": [
+        {"question": "사이즈 교환이 가능한가요?", "answer": "상품 수령 후 7일 이내 미착용 상태라면 사이즈 교환 접수가 가능합니다."},
+        {"question": "품절 상품은 재입고되나요?", "answer": "인기 상품은 재입고 알림을 남겨주시면 입고 시 안내드립니다."},
+        {"question": "실측 사이즈는 어디서 확인하나요?", "answer": "상품 상세의 실측표를 기준으로 확인해주시고, 애매하면 문의로 체형 정보를 남겨주세요."},
+    ],
+    "techzone": [
+        {"question": "전자제품 AS 기간은 어떻게 되나요?", "answer": "제품별 제조사 보증 기준을 따르며, 주문번호를 알려주시면 보증 정보를 확인해드립니다."},
+        {"question": "초기 불량이면 교환 가능한가요?", "answer": "수령 직후 불량 증상을 사진이나 영상으로 남겨 문의해주시면 교환 절차를 안내드립니다."},
+        {"question": "제품 호환성을 확인할 수 있나요?", "answer": "사용 중인 기기 모델명을 알려주시면 호환 여부를 확인해드립니다."},
+    ],
+    "greenlife": [
+        {"question": "친환경 인증 상품인가요?", "answer": "상품별 인증 여부가 다르므로 상품명을 알려주시면 인증 정보를 확인해드립니다."},
+        {"question": "대량 구매가 가능한가요?", "answer": "대량 구매는 재고 확인 후 별도 안내가 가능하니 필요한 수량을 남겨주세요."},
+        {"question": "포장재도 친환경인가요?", "answer": "가능한 재활용 포장재를 사용하며 상품 특성상 완충재가 추가될 수 있습니다."},
+    ],
+    "bookcafe": [
+        {"question": "도서 재고 확인이 가능한가요?", "answer": "도서명이나 ISBN을 알려주시면 현재 매장 재고를 확인해드립니다."},
+        {"question": "텀블러 세척 방법은 어떻게 되나요?", "answer": "코팅 보호를 위해 식기세척기보다 부드러운 스펀지 손세척을 권장드립니다."},
+        {"question": "매장 픽업이 가능한가요?", "answer": "주문 후 픽업 가능 알림을 받으시면 매장에서 수령하실 수 있습니다."},
+    ],
+}
+
+COMMON_DEMO_PRESET_TITLES = ["배송 안내", "교환/반품 안내"]
+
+DEMO_RESPONSE_PRESETS_BY_STORE = {
+    "fashion-lumi": [
+        {"title": "사이즈 교환 안내", "content": "사이즈 교환은 수령 후 7일 이내 미착용 상태에서 접수 가능합니다."},
+        {"title": "재입고 안내", "content": "품절 상품은 재입고 일정 확인 후 알림으로 안내드리겠습니다."},
+    ],
+    "bakery": [
+        {"title": "케이크 예약 안내", "content": "케이크 예약은 기본 하루 전, 레터링은 최소 2일 전 접수를 권장드립니다."},
+        {"title": "당일 제조 안내", "content": "매장 판매 빵은 당일 제조 상품이며 조기 품절될 수 있습니다."},
+    ],
+    "techzone": [
+        {"title": "AS 안내", "content": "AS는 제품별 제조사 보증 기준에 따라 주문번호 확인 후 안내드립니다."},
+        {"title": "초기 불량 안내", "content": "초기 불량은 증상 사진이나 영상을 첨부해주시면 교환 절차를 안내드립니다."},
+    ],
+    "greenlife": [
+        {"title": "친환경 인증 안내", "content": "상품별 친환경 인증 여부를 확인해 정확히 안내드리겠습니다."},
+        {"title": "대량 구매 안내", "content": "대량 구매는 필요 수량을 알려주시면 재고와 출고 가능일을 확인해드립니다."},
+    ],
+    "bookcafe": [
+        {"title": "도서 재고 안내", "content": "도서명이나 ISBN을 알려주시면 매장 재고를 확인해드립니다."},
+        {"title": "매장 픽업 안내", "content": "픽업 가능 알림을 받은 뒤 매장에서 주문 상품을 수령하실 수 있습니다."},
+    ],
+}
 
 
 def ensure_demo_customer_home_data() -> None:
@@ -291,10 +344,8 @@ def ensure_demo_customer_home_data() -> None:
                     _ensure_inquiry_reply(connection, post_id, store_operator_ids[post["store_key"]], post["reply"])
 
             for store in DEMO_STORES:
-                for sort_order, faq in enumerate(DEMO_FAQS):
-                    _ensure_faq(connection, store_ids[store["key"]], faq, sort_order)
-                _ensure_response_preset(connection, store_ids[store["key"]], "배송 안내", "배송은 보통 1~3 영업일 정도 소요됩니다.")
-                _ensure_response_preset(connection, store_ids[store["key"]], "교환/반품 안내", "교환/반품은 상품 수령 후 7일 이내 접수해 주세요.")
+                _sync_store_faqs(connection, store_ids[store["key"]], DEMO_FAQS_BY_STORE[store["key"]])
+                _sync_response_presets(connection, store_ids[store["key"]], DEMO_RESPONSE_PRESETS_BY_STORE[store["key"]])
                 _ensure_knowledge_file(connection, store_ids[store["key"]], f"{store['name']}_상담안내.txt")
 
             _relink_store_owned_records(connection)
@@ -679,13 +730,29 @@ def _ensure_inquiry_reply(connection, inquiry_post_id: int, author_user_id: int,
         )
 
 
+def _sync_store_faqs(connection, store_id: int, faqs: list[dict]) -> None:
+    with connection.cursor() as cursor:
+        placeholders = ", ".join(["%s"] * len(COMMON_DEMO_FAQ_QUESTIONS))
+        cursor.execute(
+            f"DELETE FROM faq WHERE store_id = %s AND question IN ({placeholders})",
+            (store_id, *COMMON_DEMO_FAQ_QUESTIONS),
+        )
+    for sort_order, faq in enumerate(faqs):
+        _ensure_faq(connection, store_id, faq, sort_order)
+
+
 def _ensure_faq(connection, store_id: int, faq: dict, sort_order: int) -> None:
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT id FROM faq WHERE store_id = %s AND question = %s LIMIT 1",
             (store_id, faq["question"]),
         )
-        if cursor.fetchone():
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute(
+                "UPDATE faq SET answer = %s, sort_order = %s WHERE id = %s",
+                (faq["answer"], sort_order, existing["id"]),
+            )
             return
         cursor.execute(
             """
@@ -696,13 +763,29 @@ def _ensure_faq(connection, store_id: int, faq: dict, sort_order: int) -> None:
         )
 
 
+def _sync_response_presets(connection, store_id: int, presets: list[dict]) -> None:
+    with connection.cursor() as cursor:
+        placeholders = ", ".join(["%s"] * len(COMMON_DEMO_PRESET_TITLES))
+        cursor.execute(
+            f"DELETE FROM response_preset WHERE store_id = %s AND title IN ({placeholders})",
+            (store_id, *COMMON_DEMO_PRESET_TITLES),
+        )
+    for preset in presets:
+        _ensure_response_preset(connection, store_id, preset["title"], preset["content"])
+
+
 def _ensure_response_preset(connection, store_id: int, title: str, content: str) -> None:
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT id FROM response_preset WHERE store_id = %s AND title = %s LIMIT 1",
             (store_id, title),
         )
-        if cursor.fetchone():
+        existing = cursor.fetchone()
+        if existing:
+            cursor.execute(
+                "UPDATE response_preset SET content = %s WHERE id = %s",
+                (content, existing["id"]),
+            )
             return
         cursor.execute(
             "INSERT INTO response_preset (store_id, title, content) VALUES (%s, %s, %s)",

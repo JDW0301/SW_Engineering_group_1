@@ -35,6 +35,8 @@
 | `POST` | `/api/support-sessions/{session_id}/messages` | 상담 메시지 저장 |
 | `PATCH` | `/api/support-sessions/{session_id}/status` | 상담 상태 변경 |
 
+고객/운영자 상담 상세 화면은 같은 메시지 조회/저장 API를 사용한다. 화면에서는 상담 상세 진입 시 메시지를 조회하고, 진행 중 상담은 3초 간격 polling으로 새 메시지를 다시 불러온다.
+
 ## 고객 포털 API
 
 - 고객 로그인

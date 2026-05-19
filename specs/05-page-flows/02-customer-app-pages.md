@@ -167,7 +167,10 @@
 3. 새 메시지나 첨부를 보낸다.
 4. 필요하면 주문/상품 세부를 펼쳐 본다.
 
-상담 세션과 상담 메시지는 `support_session`, `support_message` 기반 API로 저장/조회한다.
+상담 세션과 상담 메시지는 `support_session`, `support_message` 기반 API로 저장/조회한다. 고객이 상담 상세에 들어가면 기존 메시지를 조회하고, 진행 중 상담은 3초 간격으로 새 메시지를 다시 불러온다.
+
+- 상담 메시지 조회: `GET /api/support-sessions/{session_id}/messages`
+- 고객 메시지 저장: `POST /api/support-sessions/{session_id}/messages`
 
 ### 단순화 메모
 

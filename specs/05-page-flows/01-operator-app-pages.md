@@ -121,10 +121,14 @@
 5. 내부 메모를 남기거나 상태를 변경한다.
 6. 완료 후 목록으로 돌아가 다음 문의를 처리한다.
 
-현재 구현에서는 문의 답변과 내부 메모가 DB에 저장된다.
+현재 구현에서는 문의 답변과 내부 메모가 DB에 저장된다. 상담 상세는 상담 메시지 API를 사용해 고객 메시지를 조회하고 운영자 답변을 저장한다.
 
 - 문의 답변: `POST /api/operator/inquiries/{inquiry_id}/replies`
 - 내부 메모: `GET/POST /api/operator/notes`
+- 상담 메시지 조회: `GET /api/support-sessions/{session_id}/messages`
+- 상담 답변 저장: `POST /api/support-sessions/{session_id}/messages`
+
+진행 중 상담은 상세 화면에서 3초 간격으로 메시지를 다시 조회하므로, 고객이 보낸 새 메시지가 운영자 화면에도 반영된다.
 
 ### 상태 처리 원칙
 

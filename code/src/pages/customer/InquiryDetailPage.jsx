@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Package } from "lucide-react";
 import { Avatar, StatusBadge, Button, Card } from "../../components/ui";
-import { createSupportMessage } from "../../api/support";
+import { createSupportMessage, listSupportMessages } from "../../api/support";
 
 const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, setPage }) => {
   const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [chatError, setChatError] = useState("");
   const chatEnd = useRef(null);
   const supportSession = selectedDetail?.kind === "support" ? supportSessions.find(session => session.id === selectedDetail.id) : null;
   const inquiryPost = selectedDetail?.kind === "inquiry" ? inquiryPosts.find(post => post.id === selectedDetail.id) : null;
@@ -13,16 +15,48 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [supportMessages]);
 
+  useEffect(() => {
+    if (!supportSession) return undefined;
+    let ignore = false;
+
+    const refreshMessages = async () => {
+      try {
+        const messages = await listSupportMessages(supportSession.id);
+        if (!ignore) {
+          setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages }));
+        }
+      } catch (error) {
+        if (!ignore) setChatError(error.message || "상담 메시지를 불러오지 못했습니다.");
+      }
+    };
+
+    refreshMessages();
+    const intervalId = supportSession.status !== "RESOLVED" ? window.setInterval(refreshMessages, 3000) : null;
+    return () => {
+      ignore = true;
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [supportSession?.id, supportSession?.status, setSupportMessagesBySessionId]);
+
   if (!selectedDetail) return null;
 
   const sendMsg = async () => {
     if (!supportSession) return;
     if (!input.trim()) return;
-    const content = input;
+    const content = input.trim();
     setInput("");
-    const nextMessage = await createSupportMessage(supportSession.id, content);
-    setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...supportMessages, nextMessage] }));
-    setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: nextMessage.time } : session));
+    setIsSending(true);
+    setChatError("");
+    try {
+      const nextMessage = await createSupportMessage(supportSession.id, content);
+      setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...(prev[supportSession.id] || []), nextMessage] }));
+      setSupportSessions(prev => prev.map(session => session.id === supportSession.id ? { ...session, lastMessageAt: nextMessage.time } : session));
+    } catch (error) {
+      setInput(content);
+      setChatError(error.message || "메시지를 보내지 못했습니다.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (selectedDetail.kind === "inquiry") {
@@ -100,11 +134,12 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
         ))}
         <div ref={chatEnd} />
       </div>
+      {chatError && <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{chatError}</p>}
 
       {supportSession.status !== "RESOLVED" ? (
         <div className="flex gap-2">
-          <input className="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="메시지를 입력하세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} />
-          <Button onClick={sendMsg} className="rounded-xl"><Send size={16} /></Button>
+          <input className="flex-1 border rounded-xl px-4 py-2 text-sm" placeholder="메시지를 입력하세요..." value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && !isSending && sendMsg()} disabled={isSending} />
+          <Button onClick={sendMsg} className="rounded-xl" disabled={isSending}>{isSending ? "전송 중" : <Send size={16} />}</Button>
         </div>
       ) : (
         <div className="text-center text-xs text-gray-400 py-2">상담이 종료되었습니다</div>

@@ -846,7 +846,7 @@ def _fetch_support_inquiries(connection, user: dict) -> list[dict]:
         title = messages[0]["content"] if messages else "일반 상담"
         inquiries.append(
             {
-                "id": f"support-{session['id']}",
+                "id": session["id"],
                 "storeId": session["store_id"],
                 "storeName": session["store_name"],
                 "type": "상담",

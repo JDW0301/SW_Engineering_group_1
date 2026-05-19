@@ -64,6 +64,12 @@ def create_support_message(user_id: int, session_id: int, payload: dict) -> dict
             raise
 
 
+def list_support_messages(user_id: int, session_id: int) -> list[dict]:
+    with db_connection() as connection:
+        _fetch_session_for_user(connection, user_id, session_id)
+        return _fetch_messages(connection, session_id)
+
+
 def update_support_status(user_id: int, session_id: int, payload: dict) -> dict:
     with db_connection() as connection:
         try:

@@ -28,6 +28,7 @@
 12. FAQ 버튼은 AI 서버를 호출하지 않고 DB FAQ 답변을 즉시 채팅에 표시하도록 변경했다.
 13. 목업 스토어 5개마다 전용 운영자 계정을 만들고 `store.owner_user_id`로 연결했다.
 14. 운영자 챗봇 지식 파일 관리를 txt 드래그 앤 드롭 업로드, 미리보기, 다운로드가 가능한 흐름으로 변경했다.
+15. 고객/운영자 상담 상세 화면에서 상담 메시지를 DB에 저장하고 3초 polling으로 다시 조회하는 채팅 흐름을 구현했다.
 
 ---
 
@@ -690,6 +691,41 @@ http://localhost:5173/
 | BE | `http://localhost:4000` |
 | BE health | `http://localhost:4000/api/health` |
 | AI 원 서버 | `http://203.234.62.47:8000` |
+
+---
+
+## 13.1 상담 채팅 구현 및 검증
+
+상담 세션 상세 화면에서 고객과 운영자가 같은 `support_message` DB 데이터를 기준으로 대화하도록 연결했다.
+
+수정한 주요 파일:
+
+- `server/main.py`
+- `server/app/support.py`
+- `server/app/customer_home.py`
+- `code/src/api/support.js`
+- `code/src/pages/customer/InquiryDetailPage.jsx`
+- `code/src/pages/operator/OperatorInquiryDetail.jsx`
+- `code/src/pages/customer/MainPage.jsx`
+- `code/src/pages/customer/CustomerSupportListPage.jsx`
+- `code/src/pages/customer/MyInquiryTab.jsx`
+
+구현 내용:
+
+- `GET /api/support-sessions/{session_id}/messages` endpoint 추가
+- 고객/운영자 상담 상세에서 메시지 목록을 열 때 조회하고, 진행 중 상담은 3초마다 polling
+- 고객/운영자 메시지 전송 시 `POST /api/support-sessions/{session_id}/messages`로 DB 저장
+- 전송 중 상태 표시와 실패 시 입력 복구 처리
+- 고객 홈/상담 목록/내 문의 카드 클릭이 실제 상세 화면으로 들어가도록 버튼 구조 정리
+- 고객 홈의 `supportSessions[].id`를 `support-4` 같은 표시용 문자열이 아니라 DB 숫자 id로 반환하도록 수정
+
+수동 QA 결과:
+
+- 고객 `customer01`이 `봄 자켓 사이즈 상담` 상세로 진입해 `고객 브라우저 상담 QA 1779197046078` 메시지를 전송했고 화면에 표시됨
+- `GET /api/support-sessions/4/messages`에서 같은 고객 메시지가 DB 저장 데이터로 조회됨
+- 운영자 `operator01` workspace 최근 상담에 고객 메시지가 표시됨
+- 운영자 상세에서 `관리자 브라우저 답변 QA 1779197159546` 답변을 전송했고 화면에 표시됨
+- 고객으로 다시 로그인한 뒤 같은 상담 상세에서 운영자 답변이 표시됨
 
 ---
 

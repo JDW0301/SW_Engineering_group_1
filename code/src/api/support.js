@@ -35,6 +35,11 @@ export async function createSupportMessage(sessionId, content) {
   return data.message;
 }
 
+export async function listSupportMessages(sessionId) {
+  const data = await request(`/support-sessions/${sessionId}/messages`);
+  return data.messages ?? [];
+}
+
 export async function updateSupportStatus(sessionId, status) {
   const data = await request(`/support-sessions/${sessionId}/status`, {
     method: "PATCH",

@@ -16,7 +16,7 @@ from app.inquiries import create_inquiry, list_my_inquiries, list_operator_inqui
 from app.faqs import list_store_faqs
 from app.operator import update_operator_store
 from app.security import verify_access_token
-from app.support import create_support_message, create_support_session, list_customer_support, list_operator_support, update_support_status
+from app.support import create_support_message, create_support_session, list_customer_support, list_operator_support, list_support_messages, update_support_status
 from app.operator_workspace import (
     create_inquiry_reply,
     create_internal_note,
@@ -181,6 +181,11 @@ async def create_support_session_endpoint(body: dict, auth: dict = Depends(get_a
 async def create_support_message_endpoint(session_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_support_message_create(body)
     return {"message": create_support_message(int(auth["sub"]), session_id, payload)}
+
+
+@app.get("/api/support-sessions/{session_id}/messages")
+async def list_support_messages_endpoint(session_id: int, auth: dict = Depends(get_auth_payload)):
+    return {"messages": list_support_messages(int(auth["sub"]), session_id)}
 
 
 @app.patch("/api/support-sessions/{session_id}/status")

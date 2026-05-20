@@ -26,6 +26,7 @@ from app.operator_workspace import (
     ensure_operator_workspace_tables,
     get_operator_workspace,
     list_operator_settings,
+    save_operator_faqs,
     save_operator_presets,
 )
 from app.validation import (
@@ -38,6 +39,7 @@ from app.validation import (
     validate_refresh,
     validate_inquiry_reply_create,
     validate_internal_note_create,
+    validate_faq_save,
     validate_knowledge_file_create,
     validate_preset_save,
     validate_support_message_create,
@@ -230,6 +232,12 @@ async def operator_settings_endpoint(auth: dict = Depends(get_auth_payload)):
 async def save_operator_presets_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_preset_save(body)
     return {"presets": save_operator_presets(int(auth["sub"]), payload)}
+
+
+@app.put("/api/operator/settings/faqs")
+async def save_operator_faqs_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
+    payload = validate_faq_save(body)
+    return {"faqs": save_operator_faqs(int(auth["sub"]), payload)}
 
 
 @app.post("/api/operator/settings/files", status_code=201)

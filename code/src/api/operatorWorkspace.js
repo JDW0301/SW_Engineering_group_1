@@ -47,6 +47,14 @@ export async function saveOperatorPresets(presets) {
   return data.presets ?? [];
 }
 
+export async function saveOperatorFaqs(faqs) {
+  const data = await request("/operator/settings/faqs", {
+    method: "PUT",
+    body: JSON.stringify({ faqs }),
+  });
+  return data.faqs ?? [];
+}
+
 export async function createKnowledgeFile(fileName, fileContent) {
   const data = await request("/operator/settings/files", {
     method: "POST",

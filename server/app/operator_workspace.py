@@ -109,6 +109,7 @@ def list_operator_settings(user_id: int) -> dict:
         store = _ensure_operator_store(connection, user_id)
         return {
             "presets": _fetch_presets(connection, store["id"]),
+            "faqs": _fetch_faqs(connection, store["id"]),
             "files": _fetch_files(connection, store["id"]),
         }
 
@@ -119,7 +120,7 @@ def save_operator_presets(user_id: int, payload: dict) -> list[dict]:
             store = _ensure_operator_store(connection, user_id)
             with connection.cursor() as cursor:
                 cursor.execute("DELETE FROM response_preset WHERE store_id = %s", (store["id"],))
-                for preset in payload["presets"][:5]:
+                for preset in payload["presets"]:
                     cursor.execute(
                         """
                         INSERT INTO response_preset (store_id, title, content)
@@ -129,6 +130,27 @@ def save_operator_presets(user_id: int, payload: dict) -> list[dict]:
                     )
             connection.commit()
             return _fetch_presets(connection, store["id"])
+        except Exception:
+            connection.rollback()
+            raise
+
+
+def save_operator_faqs(user_id: int, payload: dict) -> list[dict]:
+    with db_connection() as connection:
+        try:
+            store = _ensure_operator_store(connection, user_id)
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM faq WHERE store_id = %s", (store["id"],))
+                for index, faq in enumerate(payload["faqs"], start=1):
+                    cursor.execute(
+                        """
+                        INSERT INTO faq (store_id, question, answer, sort_order)
+                        VALUES (%s, %s, %s, %s)
+                        """,
+                        (store["id"], faq["question"], faq["answer"], index),
+                    )
+            connection.commit()
+            return _fetch_faqs(connection, store["id"])
         except Exception:
             connection.rollback()
             raise
@@ -303,6 +325,29 @@ def _fetch_presets(connection, store_id: int) -> list[dict]:
     return [{"id": row["id"], "title": row["title"], "content": row["content"], "updatedAt": _format_date(row["updated_at"])} for row in rows]
 
 
+def _fetch_faqs(connection, store_id: int) -> list[dict]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id, question, answer, sort_order
+            FROM faq
+            WHERE store_id = %s
+            ORDER BY sort_order ASC, id ASC
+            """,
+            (store_id,),
+        )
+        rows = cursor.fetchall()
+    return [
+        {
+            "id": row["id"],
+            "question": row["question"],
+            "answer": row["answer"],
+            "sortOrder": row["sort_order"],
+        }
+        for row in rows
+    ]
+
+
 def _fetch_files(connection, store_id: int) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -375,7 +420,7 @@ def _ensure_operator_owns_inquiry(connection, user_id: int, inquiry_id: int) -> 
             raise AppError(404, "문의를 찾을 수 없습니다.")
 
 
-def _format_date(value, date_only: bool = False) -> str:
+def _format_date(value, date_only: bool = False) -> str | None:
     if value is None:
         return None
     return value.strftime("%Y-%m-%d" if date_only else "%Y-%m-%d %H:%M") if hasattr(value, "strftime") else str(value)

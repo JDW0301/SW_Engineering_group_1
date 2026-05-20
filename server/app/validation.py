@@ -166,6 +166,21 @@ def validate_preset_save(body: dict) -> dict:
     return {"presets": presets}
 
 
+def validate_faq_save(body: dict) -> dict:
+    raw_faqs = body.get("faqs", [])
+    if not isinstance(raw_faqs, list):
+        raw_faqs = []
+    faqs = []
+    for faq in raw_faqs:
+        if not isinstance(faq, dict):
+            continue
+        question = optional_string(faq.get("question"))
+        answer = optional_string(faq.get("answer"))
+        if question and answer:
+            faqs.append({"question": question[:150], "answer": answer})
+    return {"faqs": faqs}
+
+
 def validate_knowledge_file_create(body: dict) -> dict:
     file_name = require_string(body.get("fileName"), "파일명")
     return {

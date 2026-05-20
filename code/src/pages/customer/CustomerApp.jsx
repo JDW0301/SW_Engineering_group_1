@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isAuthExpiredError } from "../../api/auth";
 import { getCustomerHome } from "../../api/customerHome";
 import { listMyInquiries } from "../../api/inquiries";
 import { createSupportSession as createSupportSessionApi } from "../../api/support";
@@ -48,6 +49,7 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
         setInquiryRepliesByPostId(Object.fromEntries(posts.map(post => [post.id, post.replies || []])));
       } catch (error) {
         if (ignore) return;
+        if (isAuthExpiredError(error)) return;
         setOrders([]);
         setStores([]);
         setSupportSessions([]);

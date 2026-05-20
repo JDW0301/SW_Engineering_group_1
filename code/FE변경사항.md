@@ -178,3 +178,32 @@
 ## 검증 결과
 - [x] `MyInquiryTab.jsx` LSP diagnostics 문제 없음
 - [x] `npm run build` 성공
+
+---
+
+# 프론트엔드 변경사항 (인증 만료 처리 개선)
+
+## 변경 이유
+- access token 만료 후 API 요청이 실패했을 때 고객/관리자 화면 데이터가 빈 목록처럼 보이는 문제를 줄이기 위해 세션 만료 처리를 명확히 했다.
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/api/auth.js`
+  - 인증 API 공통 호출 함수에 401 발생 시 refresh token으로 1회 재발급 후 원 요청을 재시도하는 흐름을 추가했다.
+  - refresh 실패 또는 재시도 후 401이면 토큰을 삭제하고 세션 만료 이벤트를 발생시키도록 했다.
+- [x] `src/api/customerHome.js`, `src/api/inquiries.js`, `src/api/support.js`, `src/api/operatorWorkspace.js`, `src/api/faqs.js`, `src/api/operator.js`, `src/api/ai.js`
+  - 개별 API 호출이 공통 인증 호출 함수를 사용하도록 정리했다.
+- [x] `src/App.jsx`
+  - 세션 만료 이벤트를 받으면 로그인 화면으로 이동하고 만료 안내 메시지를 표시하도록 했다.
+- [x] `src/pages/customer/CustomerApp.jsx`, `src/pages/operator/OperatorApp.jsx`
+  - 인증 만료 오류를 빈 데이터 상태처럼 덮어쓰지 않도록 했다.
+
+## 검증 결과
+- [x] `src/api` LSP diagnostics 문제 없음
+- [x] `App.jsx`, `CustomerApp.jsx`, `OperatorApp.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+
+## Non-Goals (이번 작업에서 제외된 항목)
+- 백엔드 토큰 만료 시간 변경
+- refresh token 회전 정책 또는 저장 방식 변경
+- localStorage 기반 토큰 저장 구조 변경
+- 전체 API 구조 대규모 리팩토링

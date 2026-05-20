@@ -4,14 +4,25 @@ import { Avatar, Button } from "../../components/ui";
 import { streamChatbotReply } from "../../api/ai";
 import { listStoreFaqs } from "../../api/faqs";
 
-const buildStoreContext = (store) => [
+const buildStoreContext = (store, order) => [
   `스토어명: ${store.name}`,
   `카테고리: ${store.category ?? "미정"}`,
   `소개: ${store.desc ?? store.description ?? "정보 없음"}`,
   `전화번호: ${store.phone ?? "정보 없음"}`,
   `주소: ${store.address ?? "정보 없음"}`,
   `영업시간: ${store.operatingHours ?? store.businessHours ?? "정보 없음"}`,
+  ...(order ? [
+    `선택 주문번호: ${order.orderNumber}`,
+    `선택 상품명: ${order.productName}`,
+    `선택 주문수량: ${order.quantity ?? "정보 없음"}`,
+    `선택 주문일: ${order.orderedAt ?? "정보 없음"}`,
+    `선택 주문금액: ${order.totalPrice?.toLocaleString?.() ?? order.totalPrice ?? "정보 없음"}원`,
+  ] : []),
 ].join("\n");
+
+const buildIntroMessage = (store, order) => order
+  ? `${store.name} 챗봇입니다. 선택하신 ${order.productName} (${order.orderNumber}) 주문 문의를 도와드릴게요.`
+  : `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?`;
 
 const toAiHistory = (messages) => messages
   .filter(message => message.sender === "user" || message.sender === "bot")
@@ -21,8 +32,8 @@ const toAiHistory = (messages) => messages
     content: message.content,
   }));
 
-const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
-  const [messages, setMessages] = useState([{ id: 0, sender: "bot", content: `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?` }]);
+const ChatbotTab = ({ store, selectedOrder, onCreateSupportFromChatbot }) => {
+  const [messages, setMessages] = useState([{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]);
   const [input, setInput] = useState("");
   const [showFaq, setShowFaq] = useState(true);
   const [status, setStatus] = useState("");
@@ -35,13 +46,13 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   useEffect(() => {
-    setMessages([{ id: 0, sender: "bot", content: `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?` }]);
+    setMessages([{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]);
     setInput("");
     setShowFaq(true);
     setStatus("");
     setError("");
     setNeedsHandoff(false);
-  }, [store.id, store.name]);
+  }, [store.id, store.name, selectedOrder?.id, selectedOrder?.productName, selectedOrder?.orderNumber]);
 
   useEffect(() => {
     let ignore = false;
@@ -83,7 +94,7 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
           storeId: store.id,
           message: trimmed,
           history: toAiHistory(nextMessages),
-          store_context: buildStoreContext(store),
+          store_context: buildStoreContext(store, selectedOrder),
         },
         (data) => {
           if (data.thinking) {
@@ -154,7 +165,7 @@ const ChatbotTab = ({ store, onCreateSupportFromChatbot }) => {
   const requestHandoff = () => {
     const title = window.prompt("문의명 입력");
     if (!title || !title.trim()) return;
-    onCreateSupportFromChatbot({ title: title.trim(), store, messages });
+    onCreateSupportFromChatbot({ title: title.trim(), store, messages, order: selectedOrder });
   };
 
   return (

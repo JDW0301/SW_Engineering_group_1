@@ -78,16 +78,18 @@
 | Method | Path | 화면 목적 |
 |---|---|---|
 | `GET` | `/api/stores/{store_id}/faqs` | 스토어별 활성 FAQ 조회 |
-| `GET` | `/api/operator/settings` | 운영자 스토어 설정/프리셋/파일 조회 |
+| `GET` | `/api/operator/settings` | 운영자 스토어 설정/프리셋/FAQ/파일 조회 |
 | `PATCH` | `/api/operator/settings` | 운영자 스토어 설정 저장 |
-| `GET` | `/api/operator/settings/presets` | 운영자 응답 프리셋 조회 |
-| `POST` | `/api/operator/settings/presets` | 운영자 응답 프리셋 추가 |
+| `PUT` | `/api/operator/settings/presets` | 운영자 응답 프리셋 목록 저장 |
+| `PUT` | `/api/operator/settings/faqs` | 운영자 FAQ 목록 저장 |
 | `GET` | `/api/operator/settings/files` | 운영자 지식 파일 목록 조회 |
 | `POST` | `/api/operator/settings/files` | 운영자 txt 지식 파일명과 원문 저장 |
 
 FAQ 버튼 클릭은 AI API가 아니라 `/api/stores/{store_id}/faqs` 응답의 DB 답변을 바로 표시한다.
 
 운영자 지식 파일은 `.txt` 업로드를 기준으로 하며, 요청에는 업로드한 원본 파일명과 txt 원문을 함께 보낸다. 화면에서는 저장된 원문으로 미리보기와 다운로드를 제공한다.
+
+운영자 응답 프리셋과 FAQ 저장은 화면에 남아 있는 카드 목록을 한 번에 저장한다. FAQ는 고객 챗봇에 노출할 질문/답변 목록으로 사용한다.
 
 ## 안전 보조 및 요약 API
 

@@ -10,11 +10,6 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
 
   const storeOrders = orders.filter(order => order.storeId === selectedStore.id);
 
-  const handleOrderChange = (event) => {
-    const orderId = event.target.value;
-    onSelectOrder(orderId ? storeOrders.find(order => String(order.id) === orderId) || null : null);
-  };
-
   const handleInquiryCreated = (post) => {
     setInquiryPosts(prev => [post, ...prev.filter(item => item.id !== post.id)]);
   };
@@ -40,16 +35,6 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
         </div>
       </Card>
 
-      <div className="mb-4 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
-        <label className="block text-xs font-medium text-gray-500 mb-1">챗봇 문의 대상</label>
-        <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400" value={selectedOrder?.id || ""} onChange={handleOrderChange}>
-          <option value="">스토어 일반 문의</option>
-          {storeOrders.map(order => (
-            <option key={order.id} value={order.id}>{order.productName} ({order.orderNumber})</option>
-          ))}
-        </select>
-      </div>
-
       {/* Tabs */}
       <div className="mb-4 flex border-b">
         <TabButton className="min-w-0 flex-1 justify-center" active={storeTab === "chatbot"} onClick={() => setStoreTab("chatbot")} icon={Bot}>챗봇</TabButton>
@@ -57,7 +42,7 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
         <TabButton className="min-w-0 flex-1 justify-center" active={storeTab === "myInquiry"} onClick={() => setStoreTab("myInquiry")} icon={User}>나의 문의</TabButton>
       </div>
 
-      {storeTab === "chatbot" && <ChatbotTab store={selectedStore} selectedOrder={selectedOrder} onCreateSupportFromChatbot={onCreateSupportFromChatbot} />}
+      {storeTab === "chatbot" && <ChatbotTab store={selectedStore} selectedOrder={selectedOrder} storeOrders={storeOrders} onSelectOrder={onSelectOrder} onCreateSupportFromChatbot={onCreateSupportFromChatbot} />}
       {storeTab === "consult" && <ConsultTab store={selectedStore} order={selectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} setSupportMessagesBySessionId={setSupportMessagesBySessionId} onOpenSupportSession={openSupportSession} createSupportSession={createSupportSession} />}
       {storeTab === "board" && <BoardTab store={selectedStore} posts={inquiryPosts.filter(p => p.storeId === selectedStore.id)} orders={orders} onInquiryCreated={handleInquiryCreated} />}
       {storeTab === "myInquiry" && <MyInquiryTab store={selectedStore} supportSessions={supportSessions.filter(session => session.storeId === selectedStore.id)} inquiryPosts={inquiryPosts.filter(post => post.storeId === selectedStore.id)} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />}

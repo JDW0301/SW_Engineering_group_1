@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, ArrowRight } from "lucide-react";
-import { Avatar, Button } from "../../components/ui";
+import { Send, ArrowRight, X } from "lucide-react";
+import { Avatar, Button, Card, Input } from "../../components/ui";
 import { streamChatbotReply } from "../../api/ai";
 import { listStoreFaqs } from "../../api/faqs";
 
@@ -24,6 +24,17 @@ const buildIntroMessage = (store, order) => order
   ? `${store.name} 챗봇입니다. 선택하신 ${order.productName} (${order.orderNumber}) 주문 문의를 도와드릴게요.`
   : `${store.name}에 오신 것을 환영합니다! 무엇을 도와드릴까요?`;
 
+const formatOrderPrice = (order) => {
+  const price = order.totalPrice?.toLocaleString?.() ?? order.totalPrice;
+  return price ? `${price}원` : null;
+};
+
+const getOrderDetails = (order) => [
+  order.quantity ? `${order.quantity}개` : null,
+  order.orderedAt,
+  formatOrderPrice(order),
+].filter(Boolean).join(" · ");
+
 const toAiHistory = (messages) => messages
   .filter(message => message.sender === "user" || message.sender === "bot")
   .slice(-20)
@@ -32,14 +43,20 @@ const toAiHistory = (messages) => messages
     content: message.content,
   }));
 
-const ChatbotTab = ({ store, selectedOrder, onCreateSupportFromChatbot }) => {
+const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onCreateSupportFromChatbot }) => {
   const [messages, setMessages] = useState([{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]);
   const [input, setInput] = useState("");
   const [showFaq, setShowFaq] = useState(true);
+  const [isContextOpen, setIsContextOpen] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [needsHandoff, setNeedsHandoff] = useState(false);
+  const [isHandoffOpen, setIsHandoffOpen] = useState(false);
+  const [handoffTitle, setHandoffTitle] = useState("");
+  const [handoffContent, setHandoffContent] = useState("");
+  const [handoffError, setHandoffError] = useState("");
+  const [isHandoffSubmitting, setIsHandoffSubmitting] = useState(false);
   const [faqs, setFaqs] = useState([]);
   const [isFaqLoading, setIsFaqLoading] = useState(true);
   const chatEnd = useRef(null);
@@ -51,7 +68,13 @@ const ChatbotTab = ({ store, selectedOrder, onCreateSupportFromChatbot }) => {
     setShowFaq(true);
     setStatus("");
     setError("");
+    setIsContextOpen(false);
     setNeedsHandoff(false);
+    setIsHandoffOpen(false);
+    setHandoffTitle("");
+    setHandoffContent("");
+    setHandoffError("");
+    setIsHandoffSubmitting(false);
   }, [store.id, store.name, selectedOrder?.id, selectedOrder?.productName, selectedOrder?.orderNumber]);
 
   useEffect(() => {
@@ -163,13 +186,82 @@ const ChatbotTab = ({ store, selectedOrder, onCreateSupportFromChatbot }) => {
   };
 
   const requestHandoff = () => {
-    const title = window.prompt("문의명 입력");
-    if (!title || !title.trim()) return;
-    onCreateSupportFromChatbot({ title: title.trim(), store, messages, order: selectedOrder });
+    const latestUserMessage = [...messages].reverse().find(message => message.sender === "user");
+    setHandoffTitle("");
+    setHandoffContent(latestUserMessage?.content ?? "");
+    setHandoffError("");
+    setIsHandoffOpen(true);
+  };
+
+  const selectContextOrder = (order) => {
+    onSelectOrder(order);
+    setIsContextOpen(false);
+  };
+
+  const selectedContextLabel = selectedOrder
+    ? `${selectedOrder.productName} · ${selectedOrder.orderNumber}`
+    : "스토어 일반 문의";
+
+  const closeHandoff = () => {
+    if (isHandoffSubmitting) return;
+    setIsHandoffOpen(false);
+    setHandoffTitle("");
+    setHandoffContent("");
+    setHandoffError("");
+  };
+
+  const confirmHandoff = async (event) => {
+    event.preventDefault();
+    const title = handoffTitle.trim();
+    const content = handoffContent.trim();
+    if (!title || !content) {
+      setHandoffError("문의명과 문의 내용을 모두 입력해 주세요.");
+      return;
+    }
+
+    setHandoffError("");
+    setIsHandoffSubmitting(true);
+    try {
+      const latestUserMessage = [...messages].reverse().find(message => message.sender === "user");
+      const handoffMessages = latestUserMessage?.content?.trim() === content
+        ? messages
+        : [...messages, { id: Date.now(), sender: "user", content }];
+      await onCreateSupportFromChatbot({ title, store, messages: handoffMessages, order: selectedOrder });
+    } catch (handoffCreateError) {
+      setHandoffError(handoffCreateError.message || "상담 요청을 접수하지 못했습니다.");
+      setIsHandoffSubmitting(false);
+    }
   };
 
   return (
     <div className="flex flex-col" style={{ height: "60vh" }}>
+      <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-indigo-600">현재 문의 대상</p>
+            <p className="truncate text-sm font-semibold text-gray-900">{selectedContextLabel}</p>
+          </div>
+          <button type="button" onClick={() => setIsContextOpen(open => !open)} className="shrink-0 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 transition">
+            변경
+          </button>
+        </div>
+        {isContextOpen && (
+          <div className="mt-2 space-y-1 border-t border-indigo-100 pt-2">
+            <button type="button" onClick={() => selectContextOrder(null)} className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${!selectedOrder ? "bg-white text-indigo-700" : "text-gray-700 hover:bg-white"}`}>
+              스토어 일반 문의
+            </button>
+            {storeOrders.map(order => {
+              const details = getOrderDetails(order);
+              return (
+                <button key={order.id} type="button" onClick={() => selectContextOrder(order)} className={`w-full rounded-lg px-3 py-2 text-left transition ${selectedOrder?.id === order.id ? "bg-white text-indigo-700" : "text-gray-700 hover:bg-white"}`}>
+                  <span className="block truncate text-sm font-medium">{order.productName} · {order.orderNumber}</span>
+                  {details && <span className="mt-0.5 block truncate text-xs text-gray-500">{details}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
       <div className="flex-1 overflow-y-auto space-y-3 mb-3 pr-1">
         {messages.map(m => (
           <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
@@ -200,6 +292,38 @@ const ChatbotTab = ({ store, selectedOrder, onCreateSupportFromChatbot }) => {
       <button onClick={requestHandoff} className={`mt-2 text-xs ${needsHandoff ? "text-red-600" : "text-indigo-600"} hover:underline text-center flex items-center justify-center gap-1`}>
         <ArrowRight size={14} /> {needsHandoff ? "상담사 연결이 필요합니다" : "상담사 연결"}
       </button>
+      {isHandoffOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/35 px-4">
+          <Card className="w-full max-w-sm p-4 shadow-lg">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-base font-bold text-gray-900">상담사 연결</h3>
+                <p className="text-xs text-gray-500 mt-1">챗봇 대화와 함께 전달할 문의 정보를 입력해 주세요.</p>
+              </div>
+              <button type="button" onClick={closeHandoff} disabled={isHandoffSubmitting} className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50">
+                <X size={18} />
+              </button>
+            </div>
+            {selectedOrder && (
+              <div className="mb-3 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-700">
+                참조 주문: {selectedOrder.productName} ({selectedOrder.orderNumber})
+              </div>
+            )}
+            <form className="space-y-3" onSubmit={confirmHandoff}>
+              <Input label="문의명" value={handoffTitle} onChange={event => setHandoffTitle(event.target.value)} placeholder={selectedOrder ? `${selectedOrder.productName} 관련 상담` : `${store.name} 상담`} disabled={isHandoffSubmitting} autoFocus />
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700">문의 내용</label>
+                <textarea className="border border-gray-300 rounded-lg px-3 py-2 text-sm h-28 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 disabled:bg-gray-50 disabled:text-gray-500" value={handoffContent} onChange={event => setHandoffContent(event.target.value)} placeholder="상담사에게 전달할 내용을 작성하세요" disabled={isHandoffSubmitting} />
+              </div>
+              {handoffError && <p className="text-xs text-red-500">{handoffError}</p>}
+              <div className="flex justify-end gap-2 pt-1">
+                <Button type="button" variant="ghost" size="sm" onClick={closeHandoff} disabled={isHandoffSubmitting} className="disabled:cursor-not-allowed disabled:opacity-50">취소</Button>
+                <Button type="submit" size="sm" disabled={isHandoffSubmitting} className="disabled:cursor-not-allowed disabled:opacity-60">{isHandoffSubmitting ? "접수 중..." : "확인"}</Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Bot, Store, Upload, FileText, Eye, X, Download } from "lucide-react";
+import { Bot, Store, Upload, FileText, Eye, X, Download, Plus } from "lucide-react";
 import { updateOperatorStore } from "../../api/operator";
-import { createKnowledgeFile, deleteKnowledgeFile, getOperatorSettings, saveOperatorPresets } from "../../api/operatorWorkspace";
+import { createKnowledgeFile, deleteKnowledgeFile, getOperatorSettings, saveOperatorFaqs, saveOperatorPresets } from "../../api/operatorWorkspace";
 import { Card, TabButton, Input, Button } from "../../components/ui";
 
 const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
   const [tab, setTab] = useState("chatbot");
+  const [knowledgeTab, setKnowledgeTab] = useState("presets");
   const [files, setFiles] = useState([]);
   const [presets, setPresets] = useState([]);
+  const [faqs, setFaqs] = useState([]);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [previewFile, setPreviewFile] = useState(null);
   const [settingsMessage, setSettingsMessage] = useState("");
@@ -30,6 +32,7 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
         if (ignore) return;
         setFiles(data.files ?? []);
         setPresets(data.presets ?? []);
+        setFaqs(data.faqs ?? []);
         onPresetsChange?.(data.presets ?? []);
       })
       .catch(() => {});
@@ -45,11 +48,46 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
     setSettingsMessage("");
   };
 
+  const addPreset = () => {
+    setPresets(prev => [...prev, { title: "", content: "" }]);
+    setSettingsMessage("");
+  };
+
+  const removePreset = (index) => {
+    setPresets(prev => prev.filter((_, presetIndex) => presetIndex !== index));
+    setSettingsMessage("");
+  };
+
+  const addFaq = () => {
+    setFaqs(prev => [...prev, { question: "", answer: "" }]);
+    setSettingsMessage("");
+  };
+
+  const removeFaq = (index) => {
+    setFaqs(prev => prev.filter((_, faqIndex) => faqIndex !== index));
+    setSettingsMessage("");
+  };
+
+  const updateFaq = (index, field, value) => {
+    setFaqs(prev => {
+      const next = [...prev];
+      next[index] = { ...(next[index] || {}), [field]: value };
+      return next;
+    });
+    setSettingsMessage("");
+  };
+
   const savePresets = async () => {
     const saved = await saveOperatorPresets(presets.map(preset => ({ title: preset.title || "", content: preset.content || "" })));
     setPresets(saved);
     onPresetsChange?.(saved);
     setSettingsMessage("프리셋이 DB에 저장되었습니다.");
+  };
+
+  const saveFaqs = async () => {
+    const saved = await saveOperatorFaqs(faqs.map(faq => ({ question: faq.question || "", answer: faq.answer || "" })));
+    setFaqs(saved);
+    setSettingsMessage("자주 묻는 질문이 DB에 저장되었습니다.");
   };
 
   const readTextFile = (file) => new Promise((resolve, reject) => {
@@ -152,6 +190,8 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
 
       {tab === "chatbot" && (
         <div className="space-y-6">
+          {settingsMessage && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{settingsMessage}</p>}
+
           {/* Knowledge Files */}
           <Card className="p-4">
             <h3 className="font-semibold text-sm mb-3">챗봇 적용 정보 관리</h3>
@@ -172,7 +212,6 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
                 <Button onClick={addFile}>업로드</Button>
               </div>
             </div>
-            {settingsMessage && <p className="text-sm text-green-600 mb-2">{settingsMessage}</p>}
             <div className="space-y-2">
               {files.map(f => (
                 <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
@@ -203,24 +242,72 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
             )}
           </Card>
 
-          {/* Presets */}
+          {/* Presets and FAQs */}
           <Card className="p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-sm">프리셋 관리 (최대 5개)</h3>
-              <Button size="sm" variant="outline" onClick={() => { setPresets([]); setSettingsMessage(""); }}>초기화</Button>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 className="font-semibold text-sm">{knowledgeTab === "presets" ? "답변 프리셋 관리" : "자주 묻는 질문 관리"}</h3>
+                <p className="text-xs text-gray-400 mt-1">{knowledgeTab === "presets" ? "상담 답변에 바로 사용할 문구를 저장합니다." : "고객 챗봇 FAQ 목록에 노출할 질문과 답변을 저장합니다."}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex rounded-lg bg-gray-100 p-0.5">
+                  <button type="button" onClick={() => setKnowledgeTab("presets")} className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${knowledgeTab === "presets" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>답변 프리셋</button>
+                  <button type="button" onClick={() => setKnowledgeTab("faqs")} className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${knowledgeTab === "faqs" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}>자주 묻는 질문</button>
+                </div>
+                <Button size="sm" variant="outline" onClick={knowledgeTab === "presets" ? addPreset : addFaq}><Plus size={14} /> 추가</Button>
+                <Button size="sm" variant="outline" onClick={() => { knowledgeTab === "presets" ? setPresets([]) : setFaqs([]); setSettingsMessage(""); }}>초기화</Button>
+              </div>
             </div>
             <div className="space-y-3">
-              {[0, 1, 2, 3, 4].map(i => (
-                <div key={i} className="border rounded-lg p-3">
-                  <Input label={`프리셋 제목 ${i + 1}`} value={presets[i]?.title || ""} onChange={event => updatePreset(i, "title", event.target.value)} placeholder="예: 배송 안내" />
-                  <div className="mt-2">
-                    <label className="text-sm font-medium text-gray-700">답변</label>
-                    <textarea className="w-full border rounded-lg px-3 py-2 text-sm h-16 resize-none mt-1" value={presets[i]?.content || ""} onChange={event => updatePreset(i, "content", event.target.value)} placeholder="답변 내용" />
+              {knowledgeTab === "presets" ? (
+                presets.length > 0 ? presets.map((preset, i) => (
+                  <div key={preset.id ?? i} className="border rounded-lg p-3">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <Input label="제목" value={preset.title || ""} onChange={event => updatePreset(i, "title", event.target.value)} placeholder="예: 배송 안내" />
+                      </div>
+                      <button type="button" onClick={() => removePreset(i)} className="mt-6 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500" aria-label={`프리셋 ${i + 1} 삭제`}><X size={14} /></button>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">답변</label>
+                      <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm h-16 resize-none mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400" value={preset.content || ""} onChange={event => updatePreset(i, "content", event.target.value)} placeholder="답변 내용" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                )) : (
+                  <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+                    <p className="text-sm font-medium text-gray-700">저장할 답변 프리셋이 없습니다.</p>
+                    <p className="mt-1 text-xs text-gray-400">자주 쓰는 상담 답변을 추가해 빠르게 불러올 수 있습니다.</p>
+                    <div className="mt-3 flex justify-center">
+                      <Button size="sm" variant="outline" onClick={addPreset}><Plus size={14} /> 프리셋 추가</Button>
+                    </div>
+                  </div>
+                )
+              ) : (
+                faqs.length > 0 ? faqs.map((faq, i) => (
+                  <div key={faq.id ?? i} className="border rounded-lg p-3">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <Input label="질문" value={faq.question || ""} onChange={event => updateFaq(i, "question", event.target.value)} placeholder="예: 배송은 얼마나 걸리나요?" />
+                      </div>
+                      <button type="button" onClick={() => removeFaq(i)} className="mt-6 rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500" aria-label={`FAQ ${i + 1} 삭제`}><X size={14} /></button>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">답변</label>
+                      <textarea className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm h-16 resize-none mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400" value={faq.answer || ""} onChange={event => updateFaq(i, "answer", event.target.value)} placeholder="FAQ 답변 내용" />
+                    </div>
+                  </div>
+                )) : (
+                  <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+                    <p className="text-sm font-medium text-gray-700">저장할 자주 묻는 질문이 없습니다.</p>
+                    <p className="mt-1 text-xs text-gray-400">고객 챗봇에 보여줄 질문과 답변을 추가할 수 있습니다.</p>
+                    <div className="mt-3 flex justify-center">
+                      <Button size="sm" variant="outline" onClick={addFaq}><Plus size={14} /> FAQ 추가</Button>
+                    </div>
+                  </div>
+                )
+              )}
             </div>
-            <Button className="w-full mt-3" onClick={savePresets}>저장</Button>
+            <Button className="w-full mt-3" onClick={knowledgeTab === "presets" ? savePresets : saveFaqs}>저장</Button>
           </Card>
         </div>
       )}

@@ -201,6 +201,7 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
   const selectedContextLabel = selectedOrder
     ? `${selectedOrder.productName} · ${selectedOrder.orderNumber}`
     : "스토어 일반 문의";
+  const orderedStoreOrders = [...storeOrders].sort((firstOrder, secondOrder) => secondOrder.orderedAt.localeCompare(firstOrder.orderedAt));
 
   const closeHandoff = () => {
     if (isHandoffSubmitting) return;
@@ -250,15 +251,17 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
             <button type="button" onClick={() => selectContextOrder(null)} className={`w-full rounded-lg px-3 py-2 text-left text-sm transition ${!selectedOrder ? "bg-white text-indigo-700" : "text-gray-700 hover:bg-white"}`}>
               스토어 일반 문의
             </button>
-            {storeOrders.map(order => {
-              const details = getOrderDetails(order);
-              return (
-                <button key={order.id} type="button" onClick={() => selectContextOrder(order)} className={`w-full rounded-lg px-3 py-2 text-left transition ${selectedOrder?.id === order.id ? "bg-white text-indigo-700" : "text-gray-700 hover:bg-white"}`}>
-                  <span className="block truncate text-sm font-medium">{order.productName} · {order.orderNumber}</span>
-                  {details && <span className="mt-0.5 block truncate text-xs text-gray-500">{details}</span>}
-                </button>
-              );
-            })}
+            <div className="max-h-48 space-y-1 overflow-y-auto">
+              {orderedStoreOrders.map(order => {
+                const details = getOrderDetails(order);
+                return (
+                  <button key={order.id} type="button" onClick={() => selectContextOrder(order)} className={`w-full rounded-lg px-3 py-2 text-left transition ${selectedOrder?.id === order.id ? "bg-white text-indigo-700" : "text-gray-700 hover:bg-white"}`}>
+                    <span className="block truncate text-sm font-medium">{order.productName} · {order.orderNumber}</span>
+                    {details && <span className="mt-0.5 block truncate text-xs text-gray-500">{details}</span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

@@ -166,3 +166,15 @@
 - 고객 앱 전체 라우팅 변경
 - 별도 주문 선택 페이지 또는 복잡한 모달 도입
 - 기존 문의 게시판/나의 문의 탭 동작 변경
+
+---
+
+# 프론트엔드 변경사항 (나의 문의 탭 라벨 수정)
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/pages/customer/MyInquiryTab.jsx`
+  - `나의 문의` 화면의 탭 라벨을 `문의`에서 `문의글`로 변경했다.
+
+## 검증 결과
+- [x] `MyInquiryTab.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공

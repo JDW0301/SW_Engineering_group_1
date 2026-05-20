@@ -26,6 +26,25 @@ Default server URL:
 
 - `http://localhost:4000`
 
+## 2.1 Current FE/BE development wiring
+
+For the current shared development and demo check environment, align the frontend API proxy with the backend that owns the active data:
+
+```text
+Browser
+-> Frontend preview: 8125
+-> /api proxy target: Backend 4010
+-> Shared MySQL DB used by that backend
+```
+
+The frontend port is only the entry point for loading the screen. The visible data depends on which backend and database the frontend's `/api` requests reach. If two frontend ports point to different backend ports, the same account can show different data.
+
+Before demo or team testing, confirm these values with the backend owner:
+
+- Backend port: `4010`
+- Database connected by that backend: final shared project DB
+- Frontend `/api` proxy target: `http://127.0.0.1:4010`
+
 ## 3. Auth endpoints
 
 - `POST /api/auth/signup/customer`

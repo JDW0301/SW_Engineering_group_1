@@ -453,17 +453,29 @@ def _ensure_store(connection, owner_user_id: int, store: dict) -> int:
             """
             SELECT id
             FROM store
-            WHERE name = %s
+            WHERE owner_user_id = %s
             LIMIT 1
             """,
-            (store["name"],),
+            (owner_user_id,),
         )
         existing = cursor.fetchone()
+        if not existing:
+            cursor.execute(
+                """
+                SELECT id
+                FROM store
+                WHERE name = %s
+                LIMIT 1
+                """,
+                (store["name"],),
+            )
+            existing = cursor.fetchone()
         if existing:
             cursor.execute(
                 """
                 UPDATE store
                 SET owner_user_id = %s,
+                    name = %s,
                     category = %s,
                     description = %s,
                     phone = %s,
@@ -474,6 +486,7 @@ def _ensure_store(connection, owner_user_id: int, store: dict) -> int:
                 """,
                 (
                     owner_user_id,
+                    store["name"],
                     store["category"],
                     store["description"],
                     store["phone"],

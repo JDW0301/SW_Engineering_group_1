@@ -130,7 +130,7 @@ def update_store_by_id(connection, store_id: int, store: dict):
                 address = %s,
                 business_hours = %s,
                 description = %s
-            WHERE owner_user_id = %s
+            WHERE id = %s
             """,
             (
                 store["name"],

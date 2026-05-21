@@ -110,6 +110,18 @@ def validate_inquiry_create(body: dict) -> dict:
     }
 
 
+def validate_inquiry_update(body: dict) -> dict:
+    content = require_string(body.get("content"), "본문")
+    title = optional_string(body.get("title")) or f"{content[:20]}..."
+    is_secret = body.get("isSecret", False)
+    return {
+        "title": title[:200],
+        "content": content,
+        "orderId": optional_int(body.get("orderId"), "주문"),
+        "isSecret": bool(is_secret),
+    }
+
+
 def validate_support_session_create(body: dict) -> dict:
     messages = body.get("initialMessages", [])
     if not isinstance(messages, list):

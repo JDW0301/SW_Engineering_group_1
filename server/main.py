@@ -13,7 +13,7 @@ from app.config import settings
 from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
 from app.exceptions import AppError
-from app.inquiries import create_inquiry, list_my_inquiries, list_operator_inquiries, list_store_inquiries
+from app.inquiries import create_inquiry, list_my_inquiries, list_operator_inquiries, list_store_inquiries, update_inquiry
 from app.faqs import list_store_faqs
 from app.operator import update_operator_store
 from app.security import verify_access_token
@@ -34,6 +34,7 @@ from app.validation import (
     validate_customer_profile_update,
     validate_login,
     validate_inquiry_create,
+    validate_inquiry_update,
     validate_operator_store_update,
     validate_operator_signup,
     validate_refresh,
@@ -169,6 +170,12 @@ async def list_inquiries_endpoint(storeId: int | None = Query(default=None), aut
 async def create_inquiry_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_inquiry_create(body)
     return {"inquiry": create_inquiry(int(auth["sub"]), payload)}
+
+
+@app.patch("/api/inquiries/{inquiry_id}")
+async def update_inquiry_endpoint(inquiry_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
+    payload = validate_inquiry_update(body)
+    return {"inquiry": update_inquiry(int(auth["sub"]), inquiry_id, payload)}
 
 
 @app.get("/api/operator/inquiries")

@@ -51,6 +51,38 @@ def create_inquiry(user_id: int, payload: dict) -> dict:
             raise
 
 
+def update_inquiry(user_id: int, inquiry_id: int, payload: dict) -> dict:
+    with db_connection() as connection:
+        try:
+            _ensure_customer(connection, user_id)
+            inquiry = _fetch_editable_inquiry(connection, user_id, inquiry_id)
+            if payload["orderId"] is not None:
+                _ensure_customer_order(connection, user_id, payload["orderId"], inquiry["store_id"])
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE inquiry_post
+                    SET title = %s, content = %s, order_id = %s, is_secret = %s
+                    WHERE id = %s AND author_user_id = %s
+                    """,
+                    (
+                        payload["title"],
+                        payload["content"],
+                        payload["orderId"],
+                        payload["isSecret"],
+                        inquiry_id,
+                        user_id,
+                    ),
+                )
+
+            connection.commit()
+            return _fetch_inquiry_by_id(connection, inquiry_id, current_user_id=user_id)
+        except Exception:
+            connection.rollback()
+            raise
+
+
 def _fetch_inquiries(connection, where_sql: str, params: tuple, current_user_id: int | None = None, mask_secret: bool = False) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -83,11 +115,32 @@ def _fetch_inquiries(connection, where_sql: str, params: tuple, current_user_id:
     return [_format_inquiry(connection, row, current_user_id, mask_secret) for row in rows]
 
 
-def _fetch_inquiry_by_id(connection, inquiry_id: int) -> dict:
-    rows = _fetch_inquiries(connection, "ip.id = %s", (inquiry_id,))
+def _fetch_inquiry_by_id(connection, inquiry_id: int, current_user_id: int | None = None) -> dict:
+    rows = _fetch_inquiries(connection, "ip.id = %s", (inquiry_id,), current_user_id=current_user_id)
     if not rows:
         raise AppError(404, "문의를 찾을 수 없습니다.")
     return rows[0]
+
+
+def _fetch_editable_inquiry(connection, user_id: int, inquiry_id: int) -> dict:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT ip.id, ip.store_id, COUNT(ipr.id) AS reply_count
+            FROM inquiry_post ip
+            LEFT JOIN inquiry_post_reply ipr ON ipr.inquiry_post_id = ip.id
+            WHERE ip.id = %s AND ip.author_user_id = %s
+            GROUP BY ip.id, ip.store_id
+            LIMIT 1
+            """,
+            (inquiry_id, user_id),
+        )
+        inquiry = cursor.fetchone()
+    if not inquiry:
+        raise AppError(404, "문의를 찾을 수 없습니다.")
+    if inquiry["reply_count"] > 0:
+        raise AppError(400, "답변이 등록된 문의는 수정할 수 없습니다.")
+    return inquiry
 
 
 def _format_inquiry(connection, row: dict, current_user_id: int | None = None, mask_secret: bool = False) -> dict:

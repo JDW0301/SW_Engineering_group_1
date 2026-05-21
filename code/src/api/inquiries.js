@@ -40,3 +40,11 @@ export async function createInquiry(payload) {
   });
   return data.inquiry;
 }
+
+export async function updateInquiry(inquiryId, payload) {
+  const data = await request(`/inquiries/${inquiryId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+  return data.inquiry;
+}

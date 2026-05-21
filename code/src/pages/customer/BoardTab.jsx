@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft, Lock, Image, Package, Edit3, X } from "lucide-react";
 import { Card, StatusBadge, Input, Button } from "../../components/ui";
-import { createInquiry, listStoreInquiries } from "../../api/inquiries";
+import { createInquiry, listStoreInquiries, updateInquiry } from "../../api/inquiries";
 
-const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
+const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInquiryUpdated }) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [writing, setWriting] = useState(false);
+  const [editingPostId, setEditingPostId] = useState(null);
   const [newPost, setNewPost] = useState({ title: "", content: "", isSecret: false, orderId: null, image: null });
   const [localPosts, setLocalPosts] = useState(initialPosts);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,26 +35,56 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
     if (!newPost.content.trim()) return;
     setError("");
     try {
-      const post = await createInquiry({
+      const payload = {
         storeId: store.id,
         title: newPost.title,
         content: newPost.content,
         orderId: newPost.orderId,
         isSecret: newPost.isSecret,
-      });
-      setLocalPosts(p => [post, ...p]);
-      onInquiryCreated(post);
+      };
+      if (editingPostId) {
+        const post = await updateInquiry(editingPostId, payload);
+        setLocalPosts(prev => prev.map(item => item.id === post.id ? post : item));
+        onInquiryUpdated(post);
+      } else {
+        const post = await createInquiry(payload);
+        setLocalPosts(p => [post, ...p]);
+        onInquiryCreated(post);
+      }
       setNewPost({ title: "", content: "", isSecret: false, orderId: null, image: null });
+      setEditingPostId(null);
       setWriting(false);
     } catch (error) {
       setError(error.message);
     }
   };
 
+  const closeEditor = () => {
+    setWriting(false);
+    setEditingPostId(null);
+    setNewPost({ title: "", content: "", isSecret: false, orderId: null, image: null });
+    setError("");
+  };
+
+  const startWriting = () => {
+    setEditingPostId(null);
+    setNewPost({ title: "", content: "", isSecret: false, orderId: null, image: null });
+    setError("");
+    setWriting(true);
+  };
+
+  const startEditing = (post) => {
+    setNewPost({ title: post.title, content: post.content, isSecret: post.isSecret, orderId: post.orderId || null, image: post.image });
+    setEditingPostId(post.id);
+    setSelectedPost(null);
+    setError("");
+    setWriting(true);
+  };
+
   if (writing) return (
     <div>
-      <button onClick={() => setWriting(false)} className="flex items-center gap-1 text-sm text-gray-500 mb-3"><ArrowLeft size={16} /> 목록</button>
-      <h3 className="font-bold mb-4">문의 작성</h3>
+      <button onClick={closeEditor} className="flex items-center gap-1 text-sm text-gray-500 mb-3"><ArrowLeft size={16} /> 목록</button>
+      <h3 className="font-bold mb-4">{editingPostId ? "문의 수정" : "문의 작성"}</h3>
       <div className="space-y-3">
         <Input label="제목" value={newPost.title} onChange={e => setNewPost(p => ({ ...p, title: e.target.value }))} placeholder="제목 (선택, 미입력 시 본문 내용으로)" />
         <div className="flex flex-col gap-1">
@@ -86,7 +117,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newPost.isSecret} onChange={e => setNewPost(p => ({ ...p, isSecret: e.target.checked }))} /> <Lock size={14} /> 비밀글</label>
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <Button className="w-full" onClick={submitPost}>글 작성</Button>
+        <Button className="w-full" onClick={submitPost}>{editingPostId ? "글 수정" : "글 작성"}</Button>
       </div>
     </div>
   );
@@ -117,7 +148,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
           </div>
         )}
         <div className="flex gap-2">
-          {(selectedPost.replies || []).length === 0 && <Button size="sm" variant="outline" onClick={() => { setNewPost({ title: selectedPost.title, content: selectedPost.content, isSecret: selectedPost.isSecret, orderId: selectedPost.orderId || null, image: selectedPost.image }); setSelectedPost(null); setWriting(true); }}><Edit3 size={14} /> 수정</Button>}
+          {(selectedPost.replies || []).length === 0 && <Button size="sm" variant="outline" onClick={() => startEditing(selectedPost)}><Edit3 size={14} /> 수정</Button>}
           <Button size="sm" variant="ghost" onClick={() => setSelectedPost(null)}>목록</Button>
         </div>
       </Card>
@@ -128,7 +159,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated }) => {
     <div>
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-semibold">문의 게시판</h3>
-        <Button size="sm" onClick={() => setWriting(true)}><Edit3 size={14} /> 문의 작성</Button>
+        <Button size="sm" onClick={startWriting}><Edit3 size={14} /> 문의 작성</Button>
       </div>
       <div className="space-y-2">
         {error && <p className="text-sm text-red-500">{error}</p>}

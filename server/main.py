@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.ai_client import get_ai_health, post_ai_json, stream_ai_chatbot
 from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator, update_customer_profile
@@ -14,6 +16,7 @@ from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
 from app.exceptions import AppError
 from app.inquiries import create_inquiry, list_my_inquiries, list_operator_inquiries, list_store_inquiries, update_inquiry
+from app.inquiries import ensure_inquiry_image_table
 from app.faqs import list_store_faqs
 from app.operator import update_operator_store
 from app.security import verify_access_token
@@ -52,6 +55,7 @@ from app.validation import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     test_database_connection()
+    ensure_inquiry_image_table()
     ensure_operator_workspace_tables()
     ensure_demo_customer_home_data()
     print(f"Server running on port {settings.port}")
@@ -59,6 +63,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/api/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,

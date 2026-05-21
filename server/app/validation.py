@@ -107,6 +107,7 @@ def validate_inquiry_create(body: dict) -> dict:
         "content": content,
         "orderId": optional_int(body.get("orderId"), "주문"),
         "isSecret": bool(is_secret),
+        "image": optional_string(body.get("image")),
     }
 
 
@@ -119,6 +120,7 @@ def validate_inquiry_update(body: dict) -> dict:
         "content": content,
         "orderId": optional_int(body.get("orderId"), "주문"),
         "isSecret": bool(is_secret),
+        "image": optional_string(body.get("image")),
     }
 
 

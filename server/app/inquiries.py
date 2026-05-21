@@ -1,7 +1,39 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import re
+import uuid
+from pathlib import Path
+
 from .database import db_connection
 from .exceptions import AppError
+
+
+INQUIRY_UPLOAD_DIR = Path(__file__).resolve().parents[1] / "uploads" / "inquiries"
+IMAGE_DATA_URL_PATTERN = re.compile(r"^data:image/(png|jpe?g|gif|webp);base64,(.+)$", re.IGNORECASE | re.DOTALL)
+
+
+def ensure_inquiry_image_table() -> None:
+    with db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS inquiry_post_image (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                    inquiry_post_id BIGINT UNSIGNED NOT NULL,
+                    image_url VARCHAR(500) NOT NULL,
+                    sort_order INT UNSIGNED NOT NULL DEFAULT 0,
+                    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (id),
+                    KEY idx_inquiry_post_image_post_id (inquiry_post_id),
+                    CONSTRAINT fk_inquiry_post_image_post
+                        FOREIGN KEY (inquiry_post_id) REFERENCES inquiry_post(id)
+                        ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+                """
+            )
+        connection.commit()
 
 
 def list_store_inquiries(store_id: int, user_id: int) -> list[dict]:
@@ -43,6 +75,7 @@ def create_inquiry(user_id: int, payload: dict) -> dict:
                     ),
                 )
                 inquiry_id = cursor.lastrowid
+                _replace_inquiry_image(cursor, inquiry_id, payload.get("image"))
 
             connection.commit()
             return _fetch_inquiry_by_id(connection, inquiry_id)
@@ -75,8 +108,10 @@ def update_inquiry(user_id: int, inquiry_id: int, payload: dict) -> dict:
                         user_id,
                     ),
                 )
+                obsolete_image_urls = _replace_inquiry_image(cursor, inquiry_id, payload.get("image"))
 
             connection.commit()
+            _delete_inquiry_image_files(obsolete_image_urls)
             return _fetch_inquiry_by_id(connection, inquiry_id, current_user_id=user_id)
         except Exception:
             connection.rollback()
@@ -148,6 +183,7 @@ def _format_inquiry(connection, row: dict, current_user_id: int | None = None, m
     is_hidden_secret = mask_secret and row["is_secret"] and not is_mine
     order_meta = _fetch_order_meta(connection, row["order_id"], row["customer_name"])
     replies = [] if is_hidden_secret else _fetch_replies(connection, row["id"])
+    image = None if is_hidden_secret else _fetch_image(connection, row["id"])
     title = "비밀글 입니다." if is_hidden_secret else row["title"]
     content = "" if is_hidden_secret else row["content"]
     return {
@@ -166,6 +202,7 @@ def _format_inquiry(connection, row: dict, current_user_id: int | None = None, m
         "orderInfo": order_meta["orderInfo"],
         "orderProductName": order_meta["productName"],
         "replies": replies,
+        "image": image,
         "messages": [
             {"id": 1, "sender": "customer", "content": content, "time": _format_date(row["created_at"])},
             *[
@@ -199,6 +236,81 @@ def _fetch_replies(connection, inquiry_id: int) -> list[dict]:
         }
         for row in rows
     ]
+
+
+def _fetch_image(connection, inquiry_id: int) -> str | None:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT image_url
+            FROM inquiry_post_image
+            WHERE inquiry_post_id = %s
+            ORDER BY sort_order ASC, id ASC
+            LIMIT 1
+            """,
+            (inquiry_id,),
+        )
+        row = cursor.fetchone()
+    return row["image_url"] if row else None
+
+
+def _replace_inquiry_image(cursor, inquiry_id: int, image: str | None) -> list[str]:
+    cursor.execute("SELECT image_url FROM inquiry_post_image WHERE inquiry_post_id = %s", (inquiry_id,))
+    previous_urls = [row["image_url"] for row in cursor.fetchall()]
+
+    cursor.execute("DELETE FROM inquiry_post_image WHERE inquiry_post_id = %s", (inquiry_id,))
+    image_url = _store_inquiry_image(image)
+    if image_url:
+        cursor.execute(
+            """
+            INSERT INTO inquiry_post_image (inquiry_post_id, image_url, sort_order)
+            VALUES (%s, %s, 0)
+            """,
+            (inquiry_id, image_url),
+        )
+    return [url for url in previous_urls if url != image_url]
+
+
+def _store_inquiry_image(image: str | None) -> str | None:
+    if not image:
+        return None
+    if not image.startswith("data:image/"):
+        return image
+
+    match = IMAGE_DATA_URL_PATTERN.match(image)
+    if not match:
+        raise AppError(400, "이미지 형식이 올바르지 않습니다.")
+
+    extension = "jpg" if match.group(1).lower() == "jpeg" else match.group(1).lower()
+    try:
+        image_bytes = base64.b64decode(match.group(2), validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise AppError(400, "이미지를 읽지 못했습니다.") from error
+
+    INQUIRY_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    file_name = f"{uuid.uuid4().hex}.{extension}"
+    (INQUIRY_UPLOAD_DIR / file_name).write_bytes(image_bytes)
+    return f"/api/uploads/inquiries/{file_name}"
+
+
+def _delete_inquiry_image_files(image_urls: list[str]) -> None:
+    for image_url in image_urls:
+        image_path = _image_url_to_upload_path(image_url)
+        if image_path and image_path.exists():
+            image_path.unlink()
+
+
+def _image_url_to_upload_path(image_url: str) -> Path | None:
+    prefix = "/api/uploads/inquiries/"
+    if not image_url.startswith(prefix):
+        return None
+
+    image_path = (INQUIRY_UPLOAD_DIR / image_url.removeprefix(prefix)).resolve()
+    try:
+        image_path.relative_to(INQUIRY_UPLOAD_DIR.resolve())
+    except ValueError:
+        return None
+    return image_path
 
 
 def _fetch_order_meta(connection, order_id: int | None, customer_name: str) -> dict:

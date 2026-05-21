@@ -1,23 +1,13 @@
-import { getAccessToken } from "./auth";
+import { authFetch, parseApiResponse } from "./auth";
 
 export async function streamChatbotReply(payload, onEvent) {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    throw new Error("로그인이 필요합니다.");
-  }
-
-  const response = await fetch("/api/ai/chatbot/stream", {
+  const response = await authFetch("/ai/chatbot/stream", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.message ?? "챗봇 응답을 불러오지 못했습니다.");
+    await parseApiResponse(response, "챗봇 응답을 불러오지 못했습니다.");
   }
 
   if (!response.body) {

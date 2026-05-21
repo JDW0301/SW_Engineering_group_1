@@ -7,7 +7,7 @@ const MyInquiryTab = ({ supportSessions, inquiryPosts, onOpenSupportSession, onO
     <div>
       <div className="flex gap-2 mb-4">
         <Button variant={mode === "consult" ? "primary" : "outline"} size="sm" onClick={() => setMode("consult")}>상담</Button>
-        <Button variant={mode === "board" ? "primary" : "outline"} size="sm" onClick={() => setMode("board")}>문의</Button>
+        <Button variant={mode === "board" ? "primary" : "outline"} size="sm" onClick={() => setMode("board")}>문의글</Button>
       </div>
       {mode === "consult" ? (
         <div className="space-y-2">

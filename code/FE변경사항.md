@@ -135,3 +135,75 @@
 - [ ] 관리자 메인 화면의 '대기 문의' 카드에 기간 필터 버튼이 제거되었는지 확인
 - [ ] 관리자 앱 상단 네비게이션에 로그인한 관리자의 스토어 이름이 표시되는지 확인
 - [ ] 관리자 설정 화면의 '스토어 관리' 탭에서 로그인한 관리자의 스토어 정보(전화번호, 주소, 운영시간, 소개글)가 기본값으로 표시되는지 확인
+
+---
+
+# 프론트엔드 변경사항 (고객 챗봇 문의 대상 선택 개선)
+
+## 변경 이유
+- 기존에는 스토어 화면 상단의 작은 select에서 챗봇 문의 대상을 선택해야 해서, 채팅 중 현재 상품/주문 맥락을 확인하기 어려웠다.
+- 주문 내역에서 상품 문의로 진입한 경우와 스토어 검색으로 일반 진입한 경우를 더 명확히 구분할 필요가 있었다.
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/pages/customer/StorePage.jsx`
+  - 상단 `챗봇 문의 대상` select를 제거했다.
+  - 해당 스토어의 주문 목록과 주문 선택 콜백을 `ChatbotTab`으로 전달하도록 수정했다.
+- [x] `src/pages/customer/ChatbotTab.jsx`
+  - 채팅창 내부 상단에 `현재 문의 대상` 카드를 추가했다.
+  - 기본 상태는 `스토어 일반 문의`로 표시한다.
+  - 주문이 선택된 상태에서는 `상품명 · 주문번호`를 표시한다.
+  - `변경` 버튼을 누르면 `스토어 일반 문의`와 해당 스토어 주문 목록을 작은 inline 목록으로 보여준다.
+  - 주문 목록에는 상품명, 주문번호, 수량, 주문일, 금액을 함께 표시해 상품 구분을 쉽게 했다.
+  - 상담사 연결 팝업은 기존처럼 선택된 주문 맥락을 참조하도록 유지했다.
+
+## 검증 결과
+- [x] `StorePage.jsx` LSP diagnostics 문제 없음
+- [x] `ChatbotTab.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+
+## Non-Goals (이번 작업에서 제외된 항목)
+- 백엔드 API 및 DB 구조 변경
+- 고객 앱 전체 라우팅 변경
+- 별도 주문 선택 페이지 또는 복잡한 모달 도입
+- 기존 문의 게시판/나의 문의 탭 동작 변경
+
+---
+
+# 프론트엔드 변경사항 (나의 문의 탭 라벨 수정)
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/pages/customer/MyInquiryTab.jsx`
+  - `나의 문의` 화면의 탭 라벨을 `문의`에서 `문의글`로 변경했다.
+
+## 검증 결과
+- [x] `MyInquiryTab.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+
+---
+
+# 프론트엔드 변경사항 (인증 만료 처리 개선)
+
+## 변경 이유
+- access token 만료 후 API 요청이 실패했을 때 고객/관리자 화면 데이터가 빈 목록처럼 보이는 문제를 줄이기 위해 세션 만료 처리를 명확히 했다.
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/api/auth.js`
+  - 인증 API 공통 호출 함수에 401 발생 시 refresh token으로 1회 재발급 후 원 요청을 재시도하는 흐름을 추가했다.
+  - refresh 실패 또는 재시도 후 401이면 토큰을 삭제하고 세션 만료 이벤트를 발생시키도록 했다.
+- [x] `src/api/customerHome.js`, `src/api/inquiries.js`, `src/api/support.js`, `src/api/operatorWorkspace.js`, `src/api/faqs.js`, `src/api/operator.js`, `src/api/ai.js`
+  - 개별 API 호출이 공통 인증 호출 함수를 사용하도록 정리했다.
+- [x] `src/App.jsx`
+  - 세션 만료 이벤트를 받으면 로그인 화면으로 이동하고 만료 안내 메시지를 표시하도록 했다.
+- [x] `src/pages/customer/CustomerApp.jsx`, `src/pages/operator/OperatorApp.jsx`
+  - 인증 만료 오류를 빈 데이터 상태처럼 덮어쓰지 않도록 했다.
+
+## 검증 결과
+- [x] `src/api` LSP diagnostics 문제 없음
+- [x] `App.jsx`, `CustomerApp.jsx`, `OperatorApp.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+
+## Non-Goals (이번 작업에서 제외된 항목)
+- 백엔드 토큰 만료 시간 변경
+- refresh token 회전 정책 또는 저장 방식 변경
+- localStorage 기반 토큰 저장 구조 변경
+- 전체 API 구조 대규모 리팩토링

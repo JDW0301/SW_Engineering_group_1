@@ -1,18 +1,8 @@
-import { getAccessToken } from "./auth";
+import { authFetch, parseApiResponse } from "./auth";
 
 async function request(path, options = {}) {
-  const accessToken = getAccessToken();
-  const response = await fetch(`/api${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...(options.headers ?? {}),
-    },
-    ...options,
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message ?? "관리자 데이터를 처리하지 못했습니다.");
-  return data;
+  const response = await authFetch(path, options);
+  return parseApiResponse(response, "관리자 데이터를 처리하지 못했습니다.");
 }
 
 export async function getOperatorWorkspace() {

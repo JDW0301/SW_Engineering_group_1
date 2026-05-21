@@ -12,6 +12,7 @@ import {
   logout,
   refresh,
   saveAuthTokens,
+  SESSION_EXPIRED_EVENT,
   signupCustomer,
   signupOperator,
 } from "./api/auth";
@@ -75,6 +76,19 @@ export default function App() {
     };
 
     initializeSession();
+  }, []);
+
+  useEffect(() => {
+    const handleSessionExpired = (event) => {
+      clearAuthTokens();
+      setUser(null);
+      setAuthSuccess("");
+      setAuthError(event.detail?.message || "로그인 시간이 만료되었습니다. 다시 로그인해 주세요.");
+      setScreen("login");
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
   }, []);
 
   const handleLogin = async ({ role, loginId, password }) => {

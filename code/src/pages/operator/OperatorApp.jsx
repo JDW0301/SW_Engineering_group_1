@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isAuthExpiredError } from "../../api/auth";
 import { listOperatorInquiries } from "../../api/inquiries";
 import { getOperatorWorkspace, getOperatorSettings } from "../../api/operatorWorkspace";
 import OperatorNav from "./OperatorNav";
@@ -35,7 +36,9 @@ const OperatorApp = ({ onLogout, user, onUpdateUser }) => {
         setInquiryRepliesByPostId(Object.fromEntries(posts.map(post => [post.id, post.replies || []])));
         setPresets(settings.presets ?? []);
       })
-      .catch(() => {});
+      .catch(error => {
+        if (isAuthExpiredError(error)) return;
+      });
     return () => {
       ignore = true;
     };

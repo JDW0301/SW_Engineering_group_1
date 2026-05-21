@@ -74,9 +74,58 @@
 - `operator_bakery`, `operator_bookcafe`도 각각 `맛있는 빵집`, `북카페 서랍`으로 정상 연결되는 것을 확인했다.
 - Playwright 화면 QA에서 고객 홈의 "주문했던 스토어" 영역에 `패션스토어 루미`가 표시되는 것을 확인했다.
 
-## 3. 공통 검증
+## 3. 문의 게시판 이미지 첨부 구현
+
+### 문제
+
+문의 작성 화면에서 이미지 첨부 영역을 클릭하면 실제 파일 선택 없이 임시 png 파일명만 자동으로 붙었다.
+
+### 변경 내용
+
+- `code/src/pages/customer/BoardTab.jsx`
+  - 실제 이미지 파일 선택 input을 연결했다.
+  - 선택한 이미지를 미리보기로 보여주고 작성/수정 payload에 전달하도록 했다.
+  - 문의 상세 화면에서 저장된 첨부 이미지를 표시하도록 했다.
+- `code/src/components/ui/BoardDetail.jsx`
+  - 운영자 문의 상세에서도 첨부 이미지를 확인할 수 있도록 공용 상세 컴포넌트에 이미지 표시를 추가했다.
+- `server/app/inquiries.py`
+  - 문의 생성/수정 시 첨부 이미지를 저장하고 조회 응답에 `image`를 포함하도록 했다.
+  - data URL 이미지를 서버 파일로 저장하고 DB에는 `/api/uploads/inquiries/...` 경로를 저장하도록 했다.
+  - 기존 첨부 이미지를 교체하거나 삭제할 때 DB 커밋 성공 후 이전 업로드 파일도 삭제하도록 했다.
+- `server/main.py`
+  - 저장된 첨부 이미지를 `/api/uploads` 정적 경로로 제공하도록 했다.
+- `server/app/validation.py`
+  - 문의 생성/수정 검증 payload에 선택 이미지 값을 포함했다.
+- `.gitignore`
+  - 런타임 업로드 파일과 Python cache가 변경사항에 섞이지 않도록 `server/uploads/`, `__pycache__/`, `*.pyc`를 제외했다.
+
+### 검증 결과
+
+- 직접 백엔드 검증 스크립트로 이미지 포함 문의 생성, 목록 조회, 이미지 교체 수정을 확인했다.
+- 브라우저 QA로 이미지 선택 후 미리보기 표시, 문의 작성, 상세 화면 이미지 표시를 확인했다.
+- DB 3308의 `inquiry_post_image.image_url`에 `/api/uploads/inquiries/...png` 경로가 저장된 것을 확인했다.
+- 수정 전 백엔드 프로세스로 생성된 실패 QA row는 삭제했다.
+
+### 재검토 및 운영 반영
+
+- 코드 재검토 결과 현재 기능 흐름은 정상 동작하는 것으로 확인했다.
+- 이미지 첨부가 보이지 않던 원인은 실행 중이던 `4010` 백엔드가 수정 전 코드로 떠 있던 점이었다.
+- `4010` 백엔드를 재시작했고, `GET /api/health`가 200 OK로 응답하는 것을 확인했다.
+- 재시작 후 브라우저에서 이미지 선택, 미리보기, 문의 작성, 상세 화면 이미지 표시를 다시 확인했다.
+- DB 3308에서 `id=25` 문의의 `image_url`이 `/api/uploads/inquiries/fa085a79588e4468b333e90d8fc3bfb6.png`로 저장된 것을 확인했다.
+- `/api/uploads/inquiries/fa085a79588e4468b333e90d8fc3bfb6.png` 정적 이미지 경로가 200 OK로 응답하는 것을 확인했다.
+- 이미지 교체 시 이전 파일이 삭제되고, 이미지 삭제 시 현재 파일이 삭제되는 것을 직접 백엔드 검증 스크립트로 확인했다.
+
+### 남은 주의사항
+
+- 이미지 파일 저장과 DB 저장이 완전한 단일 트랜잭션은 아니므로, DB 저장 실패 시 고아 파일이 남을 수 있다.
+- API 직접 호출 시 `image`에 임의 문자열을 넣을 수 있으므로, 필요하면 `/api/uploads/inquiries/` 경로나 data URL만 허용하도록 검증을 강화해야 한다.
+- 큰 이미지 파일 크기 제한은 아직 없으므로, 필요하면 프론트/백엔드 양쪽에 제한을 추가해야 한다.
+
+## 4. 공통 검증
 
 - Backend health: `GET /api/health` 200 OK
+- Backend restart: `4010` 프로세스 재시작 후 `GET /api/health` 200 OK
 - Frontend availability: `http://203.234.62.35:8002` 200 OK
 - Frontend build: `npm run build` 성공
 - Python compile: 변경된 backend 파일 `py_compile` 성공
@@ -84,18 +133,21 @@
 - Python LSP diagnostics: `basedpyright-langserver` 미설치로 실행 불가
 - `git diff --check`: 통과
 
-## 4. 현재 변경 파일
+## 5. 현재 변경 파일
 
 - `code/src/api/inquiries.js`
+- `code/src/components/ui/BoardDetail.jsx`
 - `code/src/pages/customer/BoardTab.jsx`
+- `.gitignore`
 - `code/src/pages/customer/StorePage.jsx`
 - `server/app/customer_home.py`
 - `server/app/inquiries.py`
 - `server/app/repositories.py`
 - `server/app/validation.py`
 - `server/main.py`
+- `server/sql/schema.sql`
 - `CHANGE_SUMMARY.md`
 
-## 5. 참고
+## 6. 참고
 
 - `.sisyphus/run-continuation/`은 작업 세션용 untracked 디렉터리이며 커밋 대상에서 제외한다.

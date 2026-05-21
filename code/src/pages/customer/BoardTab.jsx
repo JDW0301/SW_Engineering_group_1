@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Lock, Image, Package, Edit3, X } from "lucide-react";
 import { Card, StatusBadge, Input, Button } from "../../components/ui";
 import { createInquiry, listStoreInquiries, updateInquiry } from "../../api/inquiries";
@@ -11,6 +11,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
   const [localPosts, setLocalPosts] = useState(initialPosts);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const imageInputRef = useRef(null);
   const storeOrders = orders.filter(o => o.storeId === store.id);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
         content: newPost.content,
         orderId: newPost.orderId,
         isSecret: newPost.isSecret,
+        image: newPost.image?.url || null,
       };
       if (editingPostId) {
         const post = await updateInquiry(editingPostId, payload);
@@ -74,11 +76,29 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
   };
 
   const startEditing = (post) => {
-    setNewPost({ title: post.title, content: post.content, isSecret: post.isSecret, orderId: post.orderId || null, image: post.image });
+    setNewPost({ title: post.title, content: post.content, isSecret: post.isSecret, orderId: post.orderId || null, image: post.image ? { name: "첨부 이미지", url: post.image } : null });
     setEditingPostId(post.id);
     setSelectedPost(null);
     setError("");
     setWriting(true);
+  };
+
+  const attachImage = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("이미지 파일만 첨부할 수 있습니다.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setNewPost(prev => ({ ...prev, image: { name: file.name, url: String(reader.result || "") } }));
+      setError("");
+    };
+    reader.onerror = () => setError("이미지를 읽지 못했습니다.");
+    reader.readAsDataURL(file);
   };
 
   if (writing) return (
@@ -100,14 +120,18 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm font-medium text-gray-700">이미지 첨부</label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 transition">
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={attachImage} />
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 transition" onClick={() => !newPost.image && imageInputRef.current?.click()}>
             {newPost.image ? (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{newPost.image}</span>
-                <button onClick={() => setNewPost(p => ({ ...p, image: null }))} className="text-red-400 hover:text-red-600"><X size={16} /></button>
+              <div className="space-y-2">
+                <img src={newPost.image.url} alt="첨부 이미지 미리보기" className="mx-auto max-h-40 rounded-lg object-contain" />
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm text-gray-600">{newPost.image.name}</span>
+                  <button type="button" onClick={() => setNewPost(p => ({ ...p, image: null }))} className="text-red-400 hover:text-red-600"><X size={16} /></button>
+                </div>
               </div>
             ) : (
-              <div onClick={() => setNewPost(p => ({ ...p, image: "screenshot_" + Date.now() + ".png" }))}>
+              <div>
                 <Image size={20} className="mx-auto text-gray-400 mb-1" />
                 <p className="text-xs text-gray-400">클릭하여 이미지 첨부</p>
               </div>
@@ -136,9 +160,8 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
         )}
         <p className="text-sm text-gray-700 mb-3">{selectedPost.content}</p>
         {selectedPost.image && (
-          <div className="mb-3 bg-gray-100 rounded-lg p-3 text-center">
-            <Image size={24} className="mx-auto text-gray-400 mb-1" />
-            <p className="text-xs text-gray-500">첨부 이미지: {selectedPost.image}</p>
+          <div className="mb-3 rounded-lg bg-gray-100 p-3 text-center">
+            <img src={selectedPost.image} alt="첨부 이미지" className="mx-auto max-h-64 rounded-lg object-contain" />
           </div>
         )}
         {(selectedPost.replies || []).length > 0 && (

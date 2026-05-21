@@ -26,6 +26,11 @@ const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit }) => {
           </div>
         )}
         <p className="text-sm text-gray-700 mb-3">{customerMessage?.content}</p>
+        {inquiry.image && (
+          <div className="mb-3 rounded-lg bg-gray-100 p-3 text-center">
+            <img src={inquiry.image} alt="첨부 이미지" className="mx-auto max-h-64 rounded-lg object-contain" />
+          </div>
+        )}
         
         {operatorMessage ? (
           <div className="bg-indigo-50 rounded-lg p-3 mb-3">

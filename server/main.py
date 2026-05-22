@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.ai_client import get_ai_health, post_ai_json, stream_ai_chatbot
+from app.ai_summaries import ensure_ai_summary_table, get_inquiry_summary, get_support_summary, save_inquiry_summary, save_support_summary
 from app.auth import get_me, login, logout, refresh_auth, signup_customer, signup_operator, update_customer_profile
 from app.chatbot_context import enrich_chatbot_payload
 from app.config import settings
@@ -43,6 +44,7 @@ from app.validation import (
     validate_refresh,
     validate_inquiry_reply_create,
     validate_internal_note_create,
+    validate_ai_summary_save,
     validate_faq_save,
     validate_knowledge_file_create,
     validate_preset_save,
@@ -56,6 +58,7 @@ from app.validation import (
 async def lifespan(app: FastAPI):
     test_database_connection()
     ensure_inquiry_image_table()
+    ensure_ai_summary_table()
     ensure_operator_workspace_tables()
     ensure_demo_customer_home_data()
     print(f"Server running on port {settings.port}")
@@ -235,6 +238,28 @@ async def create_operator_inquiry_reply_endpoint(inquiry_id: int, body: dict, au
 async def create_operator_note_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_internal_note_create(body)
     return {"note": create_internal_note(int(auth["sub"]), payload)}
+
+
+@app.get("/api/operator/support-sessions/{session_id}/summary")
+async def get_support_summary_endpoint(session_id: int, auth: dict = Depends(get_auth_payload)):
+    return {"summary": get_support_summary(int(auth["sub"]), session_id)}
+
+
+@app.post("/api/operator/support-sessions/{session_id}/summary")
+async def save_support_summary_endpoint(session_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
+    payload = validate_ai_summary_save(body)
+    return {"summary": save_support_summary(int(auth["sub"]), session_id, payload)}
+
+
+@app.get("/api/operator/inquiries/{inquiry_id}/summary")
+async def get_inquiry_summary_endpoint(inquiry_id: int, auth: dict = Depends(get_auth_payload)):
+    return {"summary": get_inquiry_summary(int(auth["sub"]), inquiry_id)}
+
+
+@app.post("/api/operator/inquiries/{inquiry_id}/summary")
+async def save_inquiry_summary_endpoint(inquiry_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
+    payload = validate_ai_summary_save(body)
+    return {"summary": save_inquiry_summary(int(auth["sub"]), inquiry_id, payload)}
 
 
 @app.get("/api/operator/settings")

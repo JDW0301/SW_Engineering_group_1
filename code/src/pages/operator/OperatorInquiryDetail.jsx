@@ -1,15 +1,27 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, User, Phone, Package, Clipboard, Star, HelpCircle } from "lucide-react";
 import { Card, StatusBadge, Avatar, Button, BoardDetail } from "../../components/ui";
+import { summarizeConversation } from "../../api/ai";
 import { createSupportMessage, listSupportMessages, updateSupportStatus } from "../../api/support";
-import { createInquiryReply, createInternalNote } from "../../api/operatorWorkspace";
+import { createInquiryReply, createInternalNote, getAISummary, saveAISummary } from "../../api/operatorWorkspace";
+
+const toSummarySender = (sender) => sender === "operator" ? "상담사" : "고객";
+
+const toSummaryMessages = (messages) => messages
+  .filter(message => message.sender !== "system" && message.content)
+  .map(message => ({ sender: toSummarySender(message.sender), content: message.content }));
 
 const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, setInquiryPosts, inquiryRepliesByPostId, setInquiryRepliesByPostId, setPage, prevPage, orders, notesByTarget, setNotesByTarget, presets = [] }) => {
   const [input, setInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [aiSummary, setAiSummary] = useState(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+  const [isSummaryGenerating, setIsSummaryGenerating] = useState(false);
+  const [summaryError, setSummaryError] = useState("");
   const chatEnd = useRef(null);
+  const summaryTarget = useRef("");
   const supportSession = selectedDetail?.kind === "support" ? supportSessions.find(session => session.id === selectedDetail.id) : null;
   const inquiryPost = selectedDetail?.kind === "inquiry" ? inquiryPosts.find(post => post.id === selectedDetail.id) : null;
   const detail = supportSession || inquiryPost;
@@ -18,6 +30,42 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
   const noteKey = selectedDetail ? `${selectedDetail.kind}-${selectedDetail.id}` : "";
   const notes = notesByTarget[noteKey] || [];
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [supportMessages]);
+
+  useEffect(() => {
+    if (!selectedDetail) {
+      summaryTarget.current = "";
+      setAiSummary(null);
+      setSummaryError("");
+      setIsSummaryLoading(false);
+      return undefined;
+    }
+
+    let ignore = false;
+    const targetKey = `${selectedDetail.kind}-${selectedDetail.id}`;
+    summaryTarget.current = targetKey;
+
+    const loadSummary = async () => {
+      setIsSummaryLoading(true);
+      setSummaryError("");
+      setAiSummary(null);
+      try {
+        const summary = await getAISummary(selectedDetail.kind, selectedDetail.id);
+        if (!ignore && summaryTarget.current === targetKey) setAiSummary(summary);
+      } catch (error) {
+        if (!ignore && summaryTarget.current === targetKey) {
+          setAiSummary(null);
+          setSummaryError(error.message || "저장된 AI 요약을 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!ignore && summaryTarget.current === targetKey) setIsSummaryLoading(false);
+      }
+    };
+
+    loadSummary();
+    return () => {
+      ignore = true;
+    };
+  }, [selectedDetail?.kind, selectedDetail?.id]);
 
   useEffect(() => {
     if (!supportSession) return undefined;
@@ -88,6 +136,37 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
     const nextReply = await createInquiryReply(inquiryPost.id, answer);
     setInquiryRepliesByPostId(prev => ({ ...prev, [inquiryPost.id]: [...inquiryReplies, nextReply] }));
     setInquiryPosts(prev => prev.map(post => post.id === inquiryPost.id ? { ...post, status: "RESOLVED", lastMessageAt: nextReply.createdAt } : post));
+  };
+
+  const regenerateSummary = async () => {
+    if (!selectedDetail) return;
+    const targetKind = selectedDetail.kind;
+    const targetId = selectedDetail.id;
+    const targetKey = `${targetKind}-${targetId}`;
+    const messages = selectedDetail.kind === "support"
+      ? toSummaryMessages(supportMessages)
+      : toSummaryMessages([
+        { sender: "customer", content: inquiryPost.content },
+        ...inquiryReplies.map(reply => ({ sender: "operator", content: reply.content })),
+      ]);
+    if (messages.length === 0) {
+      setSummaryError("요약할 대화 내용이 없습니다.");
+      return;
+    }
+
+    setIsSummaryGenerating(true);
+    setSummaryError("");
+    try {
+      const result = await summarizeConversation({ messages, store_info: detail.storeName });
+      const summaryText = result.summary;
+      if (!summaryText) throw new Error("AI 요약 응답이 비어 있습니다.");
+      const savedSummary = await saveAISummary(targetKind, targetId, summaryText);
+      if (summaryTarget.current === targetKey) setAiSummary(savedSummary);
+    } catch (error) {
+      if (summaryTarget.current === targetKey) setSummaryError(error.message || "AI 요약을 생성하지 못했습니다.");
+    } finally {
+      setIsSummaryGenerating(false);
+    }
   };
 
   const inquiryForBoard = inquiryPost ? {
@@ -214,8 +293,21 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
 
           {/* AI Summary */}
           <Card className="p-4">
-            <h4 className="font-semibold text-sm mb-2 flex items-center gap-1"><Star size={14} /> AI 요약</h4>
-            <p className="text-xs text-gray-600 leading-relaxed">고객이 {order?.productName || "상품"} 관련하여 문의했습니다. 주요 이슈는 사이즈 교환/제품 문의이며, 현재 {detail.status === "RESOLVED" ? "해결" : "처리 중"}입니다.</p>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h4 className="font-semibold text-sm flex items-center gap-1"><Star size={14} /> AI 요약</h4>
+              <Button size="sm" onClick={regenerateSummary} disabled={isSummaryLoading || isSummaryGenerating}>{isSummaryGenerating ? "생성 중" : "요약 재생성"}</Button>
+            </div>
+            {isSummaryLoading ? (
+              <p className="text-xs text-gray-400">저장된 요약을 불러오는 중입니다.</p>
+            ) : aiSummary ? (
+              <div className="space-y-1">
+                <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap">{aiSummary.summaryText}</p>
+                {aiSummary.updatedAt && <p className="text-[11px] text-gray-400">최근 저장: {aiSummary.updatedAt}</p>}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 leading-relaxed">저장된 AI 요약이 없습니다. 요약 재생성을 누르면 최신 요약이 DB에 저장됩니다.</p>
+            )}
+            {summaryError && <p className="mt-2 rounded-lg bg-red-50 px-2 py-1.5 text-xs text-red-600">{summaryError}</p>}
           </Card>
 
           {/* Quick Presets */}

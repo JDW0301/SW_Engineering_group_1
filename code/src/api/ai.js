@@ -1,5 +1,14 @@
 import { authFetch, parseApiResponse } from "./auth";
 
+export async function summarizeConversation(payload) {
+  const response = await authFetch("/ai/summarize", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  return parseApiResponse(response, "AI 요약을 생성하지 못했습니다.");
+}
+
 export async function streamChatbotReply(payload, onEvent) {
   const response = await authFetch("/ai/chatbot/stream", {
     method: "POST",

@@ -25,6 +25,25 @@ export async function createInternalNote(payload) {
   return data.note;
 }
 
+function getAISummaryPath(kind, id) {
+  if (kind === "support") return `/operator/support-sessions/${id}/summary`;
+  if (kind === "inquiry") return `/operator/inquiries/${id}/summary`;
+  throw new Error("지원하지 않는 AI 요약 대상입니다.");
+}
+
+export async function getAISummary(kind, id) {
+  const data = await request(getAISummaryPath(kind, id));
+  return data.summary ?? null;
+}
+
+export async function saveAISummary(kind, id, summaryText) {
+  const data = await request(getAISummaryPath(kind, id), {
+    method: "POST",
+    body: JSON.stringify({ summaryText }),
+  });
+  return data.summary;
+}
+
 export async function getOperatorSettings() {
   return request("/operator/settings");
 }

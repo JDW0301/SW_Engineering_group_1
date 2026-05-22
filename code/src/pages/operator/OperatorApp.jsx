@@ -9,19 +9,40 @@ import OperatorInquiryDetail from "./OperatorInquiryDetail";
 import StatsPage from "./StatsPage";
 import OperatorSettings from "./OperatorSettings";
 
+const DETAIL_STATE_KEY = "operator_selected_detail";
+
+function readStoredDetailState() {
+  if (typeof window === "undefined") return null;
+  try {
+    const stored = window.sessionStorage.getItem(DETAIL_STATE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
 const OperatorApp = ({ onLogout, user, onUpdateUser }) => {
-  const [page, setPage] = useState("main");
+  const [storedDetailState] = useState(readStoredDetailState);
+  const [page, setPage] = useState(storedDetailState?.page || "main");
   const [supportSessions, setSupportSessions] = useState([]);
   const [supportMessagesBySessionId, setSupportMessagesBySessionId] = useState({});
   const [inquiryPosts, setInquiryPosts] = useState([]);
   const [inquiryRepliesByPostId, setInquiryRepliesByPostId] = useState({});
-  const [selectedDetail, setSelectedDetail] = useState(null);
+  const [selectedDetail, setSelectedDetail] = useState(storedDetailState?.selectedDetail || null);
   const [orders, setOrders] = useState([]);
   const [notesByTarget, setNotesByTarget] = useState({});
   const [presets, setPresets] = useState([]);
   const [sideNav, setSideNav] = useState(false);
-  const [prevPage, setPrevPage] = useState("main");
+  const [prevPage, setPrevPage] = useState(storedDetailState?.prevPage || "main");
   const storeName = user?.storeName || user?.store?.name || "패션스토어 루미";
+
+  useEffect(() => {
+    if (page === "inquiryDetail" && selectedDetail) {
+      window.sessionStorage.setItem(DETAIL_STATE_KEY, JSON.stringify({ page, selectedDetail, prevPage }));
+      return;
+    }
+    window.sessionStorage.removeItem(DETAIL_STATE_KEY);
+  }, [page, selectedDetail, prevPage]);
 
   useEffect(() => {
     let ignore = false;

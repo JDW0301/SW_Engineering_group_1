@@ -298,6 +298,18 @@ CREATE TABLE IF NOT EXISTS chatbot_knowledge_file (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS ai_summary (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    target_type ENUM('SUPPORT', 'INQUIRY') NOT NULL,
+    target_id BIGINT UNSIGNED NOT NULL,
+    summary_text TEXT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_ai_summary_target (target_type, target_id),
+    KEY idx_ai_summary_updated_at (updated_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS store_stat_daily (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     store_id BIGINT UNSIGNED NOT NULL,

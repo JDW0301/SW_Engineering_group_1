@@ -165,6 +165,10 @@ def validate_internal_note_create(body: dict) -> dict:
     }
 
 
+def validate_ai_summary_save(body: dict) -> dict:
+    return {"summaryText": require_string(body.get("summaryText"), "요약")}
+
+
 def validate_preset_save(body: dict) -> dict:
     raw_presets = body.get("presets", [])
     if not isinstance(raw_presets, list):

@@ -54,9 +54,11 @@
 
 | Method | Path | 화면 목적 |
 |---|---|---|
-| `GET` | `/api/customer/home` | 고객 홈에 필요한 주문/스토어 요약 조회 |
+| `GET` | `/api/customer/home` | 고객 홈에 필요한 주문/스토어 요약과 검색용 전체 스토어/상품 요약 조회 |
 | `GET` | `/api/customer/orders` | 고객 주문 목록 조회 |
 | `GET` | `/api/customer/stores` | 고객이 이용한 스토어 목록 조회 |
+
+`GET /api/customer/home`의 `stores`는 고객이 주문했던 스토어 목록으로 유지한다. 검색 화면은 같은 응답의 `allStores`와 `products`를 사용해 주문 이력이 없는 스토어와 상품도 찾을 수 있다.
 
 ## 챗봇 API
 

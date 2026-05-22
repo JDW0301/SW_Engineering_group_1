@@ -53,6 +53,20 @@ DEMO_STORE_OPERATORS = {
         "phone": "010-5555-6666",
         "password": "1234",
     },
+    "petmate": {
+        "login_id": "operator_petmate",
+        "email": "operator_petmate@example.com",
+        "name": "펫메이트 관리자",
+        "phone": "010-6666-7777",
+        "password": "1234",
+    },
+    "flowerday": {
+        "login_id": "operator_flowerday",
+        "email": "operator_flowerday@example.com",
+        "name": "플라워데이 관리자",
+        "phone": "010-7777-8888",
+        "password": "1234",
+    },
 }
 
 DEMO_STORES = [
@@ -110,6 +124,28 @@ DEMO_STORES = [
         "business_hours": "화~일 11:00 ~ 20:00",
         "product_name": "텀블러 350ml",
         "price": 32000,
+    },
+    {
+        "key": "petmate",
+        "name": "펫메이트 용품점",
+        "category": "반려동물",
+        "description": "반려동물 간식과 산책용품",
+        "phone": "02-444-9090",
+        "address": "서울시 성동구 성수동 18-2",
+        "business_hours": "매일 10:00 ~ 20:00",
+        "product_name": "강아지 산책 하네스",
+        "price": 28000,
+    },
+    {
+        "key": "flowerday",
+        "name": "플라워데이 꽃집",
+        "category": "선물",
+        "description": "꽃다발과 기념일 선물",
+        "phone": "02-222-1919",
+        "address": "서울시 용산구 이태원동 77-1",
+        "business_hours": "평일 09:30 ~ 19:30",
+        "product_name": "계절 꽃다발",
+        "price": 45000,
     },
 ]
 
@@ -271,6 +307,16 @@ DEMO_FAQS_BY_STORE = {
         {"question": "텀블러 세척 방법은 어떻게 되나요?", "answer": "코팅 보호를 위해 식기세척기보다 부드러운 스펀지 손세척을 권장드립니다."},
         {"question": "매장 픽업이 가능한가요?", "answer": "주문 후 픽업 가능 알림을 받으시면 매장에서 수령하실 수 있습니다."},
     ],
+    "petmate": [
+        {"question": "하네스 사이즈는 어떻게 고르나요?", "answer": "반려동물의 목둘레와 가슴둘레를 재서 상품 사이즈표와 비교해 주세요."},
+        {"question": "간식 알레르기 성분을 확인할 수 있나요?", "answer": "상품명을 알려주시면 주요 원재료와 알레르기 성분을 확인해드립니다."},
+        {"question": "산책용품 교환이 가능한가요?", "answer": "미사용 상품은 수령 후 7일 이내 교환 접수가 가능합니다."},
+    ],
+    "flowerday": [
+        {"question": "당일 꽃다발 주문이 가능한가요?", "answer": "매장 재고에 따라 당일 제작이 가능하며, 원하는 색감을 먼저 알려주세요."},
+        {"question": "메시지 카드를 넣을 수 있나요?", "answer": "주문 요청사항에 문구를 남기면 작은 메시지 카드를 함께 준비합니다."},
+        {"question": "꽃다발 관리 방법은 무엇인가요?", "answer": "줄기 끝을 사선으로 자르고 매일 깨끗한 물로 교체하면 더 오래 볼 수 있습니다."},
+    ],
 }
 
 COMMON_DEMO_PRESET_TITLES = ["배송 안내", "교환/반품 안내"]
@@ -295,6 +341,14 @@ DEMO_RESPONSE_PRESETS_BY_STORE = {
     "bookcafe": [
         {"title": "도서 재고 안내", "content": "도서명이나 ISBN을 알려주시면 매장 재고를 확인해드립니다."},
         {"title": "매장 픽업 안내", "content": "픽업 가능 알림을 받은 뒤 매장에서 주문 상품을 수령하실 수 있습니다."},
+    ],
+    "petmate": [
+        {"title": "사이즈 안내", "content": "반려동물의 목둘레와 가슴둘레를 알려주시면 하네스 사이즈를 안내해드립니다."},
+        {"title": "성분 확인 안내", "content": "간식 상품명을 알려주시면 원재료와 알레르기 성분을 확인해드립니다."},
+    ],
+    "flowerday": [
+        {"title": "당일 제작 안내", "content": "당일 꽃다발은 매장 재고 확인 후 제작 가능 여부를 안내드립니다."},
+        {"title": "메시지 카드 안내", "content": "원하는 문구를 남겨주시면 꽃다발과 함께 메시지 카드를 준비합니다."},
     ],
 }
 
@@ -394,12 +448,16 @@ def get_customer_home(user_id: int) -> dict:
 
         orders = _fetch_orders(connection, user_id)
         stores = _fetch_ordered_stores(connection, user_id)
+        all_stores = _fetch_all_stores(connection)
+        products = _fetch_products(connection)
         support_sessions = _fetch_support_inquiries(connection, user)
         board_inquiries = _fetch_board_inquiries(connection, user)
         inquiries = support_sessions + board_inquiries
         return {
             "orders": orders,
             "stores": stores,
+            "allStores": all_stores,
+            "products": products,
             "supportSessions": support_sessions,
             "supportMessagesBySessionId": {session["id"]: session["messages"] for session in support_sessions},
             "inquiries": sorted(inquiries, key=lambda item: item["lastMessageAt"], reverse=True),
@@ -912,6 +970,69 @@ def _fetch_ordered_stores(connection, user_id: int) -> list[dict]:
         }
         for row in rows
     ]
+
+
+def _fetch_all_stores(connection) -> list[dict]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id, name, category, phone, address, description, business_hours
+            FROM store
+            WHERE status = 'ACTIVE'
+            ORDER BY name ASC
+            """
+        )
+        rows = cursor.fetchall()
+
+    return [_format_store(row) for row in rows]
+
+
+def _fetch_products(connection) -> list[dict]:
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT
+              p.id,
+              p.store_id,
+              p.name,
+              p.description,
+              p.price,
+              s.name AS store_name,
+              s.category AS store_category
+            FROM product p
+            JOIN store s ON s.id = p.store_id
+            WHERE p.status = 'ACTIVE' AND s.status = 'ACTIVE'
+            ORDER BY s.name ASC, p.name ASC
+            """
+        )
+        rows = cursor.fetchall()
+
+    return [
+        {
+            "id": row["id"],
+            "storeId": row["store_id"],
+            "name": row["name"],
+            "description": row["description"],
+            "price": int(row["price"]),
+            "storeName": row["store_name"],
+            "storeCategory": row["store_category"],
+        }
+        for row in rows
+    ]
+
+
+def _format_store(row: dict) -> dict:
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "category": row["category"],
+        "phone": row["phone"],
+        "address": row["address"],
+        "desc": row["description"],
+        "operatingHours": row["business_hours"],
+        "image": None,
+        "banner": None,
+    }
 
 
 def _fetch_support_inquiries(connection, user: dict) -> list[dict]:

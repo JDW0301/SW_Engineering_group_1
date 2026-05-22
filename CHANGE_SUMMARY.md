@@ -122,7 +122,33 @@
 - API 직접 호출 시 `image`에 임의 문자열을 넣을 수 있으므로, 필요하면 `/api/uploads/inquiries/` 경로나 data URL만 허용하도록 검증을 강화해야 한다.
 - 큰 이미지 파일 크기 제한은 아직 없으므로, 필요하면 프론트/백엔드 양쪽에 제한을 추가해야 한다.
 
-## 4. 공통 검증
+## 4. 고객 검색 범위 확장
+
+### 문제
+
+고객 검색 화면이 고객이 주문했던 스토어 목록만 사용해서, 주문 이력이 없는 스토어나 상품명으로는 검색할 수 없었다.
+
+### 변경 내용
+
+- `server/app/customer_home.py`
+  - 검색 전용 목업 스토어 `펫메이트 용품점`, `플라워데이 꽃집`과 대표 상품을 추가했다.
+  - `GET /api/customer/home` 응답에 전체 활성 스토어 `allStores`와 활성 상품 `products`를 추가했다.
+  - 기존 `stores`는 홈의 "주문했던 스토어"를 위해 주문 이력이 있는 스토어 목록으로 유지했다.
+- `code/src/pages/customer/CustomerApp.jsx`
+  - `allStores`, `products` 상태를 추가하고 검색 화면에 전달했다.
+- `code/src/pages/customer/SearchPage.jsx`
+  - 스토어명/카테고리/설명과 상품명/상품 설명을 함께 검색하도록 확장했다.
+  - 상품 검색 결과와 자동완성에서 상품을 선택하면 해당 스토어로 진입하도록 했다.
+- `specs/05-page-flows/02-customer-app-pages.md`, `specs/04-technical-reference/01-api-spec-summary.md`
+  - 고객 검색 화면과 고객 홈 API 응답의 역할을 문서에 반영했다.
+
+### 검증 결과
+
+- JS/JSX LSP diagnostics에서 `CustomerApp.jsx`, `SearchPage.jsx` 문제 없음.
+- Python LSP diagnostics는 `basedpyright-langserver` 미설치로 실행하지 못했다.
+- Python compile, frontend build, customer home API 응답 확인, 검색 화면 QA를 진행했다.
+
+## 5. 공통 검증
 
 - Backend health: `GET /api/health` 200 OK
 - Backend restart: `4010` 프로세스 재시작 후 `GET /api/health` 200 OK
@@ -133,7 +159,7 @@
 - Python LSP diagnostics: `basedpyright-langserver` 미설치로 실행 불가
 - `git diff --check`: 통과
 
-## 5. 현재 변경 파일
+## 6. 현재 변경 파일
 
 - `code/src/api/inquiries.js`
 - `code/src/components/ui/BoardDetail.jsx`
@@ -147,7 +173,12 @@
 - `server/main.py`
 - `server/sql/schema.sql`
 - `CHANGE_SUMMARY.md`
+- `code/src/pages/customer/CustomerApp.jsx`
+- `code/src/pages/customer/SearchPage.jsx`
+- `code/FE변경사항.md`
+- `specs/05-page-flows/02-customer-app-pages.md`
+- `specs/04-technical-reference/01-api-spec-summary.md`
 
-## 6. 참고
+## 7. 참고
 
 - `.sisyphus/run-continuation/`은 작업 세션용 untracked 디렉터리이며 커밋 대상에서 제외한다.

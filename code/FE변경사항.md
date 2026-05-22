@@ -207,3 +207,73 @@
 - refresh token 회전 정책 또는 저장 방식 변경
 - localStorage 기반 토큰 저장 구조 변경
 - 전체 API 구조 대규모 리팩토링
+
+---
+
+# 프론트엔드 변경사항 (문의 게시판 이미지 첨부 구현)
+
+## 변경 이유
+- 문의 게시판 작성 화면에서 이미지 첨부 영역을 클릭하면 실제 파일 선택 없이 임시 png 파일명만 자동으로 붙는 문제가 있었다.
+- 고객이 실제 이미지를 선택하고, 작성 전 미리보기와 작성 후 상세 화면에서 첨부 이미지를 확인할 수 있어야 했다.
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/pages/customer/BoardTab.jsx`
+  - `useRef` 기반 hidden file input을 추가해 실제 이미지 파일을 선택하도록 했다.
+  - `FileReader.readAsDataURL()`로 선택한 이미지를 미리보기로 표시하도록 했다.
+  - 문의 작성/수정 payload에 `image` 값을 포함하도록 했다.
+  - 상세 화면에서 저장된 첨부 이미지를 `<img>`로 표시하도록 했다.
+  - 첨부된 이미지를 X 버튼으로 제거할 수 있도록 했다.
+- [x] `src/components/ui/BoardDetail.jsx`
+  - 운영자 문의 상세에서도 `inquiry.image`가 있으면 첨부 이미지를 표시하도록 했다.
+
+## 연동 변경 참고
+- 백엔드에서 data URL 이미지를 `/api/uploads/inquiries/...` 파일로 저장하고, 문의 응답의 `image` 필드로 해당 경로를 반환한다.
+- 저장된 이미지는 `/api/uploads` 정적 경로로 제공된다.
+- 런타임 업로드 파일은 `server/uploads/`에 생성되며 git 변경사항에는 포함하지 않는다.
+
+## 검증 결과
+- [x] `BoardTab.jsx` LSP diagnostics 문제 없음
+- [x] `BoardDetail.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+- [x] 브라우저에서 이미지 선택 후 미리보기 표시 확인
+- [x] 문의 작성 후 상세 화면에서 첨부 이미지 표시 확인
+- [x] DB `inquiry_post_image.image_url`에 `/api/uploads/inquiries/...png` 경로 저장 확인
+- [x] 이미지 교체/삭제 시 이전 업로드 파일 삭제 확인
+
+## Non-Goals (이번 작업에서 제외된 항목)
+- 여러 장 이미지 첨부
+- 이미지 파일 크기 제한 UI
+- 이미지 편집, 회전, 압축 기능
+- 업로드 파일 관리 화면
+
+---
+
+# 프론트엔드 변경사항 (고객 검색 범위 확장)
+
+## 변경 이유
+- 고객 검색 화면이 기존 `stores` 데이터만 사용해서, 로그인 고객이 주문했던 스토어 안에서만 검색됐다.
+- 데모에서는 고객이 주문하지 않은 스토어와 상품명으로도 검색해 스토어에 진입할 수 있어야 했다.
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/pages/customer/CustomerApp.jsx`
+  - 고객 홈 API의 `allStores`, `products` 응답을 별도 상태로 저장했다.
+  - 메인/주문 화면에는 기존 주문 스토어 `stores`를 유지하고, 검색 화면에만 전체 스토어/상품 데이터를 전달했다.
+- [x] `src/pages/customer/SearchPage.jsx`
+  - 스토어명, 카테고리, 설명을 대상으로 검색하도록 확장했다.
+  - 상품명과 상품 설명 검색 결과를 추가하고, 상품 결과 클릭 시 해당 스토어로 이동하도록 했다.
+  - 자동완성 제안에 스토어와 상품을 함께 표시하도록 했다.
+
+## 연동 변경 참고
+- 백엔드 `GET /api/customer/home` 응답에 검색용 `allStores`, `products` 필드가 추가됐다.
+- 기존 `stores` 필드는 홈의 `주문했던 스토어` 표시를 위해 주문 이력 있는 스토어 목록으로 유지한다.
+
+## 검증 결과
+- [x] `CustomerApp.jsx` LSP diagnostics 문제 없음
+- [x] `SearchPage.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+- [x] 검색 화면에서 주문하지 않은 스토어와 상품 결과를 찾고 스토어로 진입하는 흐름 확인
+
+## Non-Goals (이번 작업에서 제외된 항목)
+- 별도 검색 API 신설
+- 고급 정렬, 필터, 검색어 하이라이트
+- 홈 화면의 `주문했던 스토어`를 전체 스토어 목록으로 변경

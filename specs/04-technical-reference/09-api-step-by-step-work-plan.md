@@ -232,9 +232,12 @@
   - `POST /api/ai/chatbot`
   - `POST /api/ai/chatbot/stream`
   - `POST /api/ai/summarize`
+- 도메인 데이터와 연결된 저장형 요약 API
+  - `GET /api/operator/inquiries/{inquiryId}/summary`
+  - `POST /api/operator/inquiries/{inquiryId}/summary`
+  - `GET /api/operator/support-sessions/{sessionId}/summary`
+  - `POST /api/operator/support-sessions/{sessionId}/summary`
 - 추후 도메인 데이터와 연결할 API
-  - `POST /api/ai/inquiries/{inquiryId}/summary`
-  - `POST /api/ai/chatbot-sessions/{sessionId}/summary`
   - `POST /api/ai/messages/{messageId}/safety-check`
 
 ### 수행 작업

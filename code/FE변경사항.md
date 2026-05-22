@@ -277,3 +277,42 @@
 - 별도 검색 API 신설
 - 고급 정렬, 필터, 검색어 하이라이트
 - 홈 화면의 `주문했던 스토어`를 전체 스토어 목록으로 변경
+
+---
+
+# 프론트엔드 변경사항 (운영자 AI 요약 저장 연동)
+
+## 변경 이유
+- 운영자 상세 화면의 AI 요약이 DB에 저장되지 않아 새로고침하면 사라지는 문제가 있었다.
+- 요약은 상담 또는 문의글 단위로 최신 1개를 유지하고, 재생성 시 기존 값을 덮어써야 했다.
+
+## 변경된 파일 목록 (Checklist)
+- [x] `src/api/ai.js`
+  - `POST /api/ai/summarize`를 호출하는 `summarizeConversation()` 함수를 추가했다.
+- [x] `src/api/operatorWorkspace.js`
+  - 상담/문의글 대상별 AI 요약 조회 함수 `getAISummary()`를 추가했다.
+  - 상담/문의글 대상별 AI 요약 저장 함수 `saveAISummary()`를 추가했다.
+- [x] `src/pages/operator/OperatorInquiryDetail.jsx`
+  - 상세 화면 진입 시 저장된 최신 AI 요약을 조회하도록 했다.
+  - `요약 재생성` 버튼을 추가해 AI 요약을 생성하고 DB에 저장하도록 했다.
+  - 저장된 요약, 최근 저장 시각, 로딩/오류 상태를 표시하도록 했다.
+- [x] `src/pages/operator/OperatorApp.jsx`
+  - F5 새로고침 후 같은 상담/문의 상세 화면을 복원하기 위해 선택 상세 상태를 `sessionStorage`에 저장하도록 했다.
+  - 복원된 상세 화면에서 저장형 AI 요약 API를 다시 호출해 DB 저장 요약이 계속 보이도록 했다.
+
+## 연동 변경 참고
+- 백엔드에 `ai_summary` 테이블과 대상별 요약 API가 추가됐다.
+- 상담 대상은 `/api/operator/support-sessions/{sessionId}/summary`, 문의글 대상은 `/api/operator/inquiries/{inquiryId}/summary`를 사용한다.
+- 같은 상담/문의글에서 요약을 다시 저장하면 기존 요약 row가 최신 값으로 덮어써진다.
+
+## 검증 결과
+- [x] `ai.js`, `operatorWorkspace.js`, `OperatorInquiryDetail.jsx` LSP diagnostics 문제 없음
+- [x] `npm run build` 성공
+- [x] 상세 화면 진입 시 저장된 요약 조회 확인
+- [x] 요약 저장 API 재호출 시 기존 요약 덮어쓰기 확인
+- [x] F5 새로고침 후 같은 상세 화면과 저장된 요약 유지 확인
+
+## Non-Goals (이번 작업에서 제외된 항목)
+- 요약 버전 이력 관리
+- 악성 표현 감지 결과 저장 UI
+- 목록 화면 요약 문구 전체를 저장형 요약으로 교체

@@ -101,8 +101,9 @@
 - `target_id`
 - `summary_text`
 - `created_at`
+- `updated_at`
 
-현재 단계에서는 버전 관리보다 최신 요약을 보여주는 쪽이 중요하다.
+현재 구현은 `target_type`을 `SUPPORT` 또는 `INQUIRY`로 구분하고, `(target_type, target_id)`를 unique key로 둔다. 현재 단계에서는 버전 관리보다 최신 요약을 보여주는 쪽이 중요하므로, 요약 재생성 시 기존 row의 `summary_text`를 덮어쓴다.
 
 ### `abuse_detection_result`
 
@@ -125,7 +126,7 @@
 - `policy_document.store_id -> store.id` (optional)
 - `response_preset.store_id -> store.id` (optional)
 - `chatbot_knowledge_file.store_id -> store.id` (optional)
-- `ai_summary.target_id -> inquiry.id` 또는 `chatbot_session.id`
+- `ai_summary.target_id -> support_session.id` 또는 `inquiry_post.id`
 - `abuse_detection_result.target_id -> inquiry_message.id` 또는 `chat_message.id`
 
 `ai_summary`와 `abuse_detection_result`는 다형 참조 개념으로 이해하면 충분하다.

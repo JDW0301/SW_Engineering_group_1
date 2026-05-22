@@ -99,6 +99,17 @@ FAQ 버튼 클릭은 AI API가 아니라 `/api/stores/{store_id}/faqs` 응답의
 - 챗봇 요약 생성
 - 악성 표현 감지 실행 또는 최신 감지 결과 조회
 
+현재 운영자 상세 화면의 저장형 요약 API는 아래와 같다.
+
+| Method | Path | 화면 목적 |
+|---|---|---|
+| `GET` | `/api/operator/support-sessions/{session_id}/summary` | 상담 ID 기준 최신 AI 요약 조회 |
+| `POST` | `/api/operator/support-sessions/{session_id}/summary` | 상담 ID 기준 AI 요약 저장/덮어쓰기 |
+| `GET` | `/api/operator/inquiries/{inquiry_id}/summary` | 문의글 ID 기준 최신 AI 요약 조회 |
+| `POST` | `/api/operator/inquiries/{inquiry_id}/summary` | 문의글 ID 기준 AI 요약 저장/덮어쓰기 |
+
+요약 생성 자체는 `POST /api/ai/summarize` 프록시를 사용하고, 운영자 상세 화면은 생성 결과를 대상별 summary API에 저장한다. 같은 대상에 다시 저장하면 최신 요약으로 덮어쓴다.
+
 ## 검색 및 지표 API
 
 - 문의 검색

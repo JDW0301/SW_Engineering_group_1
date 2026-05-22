@@ -717,11 +717,13 @@ refresh token을 폐기하여 로그아웃 처리한다.
 - `POST /api/ai/chatbot`: 챗봇 일반 응답
 - `POST /api/ai/chatbot/stream`: 챗봇 SSE 응답
 - `POST /api/ai/summarize`: 대화 요약
+- `GET /api/operator/support-sessions/{sessionId}/summary`: 상담 ID 기준 최신 저장 요약 조회
+- `POST /api/operator/support-sessions/{sessionId}/summary`: 상담 ID 기준 요약 저장/덮어쓰기
+- `GET /api/operator/inquiries/{inquiryId}/summary`: 문의글 ID 기준 최신 저장 요약 조회
+- `POST /api/operator/inquiries/{inquiryId}/summary`: 문의글 ID 기준 요약 저장/덮어쓰기
 
 ### 아직 남은 도메인 전용 엔드포인트
 
-- `POST /api/ai/inquiries/{inquiryId}/summary`: 문의 ID 기준 요약 생성
-- `POST /api/ai/chatbot-sessions/{sessionId}/summary`: 챗봇 세션 ID 기준 요약 생성
 - `POST /api/ai/messages/{messageId}/safety-check`: 메시지 ID 기준 악성 표현 감지
 
 ### 기능 목적
@@ -736,8 +738,10 @@ refresh token을 폐기하여 로그아웃 처리한다.
 
 ### 현재 화면 상태
 
-- `OperatorMain.jsx`와 `OperatorInquiryDetail.jsx`는 `generateAISummary` 또는 하드코딩 문구로 요약을 표시한다.
-- BE-AI 프록시 API는 구현되었지만, 해당 화면들이 아직 프록시 API를 호출하지는 않는다.
+- `OperatorInquiryDetail.jsx`는 진입 시 대상별 summary API로 최신 저장 요약을 조회한다.
+- 운영자가 요약을 재생성하면 `POST /api/ai/summarize` 응답을 대상별 summary API에 저장하고, 같은 대상의 기존 요약을 덮어쓴다.
+- `OperatorApp.jsx`는 F5 새로고침 후에도 같은 상세 화면을 복원하기 위해 선택된 상세 상태만 브라우저 `sessionStorage`에 저장한다. 요약 본문은 브라우저에 저장하지 않고 복원된 상세 화면에서 DB 요약 API로 다시 조회한다.
+- `OperatorMain.jsx`와 `ChannelPage.jsx`의 목록 요약은 아직 목록 표시용 즉석 요약 문구를 사용한다.
 
 ## 5.5 검색 및 지표 API
 

@@ -150,6 +150,46 @@
 
 ## 5. 공통 검증
 
+## 5. 운영자 AI 요약 저장 연동
+
+### 문제
+
+운영자 상세 화면의 AI 요약이 DB에 저장되지 않아 새로고침하면 사라졌다.
+
+### 변경 내용
+
+- `server/sql/schema.sql`
+  - `ai_summary` 테이블을 추가했다.
+  - `target_type`, `target_id` unique key로 상담/문의글별 최신 요약 1개만 유지하도록 했다.
+- `server/app/ai_summaries.py`
+  - `ai_summary` 테이블 생성 보장 함수와 최신 요약 조회/저장 함수를 추가했다.
+  - 상담(`SUPPORT`)과 문의글(`INQUIRY`) 대상별 저장을 지원하고, 저장 시 기존 값을 덮어쓰도록 했다.
+- `server/main.py`, `server/app/validation.py`
+  - 상담 ID 기준 요약 조회/저장 API를 추가했다.
+  - 문의글 ID 기준 요약 조회/저장 API를 추가했다.
+  - 요약 저장 payload 검증을 추가했다.
+- `code/src/api/ai.js`, `code/src/api/operatorWorkspace.js`
+  - AI 요약 생성 호출과 저장형 요약 조회/저장 API wrapper를 추가했다.
+- `code/src/pages/operator/OperatorInquiryDetail.jsx`
+  - 상세 화면 진입 시 저장된 최신 요약을 불러오도록 했다.
+  - `요약 재생성` 버튼으로 AI 요약을 생성한 뒤 DB에 저장하도록 했다.
+  - 저장된 요약과 최근 저장 시각, 로딩/오류 상태를 표시하도록 했다.
+- `code/src/pages/operator/OperatorApp.jsx`
+  - F5 새로고침 후에도 같은 상담/문의 상세 화면으로 복원되도록 선택 상세 상태를 `sessionStorage`에 저장했다.
+  - 복원된 상세 화면이 대상별 summary API를 다시 호출해 DB 저장 요약을 계속 표시하도록 했다.
+- `specs/04-technical-reference/01-api-spec-summary.md`, `specs/04-technical-reference/06-required-db-knowledge-and-ai.md`, `specs/04-technical-reference/08-api-feature-specification-detailed.md`
+  - 저장형 AI 요약 테이블/API/덮어쓰기 동작을 문서에 반영했다.
+
+### 검증 결과
+
+- `ai_summary` 테이블 생성과 unique key를 DB에서 확인했다.
+- 상담/문의글 요약 저장 API가 최신 요약을 반환하는 것을 확인했다.
+- 같은 대상에 두 번째 요약을 저장하면 기존 요약이 덮어써지는 것을 확인했다.
+- 운영자 상세 화면에서 저장된 요약을 조회하고, 새로고침 후에도 유지되는 흐름을 확인했다.
+- F5 후 같은 상세 화면이 복원되고 `/api/operator/support-sessions/{session_id}/summary`가 다시 호출되어 저장 요약이 표시되는 것을 확인했다.
+
+## 6. 공통 검증
+
 - Backend health: `GET /api/health` 200 OK
 - Backend restart: `4010` 프로세스 재시작 후 `GET /api/health` 200 OK
 - Frontend availability: `http://203.234.62.35:8002` 200 OK
@@ -159,7 +199,7 @@
 - Python LSP diagnostics: `basedpyright-langserver` 미설치로 실행 불가
 - `git diff --check`: 통과
 
-## 6. 현재 변경 파일
+## 7. 현재 변경 파일
 
 - `code/src/api/inquiries.js`
 - `code/src/components/ui/BoardDetail.jsx`
@@ -178,7 +218,15 @@
 - `code/FE변경사항.md`
 - `specs/05-page-flows/02-customer-app-pages.md`
 - `specs/04-technical-reference/01-api-spec-summary.md`
+- `code/src/api/ai.js`
+- `code/src/api/operatorWorkspace.js`
+- `code/src/pages/operator/OperatorApp.jsx`
+- `code/src/pages/operator/OperatorInquiryDetail.jsx`
+- `server/app/ai_summaries.py`
+- `specs/04-technical-reference/06-required-db-knowledge-and-ai.md`
+- `specs/04-technical-reference/08-api-feature-specification-detailed.md`
+- `specs/04-technical-reference/09-api-step-by-step-work-plan.md`
 
-## 7. 참고
+## 8. 참고
 
 - `.sisyphus/run-continuation/`은 작업 세션용 untracked 디렉터리이며 커밋 대상에서 제외한다.

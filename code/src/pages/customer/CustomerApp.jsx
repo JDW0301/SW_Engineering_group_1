@@ -24,6 +24,8 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
   const [showSearch, setShowSearch] = useState(false);
   const [orders, setOrders] = useState([]);
   const [stores, setStores] = useState([]);
+  const [allStores, setAllStores] = useState([]);
+  const [products, setProducts] = useState([]);
   const [supportSessions, setSupportSessions] = useState([]);
   const [supportMessagesBySessionId, setSupportMessagesBySessionId] = useState({});
   const [inquiryPosts, setInquiryPosts] = useState([]);
@@ -42,6 +44,8 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
         if (ignore) return;
         setOrders(data.orders ?? []);
         setStores(data.stores ?? []);
+        setAllStores(data.allStores ?? data.stores ?? []);
+        setProducts(data.products ?? []);
         setSupportSessions(data.supportSessions ?? []);
         setSupportMessagesBySessionId(data.supportMessagesBySessionId ?? {});
         const posts = await listMyInquiries();
@@ -52,6 +56,8 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
         if (isAuthExpiredError(error)) return;
         setOrders([]);
         setStores([]);
+        setAllStores([]);
+        setProducts([]);
         setSupportSessions([]);
         setSupportMessagesBySessionId({});
         setInquiryPosts([]);
@@ -126,7 +132,7 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {page === "main" && <MainPage setPage={setPage} openStore={openStore} supportSessions={supportSessions} inquiryPosts={inquiryPosts} openSupportSession={(id) => openSupportSession(id, "main")} openInquiryPost={(id) => openInquiryPost(id, "main")} user={user} orders={orders} stores={stores} isHomeLoading={isHomeLoading} homeError={homeError} />}
         {page === "orders" && <OrdersPage setPage={setPage} openStore={openStore} setSelectedOrder={setSelectedOrder} orders={orders} stores={stores} />}
-        {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} stores={stores} />}
+        {page === "search" && <SearchPage setPage={setPage} openStore={openStore} searchQuery={searchQuery} stores={stores} allStores={allStores} products={products} />}
         {page === "store" && <StorePage selectedStore={selectedStore} setPage={setPage} storeTab={storeTab} setStoreTab={setStoreTab} selectedOrder={selectedOrder} onSelectOrder={setSelectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} supportMessagesBySessionId={supportMessagesBySessionId} setSupportMessagesBySessionId={setSupportMessagesBySessionId} inquiryPosts={inquiryPosts} setInquiryPosts={setInquiryPosts} openSupportSession={(id) => openSupportSession(id, "store")} openInquiryPost={(id) => openInquiryPost(id, "store")} onCreateSupportFromChatbot={createSupportFromChatbot} createSupportSession={createSupportSession} />}
         {page === "supportList" && <CustomerSupportListPage setPage={setPage} supportSessions={supportSessions} openSupportSession={openSupportSession} />}
         {page === "inquiryList" && <CustomerInquiryListPage setPage={setPage} inquiryPosts={inquiryPosts} openInquiryPost={openInquiryPost} />}

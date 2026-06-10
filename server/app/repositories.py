@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+from .database import db_connection
+
+
+def ensure_store_icon_column() -> None:
+    with db_connection() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT COUNT(*) AS cnt
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE() AND table_name = 'store' AND column_name = 'icon_url'
+                """
+            )
+            if cursor.fetchone()["cnt"] == 0:
+                cursor.execute("ALTER TABLE store ADD COLUMN icon_url VARCHAR(500) NULL AFTER business_hours")
+        connection.commit()
+
 
 def find_user_by_login_id(connection, login_id: str):
     with connection.cursor() as cursor:
@@ -110,7 +127,7 @@ def find_store_by_owner_user_id(connection, owner_user_id: int):
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT id, owner_user_id, name, category, description, phone, address, business_hours, status
+            SELECT id, owner_user_id, name, category, description, phone, address, business_hours, icon_url, status
             FROM store
             WHERE owner_user_id = %s
             LIMIT 1
@@ -129,7 +146,8 @@ def update_store_by_id(connection, store_id: int, store: dict):
                 phone = %s,
                 address = %s,
                 business_hours = %s,
-                description = %s
+                description = %s,
+                icon_url = %s
             WHERE id = %s
             """,
             (
@@ -138,6 +156,7 @@ def update_store_by_id(connection, store_id: int, store: dict):
                 store["address"],
                 store["businessHours"],
                 store["description"],
+                store.get("iconUrl"),
                 store_id,
             ),
         )

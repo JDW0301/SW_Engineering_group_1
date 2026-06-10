@@ -118,6 +118,26 @@ def update_inquiry(user_id: int, inquiry_id: int, payload: dict) -> dict:
             raise
 
 
+def delete_inquiry(user_id: int, inquiry_id: int) -> None:
+    with db_connection() as connection:
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id FROM inquiry_post WHERE id = %s AND author_user_id = %s LIMIT 1",
+                    (inquiry_id, user_id),
+                )
+                if not cursor.fetchone():
+                    raise AppError(404, "문의를 찾을 수 없습니다.")
+                image_url = _fetch_image(connection, inquiry_id)
+                cursor.execute("DELETE FROM inquiry_post WHERE id = %s AND author_user_id = %s", (inquiry_id, user_id))
+            connection.commit()
+            if image_url:
+                _delete_inquiry_image_files([image_url])
+        except Exception:
+            connection.rollback()
+            raise
+
+
 def _fetch_inquiries(connection, where_sql: str, params: tuple, current_user_id: int | None = None, mask_secret: bool = False) -> list[dict]:
     with connection.cursor() as cursor:
         cursor.execute(

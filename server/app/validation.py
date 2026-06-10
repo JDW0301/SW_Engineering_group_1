@@ -80,6 +80,7 @@ def validate_operator_store_update(body: dict) -> dict:
         "address": optional_string(body.get("address")),
         "businessHours": optional_string(body.get("businessHours")),
         "description": optional_string(body.get("description")),
+        "iconUrl": body.get("icon") if isinstance(body.get("icon"), str) or body.get("icon") is None else None,
     }
 
 

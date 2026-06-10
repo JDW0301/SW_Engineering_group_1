@@ -16,8 +16,9 @@ from app.config import settings
 from app.customer_home import ensure_demo_customer_home_data, get_customer_home
 from app.database import test_database_connection
 from app.exceptions import AppError
-from app.inquiries import create_inquiry, list_my_inquiries, list_operator_inquiries, list_store_inquiries, update_inquiry
+from app.inquiries import create_inquiry, delete_inquiry, list_my_inquiries, list_operator_inquiries, list_store_inquiries, update_inquiry
 from app.inquiries import ensure_inquiry_image_table
+from app.repositories import ensure_store_icon_column
 from app.faqs import list_store_faqs
 from app.operator import update_operator_store
 from app.security import verify_access_token
@@ -61,6 +62,7 @@ async def lifespan(app: FastAPI):
     ensure_ai_summary_table()
     ensure_operator_workspace_tables()
     ensure_demo_customer_home_data()
+    ensure_store_icon_column()
     print(f"Server running on port {settings.port}")
     yield
 
@@ -186,6 +188,16 @@ async def create_inquiry_endpoint(body: dict, auth: dict = Depends(get_auth_payl
 async def update_inquiry_endpoint(inquiry_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_inquiry_update(body)
     return {"inquiry": update_inquiry(int(auth["sub"]), inquiry_id, payload)}
+
+
+@app.delete("/api/inquiries/{inquiry_id}", status_code=204)
+async def delete_inquiry_endpoint(inquiry_id: int, auth: dict = Depends(get_auth_payload)):
+    delete_inquiry(int(auth["sub"]), inquiry_id)
+
+
+@app.get("/api/operator/support-sessions")
+async def list_operator_support_endpoint(auth: dict = Depends(get_auth_payload)):
+    return list_operator_support(int(auth["sub"]))
 
 
 @app.get("/api/operator/inquiries")

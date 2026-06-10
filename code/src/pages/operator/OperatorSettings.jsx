@@ -14,12 +14,14 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
   const [previewFile, setPreviewFile] = useState(null);
   const [settingsMessage, setSettingsMessage] = useState("");
   const fileInputRef = useRef(null);
+  const iconInputRef = useRef(null);
   const [storeForm, setStoreForm] = useState({
     storeName: user?.storeName || user?.store?.name || "",
     storePhone: user?.storePhone || user?.store?.phone || "",
     address: user?.address || user?.store?.address || "",
     businessHours: user?.businessHours || user?.store?.business_hours || "",
     description: user?.description || user?.store?.description || "",
+    icon: user?.store?.icon_url || null,
   });
   const [storeError, setStoreError] = useState("");
   const [storeSuccess, setStoreSuccess] = useState("");
@@ -150,6 +152,20 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
     setStoreSuccess("");
   };
 
+  const attachIcon = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setStoreError("이미지 파일만 첨부할 수 있습니다.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setStoreForm(prev => ({ ...prev, icon: String(reader.result || "") }));
+    reader.onerror = () => setStoreError("이미지를 읽지 못했습니다.");
+    reader.readAsDataURL(file);
+  };
+
   const saveStore = async () => {
     setStoreError("");
     setStoreSuccess("");
@@ -164,6 +180,7 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
         businessHours: store.business_hours,
         description: store.description,
         store,
+        storeIconUrl: store.icon_url,
       });
       setStoreForm({
         storeName: store.name || "",
@@ -171,6 +188,7 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
         address: store.address || "",
         businessHours: store.business_hours || "",
         description: store.description || "",
+        icon: store.icon_url || null,
       });
       setStoreSuccess("스토어 정보가 저장되었습니다.");
     } catch (error) {
@@ -317,6 +335,24 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
           <h3 className="font-semibold text-sm">스토어 정보</h3>
           {storeSuccess && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{storeSuccess}</p>}
           {storeError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{storeError}</p>}
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">스토어 아이콘</label>
+            <input ref={iconInputRef} type="file" accept="image/*" className="hidden" onChange={attachIcon} />
+            <div className="flex items-center gap-3">
+              <div
+                className="w-16 h-16 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden cursor-pointer hover:border-indigo-400 transition bg-gray-50"
+                onClick={() => iconInputRef.current?.click()}
+              >
+                {storeForm.icon && storeForm.icon !== ""
+                  ? <img src={storeForm.icon} alt="스토어 아이콘" className="w-full h-full object-cover" />
+                  : <Store size={24} className="text-gray-300" />}
+              </div>
+              <div className="flex flex-col gap-1">
+                <Button size="sm" variant="outline" onClick={() => iconInputRef.current?.click()}>이미지 선택</Button>
+                {storeForm.icon && <button type="button" className="text-xs text-red-400 hover:text-red-600" onClick={() => updateStoreField("icon", "")}>제거</button>}
+              </div>
+            </div>
+          </div>
           <Input label="스토어명" value={storeForm.storeName} onChange={event => updateStoreField("storeName", event.target.value)} placeholder="스토어명을 입력하세요" />
           <Input label="전화번호" value={storeForm.storePhone} onChange={event => updateStoreField("storePhone", event.target.value)} />
           <Input label="주소" value={storeForm.address} onChange={event => updateStoreField("address", event.target.value)} />

@@ -1,5 +1,13 @@
 import { authFetch, parseApiResponse } from "./auth";
 
+export async function detectProfanity(text) {
+  const response = await authFetch("/ai/detect", {
+    method: "POST",
+    body: JSON.stringify({ text }),
+  });
+  return parseApiResponse(response, "욕설 감지를 처리하지 못했습니다.");
+}
+
 export async function summarizeConversation(payload) {
   const response = await authFetch("/ai/summarize", {
     method: "POST",

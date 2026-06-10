@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Lock, Image, Package, Edit3, X } from "lucide-react";
 import { Card, StatusBadge, Input, Button } from "../../components/ui";
-import { createInquiry, listStoreInquiries, updateInquiry } from "../../api/inquiries";
+import { createInquiry, deleteInquiry, listStoreInquiries, updateInquiry } from "../../api/inquiries";
 
 const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInquiryUpdated }) => {
   const [selectedPost, setSelectedPost] = useState(null);
@@ -73,6 +73,18 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
     setNewPost({ title: "", content: "", isSecret: false, orderId: null, image: null });
     setError("");
     setWriting(true);
+  };
+
+  const handleDelete = async (post) => {
+    if (!window.confirm("문의를 삭제하시겠습니까?")) return;
+    setError("");
+    try {
+      await deleteInquiry(post.id);
+      setLocalPosts(prev => prev.filter(p => p.id !== post.id));
+      setSelectedPost(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const startEditing = (post) => {
@@ -170,8 +182,10 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
             <p className="text-sm text-indigo-800">{selectedPost.replies[0].content}</p>
           </div>
         )}
+        {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
         <div className="flex gap-2">
           {(selectedPost.replies || []).length === 0 && <Button size="sm" variant="outline" onClick={() => startEditing(selectedPost)}><Edit3 size={14} /> 수정</Button>}
+          <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50" onClick={() => handleDelete(selectedPost)}>삭제</Button>
           <Button size="sm" variant="ghost" onClick={() => setSelectedPost(null)}>목록</Button>
         </div>
       </Card>

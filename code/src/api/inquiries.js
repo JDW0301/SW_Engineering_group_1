@@ -35,3 +35,7 @@ export async function updateInquiry(inquiryId, payload) {
   });
   return data.inquiry;
 }
+
+export async function deleteInquiry(inquiryId) {
+  await request(`/inquiries/${inquiryId}`, { method: "DELETE" });
+}

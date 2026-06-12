@@ -46,11 +46,11 @@ export async function streamChatbotReply(payload, onEvent) {
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed.startsWith("data: ")) continue;
-      onEvent(JSON.parse(trimmed.slice(6)));
+      try { onEvent(JSON.parse(trimmed.slice(6))); } catch {}
     }
   }
 
   if (buffer.trim().startsWith("data: ")) {
-    onEvent(JSON.parse(buffer.trim().slice(6)));
+    try { onEvent(JSON.parse(buffer.trim().slice(6))); } catch {}
   }
 }

@@ -393,4 +393,4 @@ async def ai_chatbot_stream_endpoint(body: dict, auth: dict = Depends(get_auth_p
 
 @app.post("/api/ai/summarize")
 async def ai_summarize_endpoint(body: dict, auth: dict = Depends(get_auth_payload)):
-    return post_ai_json("/summarize", body, timeout=30)
+    return post_ai_json("/summarize", body, timeout=90)

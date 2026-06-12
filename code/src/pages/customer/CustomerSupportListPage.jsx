@@ -2,7 +2,7 @@ import { ArrowLeft, MessageCircle } from "lucide-react";
 import { Card, StatusBadge } from "../../components/ui";
 
 const CustomerSupportListPage = ({ setPage, supportSessions, openSupportSession }) => {
-  const sorted = [...supportSessions].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
+  const sorted = [...supportSessions].sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""));
 
   return (
     <div>

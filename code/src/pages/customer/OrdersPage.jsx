@@ -13,7 +13,9 @@ const OrdersPage = ({ setPage, openStore, setSelectedOrder, orders = [], stores 
     .filter(o => storeFilter === "all" || o.storeId === parseInt(storeFilter))
     .filter(o => !dateFrom || o.orderedAt >= dateFrom)
     .filter(o => !dateTo || o.orderedAt <= dateTo)
-    .sort((a, b) => filter === "latest" ? b.orderedAt.localeCompare(a.orderedAt) : a.orderedAt.localeCompare(b.orderedAt));
+    .sort((a, b) => filter === "latest"
+      ? (b.orderedAt ?? "").localeCompare(a.orderedAt ?? "")
+      : (a.orderedAt ?? "").localeCompare(b.orderedAt ?? ""));
 
   return (
     <div>

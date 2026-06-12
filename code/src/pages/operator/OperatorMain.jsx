@@ -96,7 +96,7 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
         <h3 className="font-semibold text-gray-800 mb-3">문의 상담 관리</h3>
         <p className="text-xs font-medium text-gray-500 mb-2">최근 상담</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[...supportRows].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5).map(session => {
+          {[...supportRows].sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? "")).slice(0, 5).map(session => {
             const order = orders.find(o => o.id === session.orderId);
             const customerName = order?.customerName || session.customerName || "고객";
             return (
@@ -126,7 +126,7 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
           })}
         </div>
         <p className="text-xs font-medium text-gray-500 mt-5 mb-2">최근 문의</p>
-        {[...inquiryRows].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)).slice(0, 5).map(post => {
+        {[...inquiryRows].sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? "")).slice(0, 5).map(post => {
           const order = orders.find(o => o.id === post.orderId);
           const customerName = order?.customerName || post.customerName || "고객";
           return (

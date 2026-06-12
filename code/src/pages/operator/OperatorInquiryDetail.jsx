@@ -85,14 +85,15 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
   }, [supportSession?.id]);
 
   // WebSocket 실시간 수신
+  const wsSessionId = supportSession?.status !== "RESOLVED" ? supportSession?.id : null;
   useSupportWebSocket(
-    supportSession?.status !== "RESOLVED" ? supportSession?.id : null,
+    wsSessionId,
     (data) => {
-      if (data.type === "new_message") {
+      if (data.type === "new_message" && wsSessionId) {
         setSupportMessagesBySessionId(prev => {
-          const existing = prev[supportSession.id] || [];
+          const existing = prev[wsSessionId] || [];
           if (existing.some(m => m.id === data.message.id)) return prev;
-          return { ...prev, [supportSession.id]: [...existing, data.message] };
+          return { ...prev, [wsSessionId]: [...existing, data.message] };
         });
       }
     },
@@ -243,7 +244,7 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
                     <div className="text-sm space-y-0.5">
                       <p>{order.productName} x{order.quantity}</p>
                       <p className="text-gray-500">{order.orderNumber} · {order.orderedAt}</p>
-                      <p className="font-medium">{order.totalPrice.toLocaleString()}원</p>
+                      <p className="font-medium">{order.totalPrice?.toLocaleString() ?? "-"}원</p>
                     </div>
                   </div>
                 )}

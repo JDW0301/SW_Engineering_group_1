@@ -2,7 +2,7 @@ import { ArrowLeft, FileText } from "lucide-react";
 import { Card, StatusBadge } from "../../components/ui";
 
 const CustomerInquiryListPage = ({ setPage, inquiryPosts, openInquiryPost }) => {
-  const sorted = [...inquiryPosts].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
+  const sorted = [...inquiryPosts].sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""));
 
   return (
     <div>

@@ -13,7 +13,7 @@ const OrderSummaryCard = ({ order, onClick }) => (
           <p className="text-sm font-medium text-gray-900 truncate">{order.productName} <span className="text-gray-400">x{order.quantity}</span></p>
         </div>
       </div>
-      <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">{order.totalPrice.toLocaleString()}원</span>
+      <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">{order.totalPrice?.toLocaleString() ?? "-"}원</span>
     </div>
     <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
       <span>{order.orderedAt}</span>

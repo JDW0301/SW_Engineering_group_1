@@ -201,7 +201,7 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
   const selectedContextLabel = selectedOrder
     ? `${selectedOrder.productName} · ${selectedOrder.orderNumber}`
     : "스토어 일반 문의";
-  const orderedStoreOrders = [...storeOrders].sort((firstOrder, secondOrder) => secondOrder.orderedAt.localeCompare(firstOrder.orderedAt));
+  const orderedStoreOrders = [...storeOrders].sort((firstOrder, secondOrder) => (secondOrder.orderedAt ?? "").localeCompare(firstOrder.orderedAt ?? ""));
 
   const closeHandoff = () => {
     if (isHandoffSubmitting) return;

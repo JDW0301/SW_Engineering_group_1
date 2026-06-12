@@ -8,10 +8,10 @@ const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSuppo
   const [includeResolvedInquiries, setIncludeResolvedInquiries] = useState(false);
   const visibleSupportSessions = supportSessions
     .filter(session => includeResolved || session.status !== "RESOLVED")
-    .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
+    .sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""));
   const recentInquiryPosts = inquiryPosts
     .filter(post => includeResolvedInquiries || post.status !== "RESOLVED")
-    .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt))
+    .sort((a, b) => (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? ""))
     .slice(0, 5);
   const displayStores = stores;
   const findOrderStore = (order) => stores.find(store => store.id === order.storeId)
@@ -35,7 +35,7 @@ const MainPage = ({ setPage, openStore, supportSessions, inquiryPosts, openSuppo
           <button onClick={() => setPage("orders")} className="text-xs text-indigo-600 flex items-center gap-0.5">주문 목록 <ChevronRight size={14} /></button>
         </div>
         <div className="space-y-2">
-          {orders.length === 0 ? <p className="text-sm text-gray-400 py-4 text-center">주문 내역이 없습니다</p> : [...orders].sort((a, b) => b.orderedAt.localeCompare(a.orderedAt)).slice(0, 5).map(o => (
+          {orders.length === 0 ? <p className="text-sm text-gray-400 py-4 text-center">주문 내역이 없습니다</p> : [...orders].sort((a, b) => (b.orderedAt ?? "").localeCompare(a.orderedAt ?? "")).slice(0, 5).map(o => (
             <OrderSummaryCard key={o.id} order={o} onClick={() => { const s = findOrderStore(o); if (s) { openStore(s, "chatbot", o); } }} />
           ))}
         </div>

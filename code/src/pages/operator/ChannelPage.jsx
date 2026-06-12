@@ -20,7 +20,9 @@ const ChannelPage = ({ orders, supportSessions, supportMessagesBySessionId, inqu
     .filter(i => !searchQ || i.title.includes(searchQ) || i.storeName.includes(searchQ) || (orders.find(o => o.id === i.orderId)?.customerName || i.customerName || "").includes(searchQ))
     .filter(i => !dateFrom || i.createdAt.slice(0, 10) >= dateFrom)
     .filter(i => !dateTo || i.createdAt.slice(0, 10) <= dateTo)
-    .sort((a, b) => filter === "latest" ? b.lastMessageAt.localeCompare(a.lastMessageAt) : a.lastMessageAt.localeCompare(b.lastMessageAt));
+    .sort((a, b) => filter === "latest"
+      ? (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? "")
+      : (a.lastMessageAt ?? "").localeCompare(b.lastMessageAt ?? ""));
 
   return (
     <div>

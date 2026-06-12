@@ -180,7 +180,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
         {(selectedPost.replies || []).length > 0 && (
           <div className="bg-indigo-50 rounded-lg p-3 mb-3">
             <p className="text-xs font-medium text-indigo-700 mb-1">답변</p>
-            <p className="text-sm text-indigo-800">{selectedPost.replies[0].content}</p>
+            <p className="text-sm text-indigo-800">{selectedPost.replies?.[0]?.content}</p>
           </div>
         )}
         {error && <p className="text-sm text-red-500 mb-2">{error}</p>}

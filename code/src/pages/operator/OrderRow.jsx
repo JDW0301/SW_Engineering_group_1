@@ -13,7 +13,7 @@ const OrderRow = ({ order, supportSessions, inquiryPosts, onOpenSupportSession, 
           <p className="text-sm font-medium">{order.productName}</p>
           <p className="text-xs text-gray-500">{order.orderNumber} · {order.orderedAt} · x{order.quantity}</p>
           <p className="text-xs text-gray-500">{order.customerName} · {order.phone}</p>
-          <p className="text-xs font-semibold text-gray-700">{order.totalPrice.toLocaleString()}원</p>
+          <p className="text-xs font-semibold text-gray-700">{order.totalPrice?.toLocaleString() ?? "-"}원</p>
         </div>
         <button onClick={() => setExpanded(!expanded)} className="p-1">{expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</button>
       </div>

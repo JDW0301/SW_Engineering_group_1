@@ -1,7 +1,6 @@
 import { ArrowLeft, Store, Phone, MapPin, Clock, Bot, FileText, User } from "lucide-react";
 import { Card, TabButton } from "../../components/ui";
 import ChatbotTab from "./ChatbotTab";
-import ConsultTab from "./ConsultTab";
 import BoardTab from "./BoardTab";
 import MyInquiryTab from "./MyInquiryTab";
 
@@ -51,7 +50,6 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
       </div>
 
       {storeTab === "chatbot" && <ChatbotTab store={selectedStore} selectedOrder={selectedOrder} storeOrders={storeOrders} onSelectOrder={onSelectOrder} onCreateSupportFromChatbot={onCreateSupportFromChatbot} />}
-      {storeTab === "consult" && <ConsultTab store={selectedStore} order={selectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} setSupportMessagesBySessionId={setSupportMessagesBySessionId} onOpenSupportSession={openSupportSession} createSupportSession={createSupportSession} />}
       {storeTab === "board" && <BoardTab store={selectedStore} posts={inquiryPosts.filter(p => p.storeId === selectedStore.id)} orders={orders} onInquiryCreated={handleInquiryCreated} onInquiryUpdated={handleInquiryUpdated} onInquiryDeleted={handleInquiryDeleted} />}
       {storeTab === "myInquiry" && <MyInquiryTab store={selectedStore} supportSessions={supportSessions.filter(session => session.storeId === selectedStore.id)} inquiryPosts={inquiryPosts.filter(post => post.storeId === selectedStore.id)} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />}
     </div>

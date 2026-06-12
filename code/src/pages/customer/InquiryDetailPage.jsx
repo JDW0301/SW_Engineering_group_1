@@ -29,14 +29,15 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
   }, [supportSession?.id]);
 
   // WebSocket 실시간 수신
+  const wsSessionId = supportSession?.status !== "RESOLVED" ? supportSession?.id : null;
   useSupportWebSocket(
-    supportSession?.status !== "RESOLVED" ? supportSession?.id : null,
+    wsSessionId,
     (data) => {
-      if (data.type === "new_message") {
+      if (data.type === "new_message" && wsSessionId) {
         setSupportMessagesBySessionId(prev => {
-          const existing = prev[supportSession.id] || [];
+          const existing = prev[wsSessionId] || [];
           if (existing.some(m => m.id === data.message.id)) return prev;
-          return { ...prev, [supportSession.id]: [...existing, data.message] };
+          return { ...prev, [wsSessionId]: [...existing, data.message] };
         });
       }
     },

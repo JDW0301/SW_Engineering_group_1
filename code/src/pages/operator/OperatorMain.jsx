@@ -24,10 +24,16 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
     });
   };
 
-  const rateFiltered = filterByPeriod(displayRows, ratePeriod);
-  const rateTotal = rateFiltered.length;
-  const rateResolved = rateFiltered.filter(i => i.status === "RESOLVED").length;
-  const rate = rateTotal ? Math.round((rateResolved / rateTotal) * 100) : 0;
+  const consultFiltered = filterByPeriod(supportRows, ratePeriod);
+  const consultTotal = consultFiltered.length;
+  const consultResolved = consultFiltered.filter(i => i.status === "RESOLVED").length;
+  const consultRate = consultTotal ? Math.round((consultResolved / consultTotal) * 100) : 0;
+
+  const inquiryFiltered = filterByPeriod(inquiryRows, ratePeriod);
+  const inquiryTotal = inquiryFiltered.length;
+  const inquiryResolved = inquiryFiltered.filter(i => i.status === "RESOLVED").length;
+  const inquiryRate = inquiryTotal ? Math.round((inquiryResolved / inquiryTotal) * 100) : 0;
+
   const avgResponseTime = (() => {
     const times = displayRows.filter(row => row.messages && row.messages.length >= 2).map(row => {
       const fc = row.messages.find(m => m.sender === "customer");
@@ -42,6 +48,49 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
 
   return (
     <div className="space-y-6">
+      {/* Stats — 최상단 */}
+      <section>
+        <h3 className="font-semibold text-gray-800 mb-3">통계</h3>
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-4 min-w-max">
+            <Card className="p-4 min-h-48 min-w-[200px] flex flex-col items-center justify-center text-center">
+              <div className="relative w-20 h-20 mx-auto mb-3">
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#6366f1" strokeWidth="3" strokeDasharray={`${consultRate} ${100 - consultRate}`} strokeLinecap="round" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-sm font-bold">{consultResolved}/{consultTotal}</div>
+              </div>
+              <p className="text-xs text-gray-500">상담 완료율</p>
+              <div className="flex justify-center gap-1 mt-3">
+                {["7일", "30일", "전체"].map(l => <button key={l} onClick={() => setRatePeriod(l)} className={`text-xs px-2 py-0.5 rounded ${ratePeriod === l ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}>{l}</button>)}
+              </div>
+            </Card>
+            <Card className="p-4 min-h-48 min-w-[200px] flex flex-col items-center justify-center text-center">
+              <div className="relative w-20 h-20 mx-auto mb-3">
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="#10b981" strokeWidth="3" strokeDasharray={`${inquiryRate} ${100 - inquiryRate}`} strokeLinecap="round" />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-sm font-bold">{inquiryResolved}/{inquiryTotal}</div>
+              </div>
+              <p className="text-xs text-gray-500">문의 완료율</p>
+              <div className="flex justify-center gap-1 mt-3">
+                {["7일", "30일", "전체"].map(l => <button key={l} onClick={() => setRatePeriod(l)} className={`text-xs px-2 py-0.5 rounded ${ratePeriod === l ? "bg-green-100 text-green-600" : "text-gray-400 hover:text-gray-600"}`}>{l}</button>)}
+              </div>
+            </Card>
+            <Card className="p-4 min-h-48 min-w-[200px] flex flex-col items-center justify-center text-center">
+              <p className="text-3xl font-bold text-indigo-600 mb-1">{displayRows.filter(i => i.status !== "RESOLVED").length}</p>
+              <p className="text-xs text-gray-500">대기 문의</p>
+            </Card>
+            <Card className="p-4 min-h-48 min-w-[200px] flex flex-col items-center justify-center text-center">
+              <p className="text-3xl font-bold text-green-600 mb-1">{avgResponseTime}</p>
+              <p className="text-xs text-gray-500">평균 첫 응답시간</p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* 문의 상담 관리 */}
       <section>
         <h3 className="font-semibold text-gray-800 mb-3">문의 상담 관리</h3>
@@ -110,36 +159,6 @@ const OperatorMain = ({ orders, supportSessions, supportMessagesBySessionId, inq
         {orders.slice(0, 10).map(o => (
           <OrderRow key={o.id} order={o} supportSessions={supportSessions} inquiryPosts={inquiryPosts} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />
         ))}
-      </section>
-
-      {/* Stats */}
-      <section>
-        <h3 className="font-semibold text-gray-800 mb-3">통계</h3>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-4 min-w-max">
-          <Card className="p-4 min-h-48 min-w-[280px] flex flex-col items-center justify-center text-center">
-            <div className="relative w-20 h-20 mx-auto mb-3">
-              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e5e7eb" strokeWidth="3" />
-                <circle cx="18" cy="18" r="15.5" fill="none" stroke="#6366f1" strokeWidth="3" strokeDasharray={`${rate} ${100 - rate}`} strokeLinecap="round" />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center text-sm font-bold">{rateResolved}/{rateTotal}</div>
-            </div>
-            <p className="text-xs text-gray-500">상담·문의 완료율</p>
-            <div className="flex justify-center gap-1 mt-3">
-              {["7일", "30일", "전체"].map(l => <button key={l} onClick={() => setRatePeriod(l)} className={`text-xs px-2 py-0.5 rounded ${ratePeriod === l ? "bg-indigo-100 text-indigo-600" : "text-gray-400 hover:text-gray-600"}`}>{l}</button>)}
-            </div>
-          </Card>
-          <Card className="p-4 min-h-48 min-w-[280px] flex flex-col items-center justify-center text-center">
-            <p className="text-3xl font-bold text-indigo-600 mb-1">{displayRows.filter(i => i.status !== "RESOLVED").length}</p>
-            <p className="text-xs text-gray-500">대기 문의</p>
-          </Card>
-          <Card className="p-4 min-h-48 min-w-[280px] flex flex-col items-center justify-center text-center">
-            <p className="text-3xl font-bold text-green-600 mb-1">{avgResponseTime}</p>
-            <p className="text-xs text-gray-500">평균 첫 응답시간</p>
-          </Card>
-          </div>
-        </div>
       </section>
     </div>
   );

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Dict, List
 
-from fastapi import Depends, FastAPI, Header, Query, Request
+from fastapi import Depends, FastAPI, Header, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -53,6 +55,37 @@ from app.validation import (
     validate_support_session_create,
     validate_support_status_update,
 )
+
+
+class ConnectionManager:
+    def __init__(self):
+        self.active: Dict[int, List[WebSocket]] = {}
+
+    async def connect(self, session_id: int, websocket: WebSocket):
+        await websocket.accept()
+        self.active.setdefault(session_id, []).append(websocket)
+
+    def disconnect(self, session_id: int, websocket: WebSocket):
+        conns = self.active.get(session_id, [])
+        try:
+            conns.remove(websocket)
+        except ValueError:
+            pass
+        if not conns:
+            self.active.pop(session_id, None)
+
+    async def broadcast(self, session_id: int, data: dict):
+        dead = []
+        for ws in list(self.active.get(session_id, [])):
+            try:
+                await ws.send_json(data)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            self.disconnect(session_id, ws)
+
+
+manager = ConnectionManager()
 
 
 @asynccontextmanager
@@ -216,10 +249,35 @@ async def create_support_session_endpoint(body: dict, auth: dict = Depends(get_a
     return {"supportSession": create_support_session(int(auth["sub"]), payload)}
 
 
+@app.websocket("/api/ws/support-sessions/{session_id}")
+async def ws_support_session(
+    websocket: WebSocket,
+    session_id: int,
+    token: str | None = Query(default=None),
+):
+    if not token:
+        await websocket.close(code=4001)
+        return
+    try:
+        verify_access_token(token)
+    except Exception:
+        await websocket.close(code=4001)
+        return
+
+    await manager.connect(session_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(session_id, websocket)
+
+
 @app.post("/api/support-sessions/{session_id}/messages", status_code=201)
 async def create_support_message_endpoint(session_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_support_message_create(body)
-    return {"message": create_support_message(int(auth["sub"]), session_id, payload)}
+    message = create_support_message(int(auth["sub"]), session_id, payload)
+    asyncio.create_task(manager.broadcast(session_id, {"type": "new_message", "message": message}))
+    return {"message": message}
 
 
 @app.get("/api/support-sessions/{session_id}/messages")

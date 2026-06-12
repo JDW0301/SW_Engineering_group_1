@@ -3,7 +3,7 @@ import { ArrowLeft, Lock, Image, Package, Edit3, X } from "lucide-react";
 import { Card, StatusBadge, Input, Button } from "../../components/ui";
 import { createInquiry, deleteInquiry, listStoreInquiries, updateInquiry } from "../../api/inquiries";
 
-const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInquiryUpdated }) => {
+const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInquiryUpdated, onInquiryDeleted }) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [writing, setWriting] = useState(false);
   const [editingPostId, setEditingPostId] = useState(null);
@@ -82,6 +82,7 @@ const BoardTab = ({ store, posts: initialPosts, orders, onInquiryCreated, onInqu
       await deleteInquiry(post.id);
       setLocalPosts(prev => prev.filter(p => p.id !== post.id));
       setSelectedPost(null);
+      onInquiryDeleted?.(post.id);
     } catch (err) {
       setError(err.message);
     }

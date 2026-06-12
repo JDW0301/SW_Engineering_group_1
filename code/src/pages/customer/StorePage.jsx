@@ -18,6 +18,10 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
     setInquiryPosts(prev => prev.map(item => item.id === post.id ? post : item));
   };
 
+  const handleInquiryDeleted = (postId) => {
+    setInquiryPosts(prev => prev.filter(item => item.id !== postId));
+  };
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
@@ -48,7 +52,7 @@ const StorePage = ({ selectedStore, setPage, storeTab, setStoreTab, selectedOrde
 
       {storeTab === "chatbot" && <ChatbotTab store={selectedStore} selectedOrder={selectedOrder} storeOrders={storeOrders} onSelectOrder={onSelectOrder} onCreateSupportFromChatbot={onCreateSupportFromChatbot} />}
       {storeTab === "consult" && <ConsultTab store={selectedStore} order={selectedOrder} orders={orders} supportSessions={supportSessions} setSupportSessions={setSupportSessions} setSupportMessagesBySessionId={setSupportMessagesBySessionId} onOpenSupportSession={openSupportSession} createSupportSession={createSupportSession} />}
-      {storeTab === "board" && <BoardTab store={selectedStore} posts={inquiryPosts.filter(p => p.storeId === selectedStore.id)} orders={orders} onInquiryCreated={handleInquiryCreated} onInquiryUpdated={handleInquiryUpdated} />}
+      {storeTab === "board" && <BoardTab store={selectedStore} posts={inquiryPosts.filter(p => p.storeId === selectedStore.id)} orders={orders} onInquiryCreated={handleInquiryCreated} onInquiryUpdated={handleInquiryUpdated} onInquiryDeleted={handleInquiryDeleted} />}
       {storeTab === "myInquiry" && <MyInquiryTab store={selectedStore} supportSessions={supportSessions.filter(session => session.storeId === selectedStore.id)} inquiryPosts={inquiryPosts.filter(post => post.storeId === selectedStore.id)} onOpenSupportSession={openSupportSession} onOpenInquiryPost={openInquiryPost} />}
     </div>
   );

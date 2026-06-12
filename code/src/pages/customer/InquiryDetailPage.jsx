@@ -3,11 +3,13 @@ import { ArrowLeft, Send, Package } from "lucide-react";
 import { Avatar, StatusBadge, Button, Card } from "../../components/ui";
 import { createSupportMessage, listSupportMessages } from "../../api/support";
 import { detectProfanity } from "../../api/ai";
+import { useSupportWebSocket } from "../../hooks/useSupportWebSocket";
 
 const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, inquiryRepliesByPostId, setPage }) => {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [useFallback, setUseFallback] = useState(false);
   const chatEnd = useRef(null);
   const supportSession = selectedDetail?.kind === "support" ? supportSessions.find(session => session.id === selectedDetail.id) : null;
   const inquiryPost = selectedDetail?.kind === "inquiry" ? inquiryPosts.find(post => post.id === selectedDetail.id) : null;
@@ -16,28 +18,44 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [supportMessages]);
 
+  // 초기 메시지 로드
   useEffect(() => {
-    if (!supportSession) return undefined;
+    if (!supportSession) return;
     let ignore = false;
+    listSupportMessages(supportSession.id)
+      .then(messages => { if (!ignore) setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages })); })
+      .catch(error => { if (!ignore) setChatError(error.message || "상담 메시지를 불러오지 못했습니다."); });
+    return () => { ignore = true; };
+  }, [supportSession?.id]);
 
-    const refreshMessages = async () => {
+  // WebSocket 실시간 수신
+  useSupportWebSocket(
+    supportSession?.status !== "RESOLVED" ? supportSession?.id : null,
+    (data) => {
+      if (data.type === "new_message") {
+        setSupportMessagesBySessionId(prev => {
+          const existing = prev[supportSession.id] || [];
+          if (existing.some(m => m.id === data.message.id)) return prev;
+          return { ...prev, [supportSession.id]: [...existing, data.message] };
+        });
+      }
+    },
+    () => setUseFallback(true),
+  );
+
+  // WebSocket 실패 시 폴링 fallback
+  useEffect(() => {
+    if (!supportSession || supportSession.status === "RESOLVED" || !useFallback) return undefined;
+    let ignore = false;
+    const refresh = async () => {
       try {
         const messages = await listSupportMessages(supportSession.id);
-        if (!ignore) {
-          setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages }));
-        }
-      } catch (error) {
-        if (!ignore) setChatError(error.message || "상담 메시지를 불러오지 못했습니다.");
-      }
+        if (!ignore) setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages }));
+      } catch {}
     };
-
-    refreshMessages();
-    const intervalId = supportSession.status !== "RESOLVED" ? window.setInterval(refreshMessages, 3000) : null;
-    return () => {
-      ignore = true;
-      if (intervalId) window.clearInterval(intervalId);
-    };
-  }, [supportSession?.id, supportSession?.status, setSupportMessagesBySessionId]);
+    const id = setInterval(refresh, 3000);
+    return () => { ignore = true; clearInterval(id); };
+  }, [supportSession?.id, supportSession?.status, useFallback]);
 
   if (!selectedDetail) return null;
 

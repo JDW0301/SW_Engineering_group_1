@@ -1,7 +1,7 @@
 import { ArrowLeft, Package } from "lucide-react";
 import { Card, Button } from "./index";
 
-const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit }) => {
+const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit, answerValue, onAnswerChange }) => {
   const orderInfo = inquiry.orderInfo || inquiry.orderProductName;
   
   const customerMessage = inquiry.messages.find(m => m.sender === "customer");
@@ -42,15 +42,17 @@ const BoardDetail = ({ inquiry, onBack, isOperator, onAnswerSubmit }) => {
             <p className="text-xs font-medium text-gray-700 mb-2">답변 작성</p>
             <form onSubmit={(e) => {
               e.preventDefault();
-              const answer = e.target.elements.answer.value;
-              if (answer.trim()) {
-                onAnswerSubmit(answer);
+              const val = answerValue ?? e.target.elements.answer.value;
+              if (val.trim()) {
+                onAnswerSubmit(val);
               }
             }}>
-              <textarea 
+              <textarea
                 name="answer"
-                className="w-full border rounded-lg px-3 py-2 text-sm h-24 resize-none mb-2" 
-                placeholder="답변을 입력하세요..." 
+                className="w-full border rounded-lg px-3 py-2 text-sm h-24 resize-none mb-2"
+                placeholder="답변을 입력하세요..."
+                value={answerValue ?? ""}
+                onChange={e => onAnswerChange?.(e.target.value)}
               />
               <div className="flex justify-end">
                 <Button type="submit" size="sm">답변 등록</Button>

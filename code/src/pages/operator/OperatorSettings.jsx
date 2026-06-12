@@ -232,32 +232,34 @@ const OperatorSettings = ({ user, onUpdateUser, onPresetsChange }) => {
             </div>
             <div className="space-y-2">
               {files.map(f => (
-                <div key={f.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <FileText size={14} className="text-gray-400" />
-                    <span className="text-sm">{f.name}</span>
-                    <span className="text-xs text-gray-400">{f.uploadedAt}</span>
+                <div key={f.id}>
+                  <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <FileText size={14} className="text-gray-400" />
+                      <span className="text-sm">{f.name}</span>
+                      <span className="text-xs text-gray-400">{f.uploadedAt}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setPreviewFile(prev => prev?.id === f.id ? null : f)} className="p-1 hover:bg-gray-200 rounded" aria-label={`${f.name} 미리보기`}><Eye size={14} /></button>
+                      <button onClick={() => downloadFile(f)} className="p-1 hover:bg-gray-200 rounded" aria-label={`${f.name} 다운로드`}><Download size={14} /></button>
+                      <button onClick={() => removeFile(f.id)} className="p-1 hover:bg-red-100 rounded text-red-500"><X size={14} /></button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => setPreviewFile(f)} className="p-1 hover:bg-gray-200 rounded" aria-label={`${f.name} 미리보기`}><Eye size={14} /></button>
-                    <button onClick={() => downloadFile(f)} className="p-1 hover:bg-gray-200 rounded" aria-label={`${f.name} 다운로드`}><Download size={14} /></button>
-                    <button onClick={() => removeFile(f.id)} className="p-1 hover:bg-red-100 rounded text-red-500"><X size={14} /></button>
-                  </div>
+                  {previewFile?.id === f.id && (
+                    <div className="mt-1 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                          <Eye size={14} />
+                          <span>{f.name} 미리보기</span>
+                        </div>
+                        <button onClick={() => setPreviewFile(null)} className="p-1 hover:bg-gray-200 rounded text-gray-500" aria-label="미리보기 닫기"><X size={14} /></button>
+                      </div>
+                      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-white p-3 text-xs leading-5 text-gray-700">{f.content || "내용이 비어 있습니다."}</pre>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            {previewFile && (
-              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <Eye size={14} />
-                    <span>{previewFile.name} 미리보기</span>
-                  </div>
-                  <button onClick={() => setPreviewFile(null)} className="p-1 hover:bg-gray-200 rounded text-gray-500" aria-label="미리보기 닫기"><X size={14} /></button>
-                </div>
-                <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-white p-3 text-xs leading-5 text-gray-700">{previewFile.content || "내용이 비어 있습니다."}</pre>
-              </div>
-            )}
           </Card>
 
           {/* Presets and FAQs */}

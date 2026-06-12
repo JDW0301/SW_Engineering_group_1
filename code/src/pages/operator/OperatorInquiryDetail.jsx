@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, User, Phone, Package, Clipboard, Star, HelpCircle } from "lucide-react";
 import { Card, StatusBadge, Avatar, Button, BoardDetail } from "../../components/ui";
-import { summarizeConversation } from "../../api/ai";
+import { summarizeConversation, detectProfanity } from "../../api/ai";
 import { createSupportMessage, listSupportMessages, updateSupportStatus } from "../../api/support";
 import { createInquiryReply, createInternalNote, getAISummary, saveAISummary } from "../../api/operatorWorkspace";
+import { useSupportWebSocket } from "../../hooks/useSupportWebSocket";
 
 const toSummarySender = (sender) => sender === "operator" ? "상담사" : "고객";
 
@@ -13,9 +14,11 @@ const toSummaryMessages = (messages) => messages
 
 const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSessions, supportMessagesBySessionId, setSupportMessagesBySessionId, inquiryPosts, setInquiryPosts, inquiryRepliesByPostId, setInquiryRepliesByPostId, setPage, prevPage, orders, notesByTarget, setNotesByTarget, presets = [] }) => {
   const [input, setInput] = useState("");
+  const [answerInput, setAnswerInput] = useState("");
   const [noteInput, setNoteInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [chatError, setChatError] = useState("");
+  const [useFallback, setUseFallback] = useState(false);
   const [aiSummary, setAiSummary] = useState(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
   const [isSummaryGenerating, setIsSummaryGenerating] = useState(false);
@@ -30,6 +33,10 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
   const noteKey = selectedDetail ? `${selectedDetail.kind}-${selectedDetail.id}` : "";
   const notes = notesByTarget[noteKey] || [];
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [supportMessages]);
+
+  useEffect(() => {
+    setAnswerInput("");
+  }, [selectedDetail?.kind, selectedDetail?.id]);
 
   useEffect(() => {
     if (!selectedDetail) {
@@ -67,28 +74,44 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
     };
   }, [selectedDetail?.kind, selectedDetail?.id]);
 
+  // 초기 메시지 로드
   useEffect(() => {
-    if (!supportSession) return undefined;
+    if (!supportSession) return;
     let ignore = false;
+    listSupportMessages(supportSession.id)
+      .then(messages => { if (!ignore) setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages })); })
+      .catch(error => { if (!ignore) setChatError(error.message || "상담 메시지를 불러오지 못했습니다."); });
+    return () => { ignore = true; };
+  }, [supportSession?.id]);
 
-    const refreshMessages = async () => {
+  // WebSocket 실시간 수신
+  useSupportWebSocket(
+    supportSession?.status !== "RESOLVED" ? supportSession?.id : null,
+    (data) => {
+      if (data.type === "new_message") {
+        setSupportMessagesBySessionId(prev => {
+          const existing = prev[supportSession.id] || [];
+          if (existing.some(m => m.id === data.message.id)) return prev;
+          return { ...prev, [supportSession.id]: [...existing, data.message] };
+        });
+      }
+    },
+    () => setUseFallback(true),
+  );
+
+  // WebSocket 실패 시 폴링 fallback
+  useEffect(() => {
+    if (!supportSession || supportSession.status === "RESOLVED" || !useFallback) return undefined;
+    let ignore = false;
+    const refresh = async () => {
       try {
         const messages = await listSupportMessages(supportSession.id);
-        if (!ignore) {
-          setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages }));
-        }
-      } catch (error) {
-        if (!ignore) setChatError(error.message || "상담 메시지를 불러오지 못했습니다.");
-      }
+        if (!ignore) setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: messages }));
+      } catch {}
     };
-
-    refreshMessages();
-    const intervalId = supportSession.status !== "RESOLVED" ? window.setInterval(refreshMessages, 3000) : null;
-    return () => {
-      ignore = true;
-      if (intervalId) window.clearInterval(intervalId);
-    };
-  }, [supportSession?.id, supportSession?.status, setSupportMessagesBySessionId]);
+    const id = setInterval(refresh, 3000);
+    return () => { ignore = true; clearInterval(id); };
+  }, [supportSession?.id, supportSession?.status, useFallback]);
 
   if (!detail) return null;
 
@@ -102,6 +125,17 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
     setInput("");
     setIsSending(true);
     setChatError("");
+    try {
+      const detect = await detectProfanity(content);
+      if (detect.is_profanity) {
+        setChatError("부적절한 표현이 포함되어 있어 전송할 수 없습니다.");
+        setInput(content);
+        setIsSending(false);
+        return;
+      }
+    } catch {
+      // 감지 실패 시 전송 허용
+    }
     try {
       const nextMessage = await createSupportMessage(supportSession.id, content);
       setSupportMessagesBySessionId(prev => ({ ...prev, [supportSession.id]: [...(prev[supportSession.id] || []), nextMessage] }));
@@ -136,6 +170,7 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
     const nextReply = await createInquiryReply(inquiryPost.id, answer);
     setInquiryRepliesByPostId(prev => ({ ...prev, [inquiryPost.id]: [...inquiryReplies, nextReply] }));
     setInquiryPosts(prev => prev.map(post => post.id === inquiryPost.id ? { ...post, status: "RESOLVED", lastMessageAt: nextReply.createdAt } : post));
+    setAnswerInput("");
   };
 
   const regenerateSummary = async () => {
@@ -217,11 +252,13 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
           )}
 
           {selectedDetail.kind === "inquiry" ? (
-            <BoardDetail 
-              inquiry={inquiryForBoard} 
-              onBack={() => setPage(prevPage || "main")} 
-              isOperator={true} 
+            <BoardDetail
+              inquiry={inquiryForBoard}
+              onBack={() => setPage(prevPage || "main")}
+              isOperator={true}
               onAnswerSubmit={handleAnswerSubmit}
+              answerValue={answerInput}
+              onAnswerChange={setAnswerInput}
             />
           ) : (
             <>
@@ -315,7 +352,7 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
             <h4 className="font-semibold text-sm mb-2 flex items-center gap-1"><HelpCircle size={14} /> 빠른 답변</h4>
             <div className="space-y-1">
               {presets.map((preset) => (
-                <button key={preset.id} onClick={() => setInput(preset.content)} className="block w-full text-left px-2 py-1.5 bg-gray-50 rounded text-xs hover:bg-gray-100 transition">{preset.title}</button>
+                <button key={preset.id} onClick={() => selectedDetail?.kind === "inquiry" ? setAnswerInput(preset.content) : setInput(preset.content)} className="block w-full text-left px-2 py-1.5 bg-gray-50 rounded text-xs hover:bg-gray-100 transition">{preset.title}</button>
               ))}
               {presets.length === 0 && <p className="text-xs text-gray-400">저장된 프리셋이 없습니다</p>}
             </div>

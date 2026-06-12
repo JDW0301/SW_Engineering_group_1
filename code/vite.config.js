@@ -10,6 +10,7 @@ export default defineConfig({
       "/api": {
         target: "http://203.234.62.35:8002",
         changeOrigin: true,
+        ws: true,
       },
     },
   },

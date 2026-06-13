@@ -95,6 +95,9 @@ const OperatorInquiryDetail = ({ selectedDetail, supportSessions, setSupportSess
           if (existing.some(m => m.id === data.message.id)) return prev;
           return { ...prev, [wsSessionId]: [...existing, data.message] };
         });
+        setSupportSessions(prev => prev.map(s =>
+          s.id === wsSessionId ? { ...s, lastMessageAt: data.message.time } : s
+        ));
       }
     },
     () => setUseFallback(true),

@@ -24,7 +24,7 @@ from app.repositories import ensure_store_icon_column
 from app.faqs import list_store_faqs
 from app.operator import update_operator_store
 from app.security import verify_access_token
-from app.support import create_support_message, create_support_session, list_customer_support, list_operator_support, list_support_messages, update_support_status
+from app.support import create_profanity_warning, create_support_message, create_support_session, list_customer_support, list_operator_support, list_support_messages, update_support_status
 from app.operator_workspace import (
     create_inquiry_reply,
     create_internal_note,
@@ -276,6 +276,13 @@ async def ws_support_session(
 async def create_support_message_endpoint(session_id: int, body: dict, auth: dict = Depends(get_auth_payload)):
     payload = validate_support_message_create(body)
     message = create_support_message(int(auth["sub"]), session_id, payload)
+    asyncio.create_task(manager.broadcast(session_id, {"type": "new_message", "message": message}))
+    return {"message": message}
+
+
+@app.post("/api/support-sessions/{session_id}/profanity-warning", status_code=201)
+async def create_profanity_warning_endpoint(session_id: int, auth: dict = Depends(get_auth_payload)):
+    message = create_profanity_warning(int(auth["sub"]), session_id)
     asyncio.create_task(manager.broadcast(session_id, {"type": "new_message", "message": message}))
     return {"message": message}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Send, Package } from "lucide-react";
 import { Avatar, StatusBadge, Button, Card } from "../../components/ui";
-import { createSupportMessage, listSupportMessages } from "../../api/support";
+import { createSupportMessage, listSupportMessages, reportProfanityWarning } from "../../api/support";
 import { detectProfanity } from "../../api/ai";
 import { useSupportWebSocket } from "../../hooks/useSupportWebSocket";
 
@@ -39,6 +39,9 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
           if (existing.some(m => m.id === data.message.id)) return prev;
           return { ...prev, [wsSessionId]: [...existing, data.message] };
         });
+        setSupportSessions(prev => prev.map(s =>
+          s.id === wsSessionId ? { ...s, lastMessageAt: data.message.time } : s
+        ));
       }
     },
     () => setUseFallback(true),
@@ -70,6 +73,7 @@ const InquiryDetailPage = ({ selectedDetail, detailBackPage, supportSessions, se
       const detect = await detectProfanity(content);
       if (detect.is_profanity) {
         setChatError("부적절한 표현이 포함되어 있어 전송할 수 없습니다.");
+        reportProfanityWarning(supportSession.id).catch(() => {});
         setIsSending(false);
         return;
       }

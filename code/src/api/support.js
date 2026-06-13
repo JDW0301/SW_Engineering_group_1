@@ -37,3 +37,7 @@ export async function updateSupportStatus(sessionId, status) {
   });
   return data.supportSession;
 }
+
+export async function reportProfanityWarning(sessionId) {
+  return request(`/support-sessions/${sessionId}/profanity-warning`, { method: "POST" });
+}

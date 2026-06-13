@@ -107,21 +107,12 @@ const CustomerApp = ({ onLogout, user, onUpdateUser }) => {
     return session;
   };
 
-  const createSupportFromChatbot = async ({ title, store, messages, order = selectedOrder }) => {
-    const now = new Date().toLocaleString();
-    const chatbotMessages = messages
-      .filter(message => message.sender === "user")
-      .map(message => ({ sender: "customer", content: message.content, time: now }));
-    await createSupportSession({
-      title,
-      store,
-      order,
-      source: "chatbot",
-      initialMessages: [
-        { sender: "system", content: "챗봇에서 상담사 연결 요청이 접수되었습니다.", time: now },
-        ...chatbotMessages,
-      ],
-    });
+  const createSupportFromChatbot = async ({ title, content, store, order = selectedOrder }) => {
+    const initialMessages = [{ sender: "customer", content: title }];
+    if (content && content.trim() && content.trim() !== title.trim()) {
+      initialMessages.push({ sender: "customer", content: content.trim() });
+    }
+    await createSupportSession({ title, store, order, source: "chatbot", initialMessages });
     setSelectedDetail(null);
     setPage("supportList");
   };

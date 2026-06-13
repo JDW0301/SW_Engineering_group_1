@@ -400,7 +400,8 @@ def ensure_demo_customer_home_data() -> None:
             for store in DEMO_STORES:
                 _sync_store_faqs(connection, store_ids[store["key"]], DEMO_FAQS_BY_STORE[store["key"]])
                 _sync_response_presets(connection, store_ids[store["key"]], DEMO_RESPONSE_PRESETS_BY_STORE[store["key"]])
-                _ensure_knowledge_file(connection, store_ids[store["key"]], f"{store['name']}_상담안내.txt")
+                knowledge_content = LUMI_KNOWLEDGE_CONTENT if store["key"] == "fashion-lumi" else ""
+                _ensure_knowledge_file(connection, store_ids[store["key"]], f"{store['name']}_상담안내.txt", knowledge_content)
 
             _relink_store_owned_records(connection)
 
@@ -864,20 +865,65 @@ def _ensure_response_preset(connection, store_id: int, title: str, content: str)
         )
 
 
-def _ensure_knowledge_file(connection, store_id: int, file_name: str) -> None:
+LUMI_KNOWLEDGE_CONTENT = """[패션스토어 루미 상품 안내]
+
+■ 봄 자켓 (132,000원)
+- 소재: 폴리에스터 75%, 나일론 25% / 안감: 폴리에스터 100%
+- 세탁: 드라이클리닝 권장, 손세탁 가능(30°C 이하), 세탁기 사용 금지
+- 컬러: 베이지, 올리브, 네이비, 블랙
+- 특징: 가벼운 착용감, 방풍 기능, 슬림핏 디자인
+
+■ 사이즈 안내 (봄 자켓 실측)
+- XS(44): 어깨 38 / 가슴 88 / 총장 56cm
+- S(55): 어깨 39 / 가슴 92 / 총장 57cm
+- M(66): 어깨 40 / 가슴 96 / 총장 58cm
+- L(77): 어깨 41 / 가슴 100 / 총장 59cm
+- XL(88): 어깨 42 / 가슴 104 / 총장 60cm
+※ 슬림핏으로 평소보다 한 치수 크게 구매를 권장합니다
+
+■ 교환/반품 정책
+- 접수 기간: 수령 후 7일 이내
+- 조건: 미착용, 세탁 미진행, 택그 부착 상태
+- 고객 변심: 왕복 배송비(6,000원) 고객 부담
+- 제품 불량/오배송: 무료 교환 또는 전액 환불
+- 교환 소요 기간: 접수 후 3~5 영업일
+
+■ 배송 안내
+- 평균 소요일: 2~3 영업일 (주말·공휴일 제외)
+- 당일 발송: 평일 오후 2시 이전 결제 완료 시
+- 제주/도서산간: 추가 배송비 3,000원
+
+■ 재입고 안내
+- 인기 색상·사이즈 품절 시 상품 페이지에서 재입고 알림 신청 가능
+- 재입고 후 SMS/이메일로 개별 안내
+
+■ 기타 정책
+- 포인트: 구매 금액의 1% 적립
+- 첫 구매 쿠폰: 10% 할인 (자동 지급)
+- 고객센터 운영시간: 평일 09:00~18:00 (주말·공휴일 휴무)
+"""
+
+
+def _ensure_knowledge_file(connection, store_id: int, file_name: str, file_content: str = "") -> None:
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT id FROM chatbot_knowledge_file WHERE store_id = %s AND file_name = %s LIMIT 1",
             (store_id, file_name),
         )
-        if cursor.fetchone():
+        existing = cursor.fetchone()
+        if existing:
+            if file_content:
+                cursor.execute(
+                    "UPDATE chatbot_knowledge_file SET file_content = %s WHERE id = %s",
+                    (file_content, existing["id"]),
+                )
             return
         cursor.execute(
             """
-            INSERT INTO chatbot_knowledge_file (store_id, file_name, file_url, is_active)
-            VALUES (%s, %s, %s, TRUE)
+            INSERT INTO chatbot_knowledge_file (store_id, file_name, file_url, file_content, is_active)
+            VALUES (%s, %s, %s, %s, TRUE)
             """,
-            (store_id, file_name, f"local://{file_name}"),
+            (store_id, file_name, f"local://{file_name}", file_content if file_content else None),
         )
 
 

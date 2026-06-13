@@ -43,8 +43,19 @@ const toAiHistory = (messages) => messages
     content: message.content,
   }));
 
+const getChatStorageKey = (storeId, orderId) => `chatbot_msgs_${storeId}${orderId ? "_" + orderId : ""}`;
+
+const loadSavedMessages = (storeId, orderId) => {
+  try {
+    const saved = localStorage.getItem(getChatStorageKey(storeId, orderId));
+    return saved ? JSON.parse(saved) : null;
+  } catch { return null; }
+};
+
 const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onCreateSupportFromChatbot }) => {
-  const [messages, setMessages] = useState([{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]);
+  const [messages, setMessages] = useState(
+    () => loadSavedMessages(store.id, selectedOrder?.id) || [{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]
+  );
   const [input, setInput] = useState("");
   const [showFaq, setShowFaq] = useState(true);
   const [isContextOpen, setIsContextOpen] = useState(false);
@@ -63,9 +74,10 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   useEffect(() => {
-    setMessages([{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]);
+    const saved = loadSavedMessages(store.id, selectedOrder?.id);
+    setMessages(saved || [{ id: 0, sender: "bot", content: buildIntroMessage(store, selectedOrder) }]);
     setInput("");
-    setShowFaq(true);
+    setShowFaq(!saved || saved.length <= 1);
     setStatus("");
     setError("");
     setIsContextOpen(false);
@@ -76,6 +88,13 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
     setHandoffError("");
     setIsHandoffSubmitting(false);
   }, [store.id, store.name, selectedOrder?.id, selectedOrder?.productName, selectedOrder?.orderNumber]);
+
+  useEffect(() => {
+    if (isSending) return;
+    try {
+      localStorage.setItem(getChatStorageKey(store.id, selectedOrder?.id), JSON.stringify(messages));
+    } catch {}
+  }, [messages, isSending, store.id, selectedOrder?.id]);
 
   useEffect(() => {
     let ignore = false;
@@ -227,7 +246,7 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
       const handoffMessages = latestUserMessage?.content?.trim() === content
         ? messages
         : [...messages, { id: Date.now(), sender: "user", content }];
-      await onCreateSupportFromChatbot({ title, store, messages: handoffMessages, order: selectedOrder });
+      await onCreateSupportFromChatbot({ title, content, store, order: selectedOrder });
     } catch (handoffCreateError) {
       setHandoffError(handoffCreateError.message || "상담 요청을 접수하지 못했습니다.");
       setIsHandoffSubmitting(false);

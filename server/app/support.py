@@ -64,6 +64,18 @@ def create_support_message(user_id: int, session_id: int, payload: dict) -> dict
             raise
 
 
+def create_profanity_warning(user_id: int, session_id: int) -> dict:
+    with db_connection() as connection:
+        try:
+            _fetch_session_for_user(connection, user_id, session_id)
+            message_id = _insert_message(connection, session_id, None, "SYSTEM", "⚠️ 고객이 부적절한 표현을 시도했습니다.")
+            connection.commit()
+            return _fetch_message_by_id(connection, message_id)
+        except Exception:
+            connection.rollback()
+            raise
+
+
 def list_support_messages(user_id: int, session_id: int) -> list[dict]:
     with db_connection() as connection:
         _fetch_session_for_user(connection, user_id, session_id)

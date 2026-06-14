@@ -92,7 +92,7 @@ _REFUSAL_MARKERS = [
     "정확히 제공하기 어렵",
     "구체적으로 안내 드릴 수 없",
 ]
-_STANDARD_REFUSAL = "해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다."
+_OUT_OF_SCOPE = "__OUT_OF_SCOPE__"  # 자료 없는 질문 → HANDOFF 처리
 
 # LLM 위임 없이 항상 통과시킬 핵심 CS 동사 (동의어 처리 목적: 환불≈반품)
 _ALWAYS_FORWARD_CS_TERMS = {
@@ -128,7 +128,7 @@ def _can_answer_from_context(question: str, context: str) -> bool:
 
 def _post_process_reply(reply: str) -> str:
     if any(marker in reply for marker in _REFUSAL_MARKERS):
-        return _STANDARD_REFUSAL
+        return _OUT_OF_SCOPE
     return reply
 
 
@@ -144,6 +144,7 @@ _CS_KEYWORDS = {
     "서비스", "고객", "가격", "할인", "쿠폰", "포인트",
     "포장", "품질", "재질", "소재", "색상", "디자인",
     "쓰레기", "별로", "실망", "최악", "후기", "리뷰",
+    "팔아", "판매", "팔다",
 }
 
 def _is_cs_context(text: str) -> bool:
@@ -409,11 +410,11 @@ def chatbot(body: ChatbotInput):
 
     context = body.resolve_context()
 
-    # 사전 검사: 질문 핵심어가 컨텍스트에 없으면 LLM 없이 즉시 거절
+    # 사전 검사: 질문 핵심어가 컨텍스트에 없으면 LLM 없이 즉시 HANDOFF
     if not _can_answer_from_context(body.message, context):
         return ChatbotResponse(
-            reply=_STANDARD_REFUSAL,
-            can_answer=True,
+            reply="죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요.",
+            can_answer=False,
             latency_ms=0,
         )
 
@@ -472,8 +473,8 @@ def chatbot(body: ChatbotInput):
         )
     except Exception:
         return ChatbotResponse(
-            reply=_STANDARD_REFUSAL,
-            can_answer=True,
+            reply="죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요.",
+            can_answer=False,
             latency_ms=round((time.time() - start) * 1000, 2),
         )
 
@@ -483,7 +484,12 @@ def chatbot(body: ChatbotInput):
     if not can_answer:
         reply = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
     else:
-        reply = _post_process_reply(reply)
+        processed = _post_process_reply(reply)
+        if processed == _OUT_OF_SCOPE:
+            can_answer = False
+            reply = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
+        else:
+            reply = processed
 
     return ChatbotResponse(
         reply=reply,
@@ -563,12 +569,11 @@ async def chatbot_stream(body: ChatbotInput):
             yield f"data: {json.dumps({'token': '', 'is_warning': True, 'can_answer': True, 'final': WARNING_MSG}, ensure_ascii=False)}\n\n"
             return
 
-        # 컨텍스트 범위 밖 질문 — LLM 없이 즉시 거절
+        # 컨텍스트 범위 밖 질문 — LLM 없이 즉시 HANDOFF
         if is_out_of_scope:
             yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
             yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
-            yield f"data: {json.dumps({'token': _STANDARD_REFUSAL, 'can_answer': True}, ensure_ascii=False)}\n\n"
-            yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
             return
 
         yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
@@ -609,12 +614,15 @@ async def chatbot_stream(body: ChatbotInput):
                     yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
                     return
 
-            # 전체 응답 후처리 — 자료 없음 인정 + 일반 지식 덧붙임 방지
+            # 전체 응답 후처리 — 자료 없음 인정 시 HANDOFF
             final_reply = _post_process_reply(accumulated.strip())
 
             yield end_thinking()
-            yield f"data: {json.dumps({'token': final_reply, 'can_answer': True}, ensure_ascii=False)}\n\n"
-            yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
+            if final_reply == _OUT_OF_SCOPE:
+                yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
+            else:
+                yield f"data: {json.dumps({'token': final_reply, 'can_answer': True}, ensure_ascii=False)}\n\n"
+                yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
 
         except Exception:
             yield end_thinking()

@@ -75,6 +75,63 @@ def _build_automaton(lexicon: list[dict]):
     return automaton
 
 
+# ── 챗봇 후처리 ─────────────────────────────────────────────
+# 모델이 "자료 없음"을 인정하면서 일반 지식을 덧붙이는 경우 표준 거절 문구로 교체
+_REFUSAL_MARKERS = [
+    "안내 자료에 포함되어 있지 않아",
+    "스토어 정보에 명시되어 있지 않",
+    "제공된 정보로는 확인이 불가능",
+    "현재 제공된 정보로는",
+    "확인이 불가능합니다",
+    "정보에 포함되어 있지 않",
+    "명시되어 있지 않습니다",
+    "명시되어 있지 않아",
+    "자세한 사항이 명시",
+    "명시된 내용으로는",
+    "명시된 정보로는",
+    "정확히 제공하기 어렵",
+    "구체적으로 안내 드릴 수 없",
+]
+_STANDARD_REFUSAL = "해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다."
+
+# LLM 위임 없이 항상 통과시킬 핵심 CS 동사 (동의어 처리 목적: 환불≈반품)
+_ALWAYS_FORWARD_CS_TERMS = {
+    "환불", "교환", "반품", "배송", "주문", "결제", "취소",
+    "불량", "파손", "하자", "누락", "오배송",
+}
+# 인사/감사 등 메타 표현 — 컨텍스트 무관하게 LLM에 위임
+_ALWAYS_FORWARD_GREETINGS = {"안녕", "감사", "고마", "죄송", "수고", "잘부탁"}
+_CONTEXT_STOPWORDS = {
+    "어떻게", "얼마나", "알려", "있나요", "있어요", "하나요",
+    "방법", "어디서", "어디에", "해요", "되나요", "되요",
+    "줘요", "주세요", "궁금해요", "궁금합니다",
+}
+
+def _can_answer_from_context(question: str, context: str) -> bool:
+    """LLM 호출 전 사전 검사: 질문 핵심어가 컨텍스트에 없으면 False"""
+    if len(context.strip()) < 20:
+        return True
+    if any(term in question for term in _ALWAYS_FORWARD_CS_TERMS):
+        return True
+    if any(term in question for term in _ALWAYS_FORWARD_GREETINGS):
+        return True
+    words = [w for w in re.findall(r"[가-힣]{2,}", question) if w not in _CONTEXT_STOPWORDS]
+    if not words:
+        return True
+    # 한국어 조사·어미 처리: 단어 전체 또는 앞 2자(어근) 기준으로 매칭
+    for word in words:
+        if word in context:
+            return True
+        if len(word) >= 2 and word[:2] in context:
+            return True
+    return False
+
+def _post_process_reply(reply: str) -> str:
+    if any(marker in reply for marker in _REFUSAL_MARKERS):
+        return _STANDARD_REFUSAL
+    return reply
+
+
 # ── 감지 / 중립화 ────────────────────────────────────────────
 # 한글/영문/숫자가 하나도 없는 텍스트는 KoELECTRA 입력 자체를 건너뜀
 _MEANINGFUL_RE = re.compile(r'[가-힣a-zA-Z0-9]')
@@ -352,6 +409,14 @@ def chatbot(body: ChatbotInput):
 
     context = body.resolve_context()
 
+    # 사전 검사: 질문 핵심어가 컨텍스트에 없으면 LLM 없이 즉시 거절
+    if not _can_answer_from_context(body.message, context):
+        return ChatbotResponse(
+            reply=_STANDARD_REFUSAL,
+            can_answer=True,
+            latency_ms=0,
+        )
+
     # 대화 히스토리 구성
     history_text = ""
     if body.history:
@@ -362,7 +427,7 @@ def chatbot(body: ChatbotInput):
         history_text = f"\n--- 이전 대화 ---\n{history_text}\n---\n"
 
     system_prompt = f"""당신은 소규모 쇼핑몰의 고객센터 AI 챗봇입니다.
-아래 [스토어 정보]만을 기반으로 고객 질문에 답변하세요.
+반드시 아래 [스토어 정보]에 명시된 내용만을 근거로 답변하세요.
 
 [스토어 정보]
 {context}
@@ -371,15 +436,25 @@ def chatbot(body: ChatbotInput):
 - 특정 주문의 현재 배송 상태·위치 조회
 - 고객 개인 주문내역·결제 정보 확인
 - 환불·교환·반품 접수를 명시적으로 요청하는 경우 ("접수해 주세요", "처리해 주세요" 등 직접 요청)
-  ※ "환불하고 싶다", "교환하고 싶다" 등 의향 표현은 HANDOFF가 아님 → 스토어 정보로 절차 안내
+  ※ 의향 표현("환불하고 싶다", "교환하고 싶다")이나 방법·절차 문의("어떻게 하나요?", "하려면?", "방법이" 등)는 HANDOFF가 아님 → 스토어 정보로 절차 안내
 - 실시간 재고 확인
-- 스토어 정보에 없어 답변이 불가능한 경우
 
 [일반 규칙]
-1. HANDOFF 조건이 아닌 경우 스토어 정보를 근거로 답변하세요.
-2. 환불·교환 의향을 표현한 고객에게는 절차와 방법을 먼저 안내하세요.
-3. 답변은 친절하고 간결하게 한국어로 작성하세요.
-4. "HANDOFF" 출력 시 다른 말은 절대 붙이지 마세요."""
+1. 스토어 정보에 명시된 내용은 해당 내용만을 근거로 답변하세요.
+2. 스토어 정보에 없는 내용은 반드시 "해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다."라고만 답변하세요. 추측, 일반 지식, 추가 설명을 절대 덧붙이지 마세요.
+3. 환불·교환 의향을 표현한 고객에게는 스토어 정보에 명시된 절차와 방법만 안내하세요.
+4. 답변은 친절하고 간결하게 한국어로 작성하세요.
+5. "HANDOFF" 출력 시 다른 말은 절대 붙이지 마세요.
+
+[응답 예시 - 자료 없는 질문]
+고객: 포인트 적립은 어떻게 되나요?
+챗봇: 해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다.
+
+고객: 할인 쿠폰은 어떻게 써요?
+챗봇: 해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다.
+
+고객: 색상이 몇 가지예요?
+챗봇: 해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다."""
 
     user_prompt = f"{history_text}고객: {body.message}\n챗봇:"
 
@@ -393,16 +468,22 @@ def chatbot(body: ChatbotInput):
             max_tokens=300,
             temperature=0.3,
             stop=["고객:"],
-            timeout=30,
+            timeout=20,
         )
     except Exception:
-        raise HTTPException(status_code=503, detail="AI 모델 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.")
+        return ChatbotResponse(
+            reply=_STANDARD_REFUSAL,
+            can_answer=True,
+            latency_ms=round((time.time() - start) * 1000, 2),
+        )
 
     reply = response.choices[0].message.content.strip()
     can_answer = "HANDOFF" not in reply.upper()
 
     if not can_answer:
         reply = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
+    else:
+        reply = _post_process_reply(reply)
 
     return ChatbotResponse(
         reply=reply,
@@ -422,6 +503,7 @@ def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
         ) + "\n---\n"
 
     system_prompt = f"""당신은 소규모 쇼핑몰 고객센터 AI 챗봇입니다.
+반드시 아래 [스토어 정보]에 명시된 내용만을 근거로 답변하라.
 
 [스토어 정보]
 {context}
@@ -432,10 +514,21 @@ def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
 - 환불·교환·반품 접수를 명시적으로 요청 ("접수해 주세요", "처리해 주세요" 등 직접 요청)
   ※ "환불하고 싶다", "교환하고 싶다" 등 의향 표현은 HANDOFF 아님 → 절차 안내로 응답
 - 실시간 재고 확인
-- 스토어 정보에 없어 답변 불가능한 경우
 
-위 조건에 해당하지 않으면 스토어 정보를 근거로 한국어로 간결하게 답변하라.
-환불·교환 의향을 밝힌 경우 절차와 방법을 먼저 안내하라."""
+위 조건에 해당하지 않으면:
+- 스토어 정보에 있는 내용은 해당 자료를 근거로 한국어로 간결하게 답변하라.
+- 스토어 정보에 없는 내용은 반드시 "해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다."라고만 답변하라. 추측하거나 일반 지식으로 보충 설명을 절대 추가하지 마라.
+- 환불·교환 의향을 밝힌 경우 스토어 정보에 명시된 절차와 방법만 안내하라.
+
+[응답 예시 - 자료 없는 질문]
+고객: 포인트 적립은 어떻게 되나요?
+챗봇: 해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다.
+
+고객: 할인 쿠폰은 어떻게 써요?
+챗봇: 해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다.
+
+고객: 색상이 몇 가지예요?
+챗봇: 해당 내용은 안내 자료에 포함되어 있지 않아 안내 드리기 어렵습니다."""
 
     user_prompt = f"{history_text}고객: {body.message}\n챗봇:"
     return system_prompt, user_prompt
@@ -453,12 +546,14 @@ async def chatbot_stream(body: ChatbotInput):
     if len(body.history) > 20:
         raise HTTPException(status_code=400, detail="history는 최대 20개까지 허용됩니다.")
 
+    context = body.resolve_context()
     system_prompt, user_prompt = _build_chatbot_messages(body)
 
     HANDOFF_MSG = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
     WARNING_MSG = "욕설이 포함된 메시지는 전송할 수 없습니다. 경고가 누적되면 대화가 제한됩니다."
-    # HANDOFF 판정에 충분한 초기 버퍼 크기 (chars)
-    HANDOFF_BUFFER = 12
+
+    # 사전 검사 결과 (generate 클로저에서 참조)
+    is_out_of_scope = not _can_answer_from_context(body.message, context)
 
     # 욕설 선제 검사 — 감지 시 LLM 호출 없이 즉시 경고 반환
     is_profanity, _, _, _ = _analyze(body.message)
@@ -466,6 +561,14 @@ async def chatbot_stream(body: ChatbotInput):
     def generate():
         if is_profanity:
             yield f"data: {json.dumps({'token': '', 'is_warning': True, 'can_answer': True, 'final': WARNING_MSG}, ensure_ascii=False)}\n\n"
+            return
+
+        # 컨텍스트 범위 밖 질문 — LLM 없이 즉시 거절
+        if is_out_of_scope:
+            yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'token': _STANDARD_REFUSAL, 'can_answer': True}, ensure_ascii=False)}\n\n"
+            yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
             return
 
         yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
@@ -498,35 +601,19 @@ async def chatbot_stream(body: ChatbotInput):
                 delta = chunk.choices[0].delta.content
                 if not delta:
                     continue
-
                 accumulated += delta
 
-                # HANDOFF 감지 — 버퍼 단계든 이후 단계든 즉시 종료
+                # HANDOFF 조기 감지 — 확인 즉시 종료
                 if "HANDOFF" in accumulated.upper():
                     yield end_thinking()
                     yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
                     return
 
-                # 버퍼 단계: 충분히 쌓일 때까지 FE에 보내지 않음
-                if len(accumulated) < HANDOFF_BUFFER:
-                    buffer += delta
-                    continue
-
-                # 버퍼 해제: 안전하다고 판단, 쌓인 버퍼 + 현재 토큰 전송
-                if buffer:
-                    yield end_thinking()
-                    yield f"data: {json.dumps({'token': buffer, 'can_answer': True}, ensure_ascii=False)}\n\n"
-                    buffer = ""
-
-                yield end_thinking()
-                yield f"data: {json.dumps({'token': delta, 'can_answer': True}, ensure_ascii=False)}\n\n"
-
-            # 스트림 종료 — 버퍼에 남은 내용 처리
-            if buffer and "HANDOFF" not in accumulated.upper():
-                yield end_thinking()
-                yield f"data: {json.dumps({'token': buffer, 'can_answer': True}, ensure_ascii=False)}\n\n"
+            # 전체 응답 후처리 — 자료 없음 인정 + 일반 지식 덧붙임 방지
+            final_reply = _post_process_reply(accumulated.strip())
 
             yield end_thinking()
+            yield f"data: {json.dumps({'token': final_reply, 'can_answer': True}, ensure_ascii=False)}\n\n"
             yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
 
         except Exception:

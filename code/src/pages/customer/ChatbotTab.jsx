@@ -247,6 +247,7 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
         ? messages
         : [...messages, { id: Date.now(), sender: "user", content }];
       await onCreateSupportFromChatbot({ title, content, store, order: selectedOrder });
+      try { localStorage.removeItem(getChatStorageKey(store.id, selectedOrder?.id)); } catch {}
     } catch (handoffCreateError) {
       setHandoffError(handoffCreateError.message || "상담 요청을 접수하지 못했습니다.");
       setIsHandoffSubmitting(false);

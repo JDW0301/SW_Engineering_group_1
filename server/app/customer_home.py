@@ -831,11 +831,7 @@ def _ensure_inquiry_reply(connection, inquiry_post_id: int, author_user_id: int,
 
 def _sync_store_faqs(connection, store_id: int, faqs: list[dict]) -> None:
     with connection.cursor() as cursor:
-        placeholders = ", ".join(["%s"] * len(COMMON_DEMO_FAQ_QUESTIONS))
-        cursor.execute(
-            f"DELETE FROM faq WHERE store_id = %s AND question IN ({placeholders})",
-            (store_id, *COMMON_DEMO_FAQ_QUESTIONS),
-        )
+        cursor.execute("DELETE FROM faq WHERE store_id = %s", (store_id,))
     for sort_order, faq in enumerate(faqs):
         _ensure_faq(connection, store_id, faq, sort_order)
 

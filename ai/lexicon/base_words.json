@@ -77,18 +77,7 @@
       "variants": [
         "좃",
         "졷",
-        "조또",
-        "존나"
-      ]
-    },
-    {
-      "word": "보지",
-      "level": 5,
-      "offense_type": "음란",
-      "target": "일반",
-      "variants": [
-        "보즤",
-        "봊이"
+        "조또"
       ]
     },
     {
@@ -115,47 +104,13 @@
       ]
     },
     {
-      "word": "꺼져",
-      "level": 3,
-      "offense_type": "위협",
-      "target": "일반",
-      "variants": [
-        "꺼저",
-        "껒져"
-      ]
-    },
-    {
       "word": "닥쳐",
       "level": 3,
       "offense_type": "위협",
       "target": "일반",
       "variants": [
         "닥처",
-        "닥춰",
-        "다쳐"
-      ]
-    },
-    {
-      "word": "뒤져",
-      "level": 4,
-      "offense_type": "위협",
-      "target": "일반",
-      "variants": [
-        "뒤저",
-        "뒈져",
-        "뒈저",
-        "디져"
-      ]
-    },
-    {
-      "word": "미친",
-      "level": 3,
-      "offense_type": "욕설",
-      "target": "일반",
-      "variants": [
-        "미칀",
-        "미틴",
-        "믿친"
+        "닥춰"
       ]
     },
     {
@@ -178,15 +133,6 @@
         "찐다",
         "진따",
         "ㅉㄷ"
-      ]
-    },
-    {
-      "word": "한남",
-      "level": 4,
-      "offense_type": "모욕",
-      "target": "성별",
-      "variants": [
-        "한남충"
       ]
     },
     {
@@ -388,13 +334,6 @@
       "level": 4,
       "offense_type": "욕설",
       "target": "일반",
-      "variants": []
-    },
-    {
-      "word": "걸레",
-      "level": 5,
-      "offense_type": "모욕",
-      "target": "성별",
       "variants": []
     },
     {
@@ -954,13 +893,6 @@
       "word": "쌩보지쑈",
       "level": 5,
       "offense_type": "음란",
-      "target": "일반",
-      "variants": []
-    },
-    {
-      "word": "쓰레기",
-      "level": 3,
-      "offense_type": "모욕",
       "target": "일반",
       "variants": []
     },
@@ -1624,13 +1556,6 @@
     },
     {
       "word": "왕자지",
-      "level": 5,
-      "offense_type": "음란",
-      "target": "일반",
-      "variants": []
-    },
-    {
-      "word": "자지",
       "level": 5,
       "offense_type": "음란",
       "target": "일반",

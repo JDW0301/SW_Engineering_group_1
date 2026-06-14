@@ -404,6 +404,7 @@ def ensure_demo_customer_home_data() -> None:
                     _deactivate_knowledge_file(connection, store_ids[store["key"]], "패션스토어 루미_상담안내.txt")
                     _ensure_knowledge_file(connection, store_ids[store["key"]], "패션스토어_루미_상품목록.txt", LUMI_PRODUCTS_CONTENT)
                     _ensure_knowledge_file(connection, store_ids[store["key"]], "패션스토어_루미_운영안내.txt", LUMI_POLICY_CONTENT)
+                    _ensure_knowledge_file(connection, store_ids[store["key"]], "패션스토어_루미_이벤트.txt", LUMI_EVENT_CONTENT)
                 else:
                     _ensure_knowledge_file(connection, store_ids[store["key"]], f"{store['name']}_상담안내.txt", "")
 
@@ -979,6 +980,34 @@ LUMI_POLICY_CONTENT = """[패션스토어 루미 - 운영 안내]
 - 평일 09:00~18:00 (주말·공휴일 휴무)
 - 점심시간: 12:00~13:00 (응답 지연 가능)
 - 문의: 채팅 상담 또는 1:1 문의 게시판
+"""
+
+
+LUMI_EVENT_CONTENT = """[패션스토어 루미 - 이벤트 및 혜택 안내]
+
+■ 신규 회원 웰컴 혜택
+- 가입 즉시 10% 할인 쿠폰 자동 지급 (전 상품 적용)
+- 쿠폰 유효 기간: 발급일로부터 30일
+- 첫 구매 시 포인트 2배 적립 (구매 금액의 2%)
+
+■ 봄 시즌 기획전 (2026.03.01 ~ 2026.05.31)
+- 봄 자켓 / 린넨 블라우스 / 플리츠 미디 스커트 최대 15% 할인
+- 봄 자켓 + 린넨 블라우스 세트 구매 시 추가 5% 할인
+- 봄 신상 3만 원 이상 구매 시 쇼핑백 증정 (품절 시 종료)
+
+■ 친구 추천 이벤트
+- 추천한 친구가 첫 구매 완료 시: 추천인 5,000원 포인트 지급
+- 추천받은 친구: 5,000원 할인 쿠폰 지급
+- 추천 코드는 마이페이지 > 친구 추천에서 확인
+
+■ 리뷰 이벤트
+- 구매 후 사진 리뷰 작성 시 500 포인트 추가 적립
+- 이달의 베스트 리뷰 선정 시 1만 원 상품권 지급
+
+■ 등급 혜택
+- 실버 (6개월 누적 10만 원 이상): 생일 쿠폰 5% + 무료배송 월 1회
+- 골드 (6개월 누적 30만 원 이상): 생일 쿠폰 10% + 무료배송 월 3회 + 신상 얼리버드 알림
+- VIP (6개월 누적 60만 원 이상): 생일 쿠폰 15% + 무료배송 무제한 + 전담 상담사 배정
 """
 
 

@@ -94,10 +94,17 @@ _REFUSAL_MARKERS = [
 ]
 _OUT_OF_SCOPE = "__OUT_OF_SCOPE__"  # 자료 없는 질문 → HANDOFF 처리
 
+# 실시간 데이터 필요 — TXT로 절대 답 불가 → pre-filter에서 즉시 HANDOFF
+_REALTIME_QUERY_TERMS = {
+    "어디까지", "운송장", "배송현황", "배송조회", "배송 현황", "배송 조회",
+    "지금 어디", "어디있", "몇시에 와", "언제 와",
+}
+
 # LLM 위임 없이 항상 통과시킬 핵심 CS 동사 (동의어 처리 목적: 환불≈반품)
 _ALWAYS_FORWARD_CS_TERMS = {
     "환불", "교환", "반품", "배송", "주문", "결제", "취소",
     "불량", "파손", "하자", "누락", "오배송",
+    "판매", "팔아", "파는",  # "뭐 팔아", "여기서 파는 것" 등 구어체 상품 문의
 }
 # 인사/감사 등 메타 표현 — 컨텍스트 무관하게 LLM에 위임
 _ALWAYS_FORWARD_GREETINGS = {"안녕", "감사", "고마", "죄송", "수고", "잘부탁"}
@@ -111,6 +118,9 @@ def _can_answer_from_context(question: str, context: str) -> bool:
     """LLM 호출 전 사전 검사: 질문 핵심어가 컨텍스트에 없으면 False"""
     if len(context.strip()) < 20:
         return True
+    # 실시간 데이터 필요 질문 — TXT로 절대 답 불가 → 즉시 HANDOFF
+    if any(term in question for term in _REALTIME_QUERY_TERMS):
+        return False
     if any(term in question for term in _ALWAYS_FORWARD_CS_TERMS):
         return True
     if any(term in question for term in _ALWAYS_FORWARD_GREETINGS):
@@ -579,7 +589,6 @@ async def chatbot_stream(body: ChatbotInput):
         yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
 
         accumulated = ""
-        buffer = ""          # HANDOFF 확인 전까지 토큰을 쌓아두는 버퍼
         thinking_ended = False
 
         def end_thinking():
@@ -608,20 +617,20 @@ async def chatbot_stream(body: ChatbotInput):
                     continue
                 accumulated += delta
 
-                # HANDOFF 조기 감지 — 확인 즉시 종료
-                if "HANDOFF" in accumulated.upper():
+                # 거절/HANDOFF 감지 — final로 덮어씌우고 즉시 종료
+                if "HANDOFF" in accumulated.upper() or any(m in accumulated for m in _REFUSAL_MARKERS):
                     yield end_thinking()
                     yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
                     return
 
-            # 전체 응답 후처리 — 자료 없음 인정 시 HANDOFF
-            final_reply = _post_process_reply(accumulated.strip())
+                # 정상 토큰 — thinking 종료 후 즉시 전송
+                yield end_thinking()
+                yield f"data: {json.dumps({'token': delta, 'can_answer': True}, ensure_ascii=False)}\n\n"
 
-            yield end_thinking()
-            if final_reply == _OUT_OF_SCOPE:
+            # 스트림 완료 후 최종 점검 (마커가 마지막 토큰에 걸친 경우)
+            if _post_process_reply(accumulated.strip()) == _OUT_OF_SCOPE:
                 yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
             else:
-                yield f"data: {json.dumps({'token': final_reply, 'can_answer': True}, ensure_ascii=False)}\n\n"
                 yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
 
         except Exception:

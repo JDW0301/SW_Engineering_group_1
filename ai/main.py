@@ -4,7 +4,8 @@ import time
 import unicodedata
 import ahocorasick
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, UploadFile, Form
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -75,10 +76,15 @@ def _build_automaton(lexicon: list[dict]):
 
 
 # ── 감지 / 중립화 ────────────────────────────────────────────
-# CS 플랫폼 문맥 키워드 — 포함 시 offensive 오탐 방지
+# 한글/영문/숫자가 하나도 없는 텍스트는 KoELECTRA 입력 자체를 건너뜀
+_MEANINGFUL_RE = re.compile(r'[가-힣a-zA-Z0-9]')
+
+# CS 플랫폼 문맥 키워드 — 포함 시 오탐 방지
 _CS_KEYWORDS = {
     "환불", "배송", "교환", "주문", "결제", "상품", "접수",
     "처리", "부탁", "신청", "문의", "반품", "수령", "도착",
+    "사이즈", "제품", "구매", "이용", "불량", "택배", "배달",
+    "서비스", "고객", "가격", "할인", "쿠폰", "포인트",
 }
 
 def _is_cs_context(text: str) -> bool:
@@ -96,9 +102,11 @@ def _koelectra_classify(text: str) -> tuple[bool, float, str]:
     label = result["label"]
     score = round(result["score"], 4)
 
-    if label == "hate" and score >= 0.95:
+    if label == "hate" and score >= 0.98 and not _is_cs_context(text):
         is_flagged = True
-    elif label == "offensive" and score >= 0.97 and not _is_cs_context(text):
+    elif label == "hate" and score >= 0.995:
+        is_flagged = True
+    elif label == "offensive" and score >= 0.99 and not _is_cs_context(text):
         is_flagged = True
     else:
         is_flagged = False
@@ -175,23 +183,27 @@ class ChatMessage(BaseModel):
     role: str     # "customer" | "bot"
     content: str
 
+STORE_CONTEXT_DIR = Path("store_contexts")
+
 class ChatbotInput(BaseModel):
     message: str                        # 현재 고객 메시지
     history: list[ChatMessage] = []     # 이전 대화 내역
-    store_context: str                  # 사업자가 설정한 정보 (상품/정책/FAQ)
+    store_id: str = ""                  # 업로드된 txt 파일 ID (우선)
+    store_context: str = ""             # 직접 전달하는 문자열 (하위 호환)
+
+    def resolve_context(self) -> str:
+        if self.store_id:
+            path = STORE_CONTEXT_DIR / f"{self.store_id}.txt"
+            if not path.exists():
+                raise HTTPException(status_code=404, detail=f"store_id '{self.store_id}'에 해당하는 파일이 없습니다.")
+            return path.read_text(encoding="utf-8")
+        if self.store_context:
+            return self.store_context
+        raise HTTPException(status_code=400, detail="store_id 또는 store_context 중 하나는 필요합니다.")
 
 class ChatbotResponse(BaseModel):
     reply: str
     can_answer: bool     # False면 상담사 연결 트리거
-    latency_ms: float
-
-# ── 문의 분류 스키마 ─────────────────────────────────────────
-class ClassifyInput(BaseModel):
-    text: str
-
-class ClassifyResponse(BaseModel):
-    category: str        # 배송문의 | 환불문의 | 교환문의 | 상품문의 | 기타
-    confidence: str      # high | medium | low
     latency_ms: float
 
 
@@ -207,6 +219,10 @@ def _analyze(text: str) -> tuple[bool, float, list[dict], str]:
     if detections:
         _, confidence, _ = _koelectra_classify(text)
         return True, confidence, detections, "lexicon+koelectra"
+
+    # 한글/영문/숫자가 없는 텍스트(특수문자만 등)는 KoELECTRA 오탐 방지를 위해 스킵
+    if not _MEANINGFUL_RE.search(text):
+        return False, 0.0, [], "skipped"
 
     # lexicon 미감지 → KoELECTRA 보조 탐지
     is_flagged, confidence, label = _koelectra_classify(text)
@@ -227,6 +243,8 @@ def detect(body: TextInput):
     body.validate_text()
     start = time.time()
     is_profanity, confidence, detections, method = _analyze(body.text)
+
+    print(f"[detect] text={repr(body.text)} | is_profanity={is_profanity} | confidence={confidence:.4f} | method={method} | detections={detections}", flush=True)
 
     return DetectResponse(
         is_profanity=is_profanity,
@@ -305,9 +323,9 @@ def summarize(body: MessagesInput):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            max_tokens=300,
+            max_tokens=150,
             temperature=0.3,
-            timeout=30,
+            timeout=60,
         )
     except Exception:
         raise HTTPException(status_code=503, detail="AI 모델 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.")
@@ -327,10 +345,10 @@ def chatbot(body: ChatbotInput):
 
     if not body.message or not body.message.strip():
         raise HTTPException(status_code=400, detail="message가 비어있습니다.")
-    if not body.store_context.strip():
-        raise HTTPException(status_code=400, detail="store_context가 비어있습니다.")
     if len(body.history) > 20:
         raise HTTPException(status_code=400, detail="history는 최대 20개까지 허용됩니다.")
+
+    context = body.resolve_context()
 
     # 대화 히스토리 구성
     history_text = ""
@@ -345,19 +363,21 @@ def chatbot(body: ChatbotInput):
 아래 [스토어 정보]만을 기반으로 고객 질문에 답변하세요.
 
 [스토어 정보]
-{body.store_context}
+{context}
 
 [HANDOFF 필수 조건 - 아래 해당 시 반드시 "HANDOFF"만 출력]
-- 특정 주문의 현재 배송 상태, 위치 조회
-- 고객 개인 주문내역, 결제 정보 확인
-- 환불/교환 접수 처리 (방법 안내는 가능, 실제 접수는 HANDOFF)
-- 재고 실시간 확인
-- 스토어 정보에 없는 내용
+- 특정 주문의 현재 배송 상태·위치 조회
+- 고객 개인 주문내역·결제 정보 확인
+- 환불·교환·반품 접수를 명시적으로 요청하는 경우 ("접수해 주세요", "처리해 주세요" 등 직접 요청)
+  ※ "환불하고 싶다", "교환하고 싶다" 등 의향 표현은 HANDOFF가 아님 → 스토어 정보로 절차 안내
+- 실시간 재고 확인
+- 스토어 정보에 없어 답변이 불가능한 경우
 
 [일반 규칙]
-1. HANDOFF 조건이 아닌 경우에만 스토어 정보 기반으로 답변하세요.
-2. 답변은 친절하고 간결하게 한국어로 작성하세요.
-3. "HANDOFF" 출력 시 다른 말은 절대 붙이지 마세요."""
+1. HANDOFF 조건이 아닌 경우 스토어 정보를 근거로 답변하세요.
+2. 환불·교환 의향을 표현한 고객에게는 절차와 방법을 먼저 안내하세요.
+3. 답변은 친절하고 간결하게 한국어로 작성하세요.
+4. "HANDOFF" 출력 시 다른 말은 절대 붙이지 마세요."""
 
     user_prompt = f"{history_text}고객: {body.message}\n챗봇:"
 
@@ -368,10 +388,10 @@ def chatbot(body: ChatbotInput):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            max_tokens=150,   # 300 → 150 (챗봇 응답은 간결하게)
+            max_tokens=300,
             temperature=0.3,
             stop=["고객:"],
-            timeout=15,
+            timeout=30,
         )
     except Exception:
         raise HTTPException(status_code=503, detail="AI 모델 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.")
@@ -391,6 +411,7 @@ def chatbot(body: ChatbotInput):
 
 def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
     """챗봇 system/user 메시지 구성 (chatbot, chatbot/stream 공용)"""
+    context = body.resolve_context()
     history_text = ""
     if body.history:
         history_text = "\n--- 이전 대화 ---\n" + "\n".join(
@@ -398,12 +419,21 @@ def _build_chatbot_messages(body: ChatbotInput) -> tuple[str, str]:
             for m in body.history[-6:]
         ) + "\n---\n"
 
-    system_prompt = f"""고객센터 AI 챗봇. 아래 스토어 정보만으로 답변하라.
+    system_prompt = f"""당신은 소규모 쇼핑몰 고객센터 AI 챗봇입니다.
 
-{body.store_context}
+[스토어 정보]
+{context}
 
-주문조회/결제/개인정보/재고확인/환불교환접수/정보없는질문 → "HANDOFF"만 출력.
-그 외 → 한국어로 간결하게 답변."""
+[절대 규칙]
+아래 조건에만 "HANDOFF" 한 단어만 출력하고 즉시 종료하라.
+- 특정 주문 조회 / 결제 내역 / 개인 정보 확인
+- 환불·교환·반품 접수를 명시적으로 요청 ("접수해 주세요", "처리해 주세요" 등 직접 요청)
+  ※ "환불하고 싶다", "교환하고 싶다" 등 의향 표현은 HANDOFF 아님 → 절차 안내로 응답
+- 실시간 재고 확인
+- 스토어 정보에 없어 답변 불가능한 경우
+
+위 조건에 해당하지 않으면 스토어 정보를 근거로 한국어로 간결하게 답변하라.
+환불·교환 의향을 밝힌 경우 절차와 방법을 먼저 안내하라."""
 
     user_prompt = f"{history_text}고객: {body.message}\n챗봇:"
     return system_prompt, user_prompt
@@ -418,19 +448,37 @@ async def chatbot_stream(body: ChatbotInput):
     """
     if not body.message or not body.message.strip():
         raise HTTPException(status_code=400, detail="message가 비어있습니다.")
-    if not body.store_context.strip():
-        raise HTTPException(status_code=400, detail="store_context가 비어있습니다.")
     if len(body.history) > 20:
         raise HTTPException(status_code=400, detail="history는 최대 20개까지 허용됩니다.")
 
     system_prompt, user_prompt = _build_chatbot_messages(body)
 
+    HANDOFF_MSG = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
+    WARNING_MSG = "욕설이 포함된 메시지는 전송할 수 없습니다. 경고가 누적되면 대화가 제한됩니다."
+    # HANDOFF 판정에 충분한 초기 버퍼 크기 (chars)
+    HANDOFF_BUFFER = 12
+
+    # 욕설 선제 검사 — 감지 시 LLM 호출 없이 즉시 경고 반환
+    is_profanity, _, _, _ = _analyze(body.message)
+
     def generate():
-        # 첫 토큰 전 즉시 전송 — 프론트에서 "생각중입니다..." 표시용
+        if is_profanity:
+            yield f"data: {json.dumps({'token': '', 'is_warning': True, 'can_answer': True, 'final': WARNING_MSG}, ensure_ascii=False)}\n\n"
+            return
+
         yield f"data: {json.dumps({'thinking': True}, ensure_ascii=False)}\n\n"
 
         accumulated = ""
-        first_token = True
+        buffer = ""          # HANDOFF 확인 전까지 토큰을 쌓아두는 버퍼
+        thinking_ended = False
+
+        def end_thinking():
+            nonlocal thinking_ended
+            if not thinking_ended:
+                thinking_ended = True
+                return f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
+            return ""
+
         try:
             stream = _resources["exaone"].chat.completions.create(
                 model="exaone-3.5-7.8b-instruct",
@@ -438,82 +486,86 @@ async def chatbot_stream(body: ChatbotInput):
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
-                max_tokens=150,
+                max_tokens=300,
                 temperature=0.3,
                 stop=["고객:"],
                 stream=True,
-                timeout=15,
+                timeout=40,
             )
             for chunk in stream:
                 delta = chunk.choices[0].delta.content
-                if delta:
-                    accumulated += delta
-                    if "HANDOFF" in accumulated.upper():
-                        handoff_msg = "죄송합니다. 해당 문의는 상담사가 직접 도움드릴 수 있습니다. 상담사 연결 버튼을 눌러주세요."
-                        if first_token:
-                            yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
-                        yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': handoff_msg}, ensure_ascii=False)}\n\n"
-                        return
-                    # 첫 토큰 도착 시 thinking 종료 신호 전송
-                    if first_token:
-                        yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
-                        first_token = False
-                    yield f"data: {json.dumps({'token': delta, 'can_answer': True}, ensure_ascii=False)}\n\n"
+                if not delta:
+                    continue
 
+                accumulated += delta
+
+                # HANDOFF 감지 — 버퍼 단계든 이후 단계든 즉시 종료
+                if "HANDOFF" in accumulated.upper():
+                    yield end_thinking()
+                    yield f"data: {json.dumps({'token': '', 'can_answer': False, 'final': HANDOFF_MSG}, ensure_ascii=False)}\n\n"
+                    return
+
+                # 버퍼 단계: 충분히 쌓일 때까지 FE에 보내지 않음
+                if len(accumulated) < HANDOFF_BUFFER:
+                    buffer += delta
+                    continue
+
+                # 버퍼 해제: 안전하다고 판단, 쌓인 버퍼 + 현재 토큰 전송
+                if buffer:
+                    yield end_thinking()
+                    yield f"data: {json.dumps({'token': buffer, 'can_answer': True}, ensure_ascii=False)}\n\n"
+                    buffer = ""
+
+                yield end_thinking()
+                yield f"data: {json.dumps({'token': delta, 'can_answer': True}, ensure_ascii=False)}\n\n"
+
+            # 스트림 종료 — 버퍼에 남은 내용 처리
+            if buffer and "HANDOFF" not in accumulated.upper():
+                yield end_thinking()
+                yield f"data: {json.dumps({'token': buffer, 'can_answer': True}, ensure_ascii=False)}\n\n"
+
+            yield end_thinking()
             yield f"data: {json.dumps({'token': '', 'done': True, 'can_answer': True}, ensure_ascii=False)}\n\n"
 
         except Exception:
-            yield f"data: {json.dumps({'thinking_end': True}, ensure_ascii=False)}\n\n"
+            yield end_thinking()
             yield f"data: {json.dumps({'error': 'AI 모델 오류가 발생했습니다.'}, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 
 
-_CATEGORIES = ["배송문의", "환불문의", "교환문의", "상품문의", "기타"]
 
-@app.post("/classify", response_model=ClassifyResponse)
-def classify(body: ClassifyInput):
-    if not body.text or not body.text.strip():
-        raise HTTPException(status_code=400, detail="text가 비어있습니다.")
-    if len(body.text) > 500:
-        raise HTTPException(status_code=400, detail="text는 500자 이하여야 합니다.")
-    start = time.time()
+@app.post("/store-context/upload")
+async def upload_store_context(
+    store_id: str = Form(...),
+    file: UploadFile = Form(...),
+):
+    if not store_id.strip():
+        raise HTTPException(status_code=400, detail="store_id가 비어있습니다.")
+    if not file.filename.endswith(".txt"):
+        raise HTTPException(status_code=400, detail="txt 파일만 허용됩니다.")
 
-    prompt = f"""다음 고객 문의를 아래 카테고리 중 하나로 분류하세요.
+    content = await file.read()
+    text = content.decode("utf-8").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="파일 내용이 비어있습니다.")
+    if len(text) > 5000:
+        raise HTTPException(status_code=400, detail="파일 내용은 5000자 이하여야 합니다.")
 
-카테고리: 배송문의, 환불문의, 교환문의, 상품문의, 기타
+    STORE_CONTEXT_DIR.mkdir(exist_ok=True)
+    path = STORE_CONTEXT_DIR / f"{store_id}.txt"
+    path.write_text(text, encoding="utf-8")
 
-규칙:
-- 반드시 위 카테고리 중 정확히 하나만 출력하세요.
-- 다른 말은 절대 하지 마세요.
+    return {"store_id": store_id, "char_count": len(text), "ok": True}
 
-고객 문의: {body.text}
-카테고리:"""
 
-    response = _resources["exaone"].chat.completions.create(
-        model="exaone-3.5-7.8b-instruct",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=20,
-        temperature=0.0,
-    )
-
-    raw = response.choices[0].message.content.strip()
-
-    # 응답에서 카테고리 추출
-    category = "기타"
-    for c in _CATEGORIES:
-        if c in raw:
-            category = c
-            break
-
-    # 신뢰도: 카테고리가 정확히 매칭되면 high
-    confidence = "high" if raw in _CATEGORIES else ("medium" if category != "기타" else "low")
-
-    return ClassifyResponse(
-        category=category,
-        confidence=confidence,
-        latency_ms=round((time.time() - start) * 1000, 2),
-    )
+@app.delete("/store-context/{store_id}")
+def delete_store_context(store_id: str):
+    path = STORE_CONTEXT_DIR / f"{store_id}.txt"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"store_id '{store_id}'가 존재하지 않습니다.")
+    path.unlink()
+    return {"store_id": store_id, "deleted": True}
 
 
 @app.get("/")

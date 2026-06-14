@@ -17,9 +17,9 @@ const ChannelPage = ({ orders, supportSessions, supportMessagesBySessionId, inqu
   const supportRows = supportSessions.map(session => ({ ...session, kind: "support", messages: supportMessagesBySessionId[session.id] || [] }));
   const inquiryRows = inquiryPosts.map(post => ({ ...post, kind: "inquiry", messages: toInquiryMessages(post, inquiryRepliesByPostId[post.id] || []) }));
   const list = (tab === "consult" ? supportRows : inquiryRows)
-    .filter(i => !searchQ || i.title.includes(searchQ) || i.storeName.includes(searchQ) || (orders.find(o => o.id === i.orderId)?.customerName || i.customerName || "").includes(searchQ))
-    .filter(i => !dateFrom || i.createdAt.slice(0, 10) >= dateFrom)
-    .filter(i => !dateTo || i.createdAt.slice(0, 10) <= dateTo)
+    .filter(i => !searchQ || (i.title || "").includes(searchQ) || (i.storeName || "").includes(searchQ) || (orders.find(o => o.id === i.orderId)?.customerName || i.customerName || "").includes(searchQ))
+    .filter(i => !dateFrom || (i.createdAt || "").slice(0, 10) >= dateFrom)
+    .filter(i => !dateTo || (i.createdAt || "").slice(0, 10) <= dateTo)
     .sort((a, b) => filter === "latest"
       ? (b.lastMessageAt ?? "").localeCompare(a.lastMessageAt ?? "")
       : (a.lastMessageAt ?? "").localeCompare(b.lastMessageAt ?? ""));

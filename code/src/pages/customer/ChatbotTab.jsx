@@ -242,10 +242,6 @@ const ChatbotTab = ({ store, selectedOrder, storeOrders = [], onSelectOrder, onC
     setHandoffError("");
     setIsHandoffSubmitting(true);
     try {
-      const latestUserMessage = [...messages].reverse().find(message => message.sender === "user");
-      const handoffMessages = latestUserMessage?.content?.trim() === content
-        ? messages
-        : [...messages, { id: Date.now(), sender: "user", content }];
       await onCreateSupportFromChatbot({ title, content, store, order: selectedOrder });
       try { localStorage.removeItem(getChatStorageKey(store.id, selectedOrder?.id)); } catch {}
     } catch (handoffCreateError) {
